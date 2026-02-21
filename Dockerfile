@@ -16,5 +16,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
 
-# Run OrQuanta v4 API
-CMD uvicorn v4.api.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1
+# Run OrQuanta v4 API - use shell form so $PORT env var expands correctly
+CMD uvicorn v4.api.main:app --host 0.0.0.0 --port $PORT --workers 1
