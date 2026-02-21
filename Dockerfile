@@ -9,6 +9,9 @@ RUN pip install --no-cache-dir -r requirements_deploy.txt
 # Copy entire application
 COPY . .
 
+# Make entrypoint executable
+RUN chmod +x /app/entrypoint.sh
+
 # Expose port
 EXPOSE 8000
 
@@ -16,5 +19,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
 
-# Run OrQuanta v4 API - use shell form so $PORT env var expands correctly
-CMD uvicorn v4.api.main:app --host 0.0.0.0 --port $PORT --workers 1
+# Use entrypoint.sh which properly expands $PORT via the shell
+ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]
