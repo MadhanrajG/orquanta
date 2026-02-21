@@ -130,6 +130,89 @@ class LambdaLabsProvider(BaseGPUProvider):
             logger.warning(f"[LambdaLabs] is_available check failed: {exc}")
             return False
 
+    async def list_instances(self, region: str | None = None):
+        """List all running GPU instances (satisfies BaseGPUProvider abstract method)."""
+        from v4.providers.base_provider import GPUInstance
+        raw = await self.list_running_instances()
+        instances = []
+        for inst in raw:
+            if region and inst.get("region", {}).get("name", "") != region:
+                continue
+            specs = inst.get("instance_type", {})
+            instances.append(GPUInstance(
+                instance_id=inst.get("id", ""),
+                provider="lambda",
+                region=inst.get("region", {}).get("name", "us-tx-3"),
+                gpu_type=specs.get("name", "gpu_1x_a100"),
+                gpu_count=1,
+                vram_gb=specs.get("memory_gib", 80),
+                vcpus=specs.get("vcpus", 30),
+                ram_gb=float(specs.get("memory_gib", 200)),
+                hourly_cost_usd=specs.get("price_cents_per_hour", 199) / 100.0,
+                status=inst.get("status", "running"),
+                public_ip=inst.get("ip", None),
+            ))
+        return instances
+
+    async def spin_up(self, gpu_type: str, gpu_count: int = 1,
+                      region: str | None = None, spot: bool = True,
+                      tags: dict | None = None):
+        """Provision a new GPU instance (satisfies BaseGPUProvider abstract method)."""
+        from v4.providers.base_provider import GPUInstance, InstanceConfig
+        config = InstanceConfig(
+            gpu_type=gpu_type, gpu_count=gpu_count,
+            region=region, tags=tags or {}, spot=spot,
+        )
+        provisioned = await self.provision_instance(config)
+        return GPUInstance(
+            instance_id=provisioned.instance_id,
+            provider=provisioned.provider,
+            region=provisioned.region,
+            gpu_type=provisioned.gpu_type,
+            gpu_count=provisioned.gpu_count,
+            vram_gb=80,
+            vcpus=30,
+            ram_gb=200.0,
+            hourly_cost_usd=provisioned.cost_per_hour,
+            status=provisioned.status,
+            public_ip=provisioned.ip_address,
+            spot=spot,
+        )
+
+    async def get_spot_prices(self, gpu_type: str, regions: list[str] | None = None):
+        """Get current spot prices (satisfies BaseGPUProvider abstract method)."""
+        from v4.providers.base_provider import SpotPrice
+        target_regions = regions or ["us-tx-3", "us-west-3", "us-east-1"]
+        prices = []
+        for region in target_regions:
+            price = await self.get_gpu_price(gpu_type, region)
+            if price > 0:
+                prices.append(SpotPrice(
+                    provider="lambda",
+                    region=region,
+                    gpu_type=gpu_type,
+                    instance_type=gpu_type,
+                    current_price_usd_hr=price,
+                    on_demand_price_usd_hr=price,  # Lambda Labs is on-demand
+                    availability="high",
+                    interruption_rate_pct=0.0,
+                    price_trend="stable",
+                ))
+        # Sort cheapest first
+        prices.sort(key=lambda p: p.current_price_usd_hr)
+        return prices
+
+    async def get_metrics(self, instance_id: str, region: str | None = None):
+        """Fetch GPU metrics — Lambda Labs API doesn't expose them directly."""
+        from v4.providers.base_provider import GPUMetrics
+        return GPUMetrics(
+            instance_id=instance_id,
+            provider="lambda",
+            gpu_utilization_pct=0.0,
+            memory_used_gb=0.0,
+            memory_total_gb=80.0,
+        )
+
     async def get_instance_types(self) -> list[dict[str, Any]]:
         """
         List all available GPU instance types with real-time pricing.
@@ -297,6 +380,10 @@ class LambdaLabsProvider(BaseGPUProvider):
         except Exception as exc:
             logger.error(f"[LambdaLabs] Terminate {instance_id} failed: {exc}")
             return False
+
+    async def terminate(self, instance_id: str, region: str | None = None) -> bool:
+        """Alias for terminate_instance — satisfies BaseGPUProvider abstract method."""
+        return await self.terminate_instance(instance_id)
 
     async def get_instance_status(self, instance_id: str) -> dict[str, Any]:
         """Fetch current instance status from the API."""

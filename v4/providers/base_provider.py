@@ -202,6 +202,78 @@ class InsufficientCapacityError(ProviderError):
 # Abstract Base Provider
 # ---------------------------------------------------------------------------
 
+@dataclass
+class InstanceConfig:
+    """Configuration for launching a GPU instance."""
+    gpu_type: str                          # e.g. "gpu_1x_a100"
+    gpu_count: int = 1
+    region: Optional[str] = None
+    name: Optional[str] = None
+    ssh_key_name: Optional[str] = None
+    user_data: Optional[str] = None
+    spot: bool = True
+    tags: dict = field(default_factory=dict)
+    budget_usd: float = 0.0
+    max_runtime_hours: float = 24.0
+
+
+@dataclass
+class ProvisionedInstance:
+    """A successfully provisioned GPU instance."""
+    instance_id: str
+    provider: str
+    gpu_type: str
+    gpu_count: int
+    region: str
+    ip_address: str
+    status: str                            # running / stopping / terminated
+    cost_per_hour: float
+    started_at: str
+    ssh_user: str = "ubuntu"
+    ssh_key_name: str = "orquanta-default"
+    tags: dict = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "instance_id": self.instance_id,
+            "provider": self.provider,
+            "gpu_type": self.gpu_type,
+            "gpu_count": self.gpu_count,
+            "region": self.region,
+            "ip_address": self.ip_address,
+            "status": self.status,
+            "cost_per_hour": self.cost_per_hour,
+            "started_at": self.started_at,
+        }
+
+
+@dataclass
+class GpuMetrics:
+    """Real-time GPU metrics from a running instance."""
+    instance_id: str
+    gpu_utilization_pct: float = 0.0
+    memory_utilization_pct: float = 0.0
+    temp_celsius: float = 0.0
+    power_watts: float = 0.0
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    source: str = "api"
+    note: str = ""
+
+
+@dataclass
+class CommandResult:
+    """Result of an SSH command execution on an instance."""
+    instance_id: str
+    command: str
+    stdout: str = ""
+    stderr: str = ""
+    exit_code: int = 0
+
+    @property
+    def success(self) -> bool:
+        return self.exit_code == 0
+
+
 class BaseGPUProvider(ABC):
     """Abstract interface all GPU cloud providers must implement.
 
