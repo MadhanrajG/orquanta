@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orquanta-api
+  labels: { app: orquanta, component: api, version: "4.0.0" }
+spec:
+  replicas: 3
+  selector:
+    matchLabels: { app: orquanta, component: api }
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxSurge: 1, maxUnavailable: 0 }
+  template:
+    metadata:
+      labels: { app: orquanta, component: api, version: "4.0.0" }
+    spec:
+      containers:
+        - name: api
+          image: orquanta-api:4.0.0
+          ports: [{ containerPort: 8000 }]
+          env:
+            - { name: REDIS_URL, valueFrom: { secretKeyRef: { name: orquanta-secrets, key: redis-url } } }
+            - { name: DATABASE_URL, valueFrom: { secretKeyRef: { name: orquanta-secrets, key: database-url } } }
+            - { name: JWT_SECRET, valueFrom: { secretKeyRef: { name: orquanta-secrets, key: jwt-secret } } }
+            - { name: LLM_PROVIDER, value: "openai" }
+            - { name: OPENAI_API_KEY, valueFrom: { secretKeyRef: { name: orquanta-secrets, key: openai-api-key } } }
+          resources:
+            requests: { cpu: "500m", memory: "1Gi" }
+            limits: { cpu: "2000m", memory: "4Gi" }
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orquanta-celery
+  labels: { app: orquanta, component: celery }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: orquanta, component: celery }
+  template:
+    metadata:
+      labels: { app: orquanta, component: celery }
+    spec:
+      containers:
+        - name: celery
+          image: orquanta-agents:4.0.0
+          command: ["celery", "-A", "v4.tasks", "worker", "--loglevel=info"]
+          env:
+            - { name: REDIS_URL, valueFrom: { secretKeyRef: { name: orquanta-secrets, key: redis-url } } }
+          resources:
+            requests: { cpu: "250m", memory: "512Mi" }
+            limits: { cpu: "1000m", memory: "2Gi" }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: orquanta-api-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: orquanta-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 70 }
+    - type: Resource
+      resource:
+        name: memory
+        target: { type: Utilization, averageUtilization: 80 }

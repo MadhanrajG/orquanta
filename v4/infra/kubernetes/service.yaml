@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: orquanta-api
+  labels: { app: orquanta, component: api }
+spec:
+  selector: { app: orquanta, component: api }
+  ports:
+    - { name: http, port: 80, targetPort: 8000, protocol: TCP }
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orquanta-api-lb
+  labels: { app: orquanta, component: api }
+spec:
+  selector: { app: orquanta, component: api }
+  ports:
+    - { name: http, port: 80, targetPort: 8000 }
+  type: LoadBalancer
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: orquanta-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [orquanta.example.com]
+      secretName: orquanta-tls
+  rules:
+    - host: orquanta.example.com
+      http:
+        paths:
+          - { path: /api/, pathType: Prefix, backend: { service: { name: orquanta-api, port: { name: http } } } }
+          - { path: /ws/, pathType: Prefix, backend: { service: { name: orquanta-api, port: { name: http } } } }
+          - { path: /auth/, pathType: Prefix, backend: { service: { name: orquanta-api, port: { name: http } } } }
+          - { path: /, pathType: Prefix, backend: { service: { name: orquanta-frontend, port: { number: 80 } } } }

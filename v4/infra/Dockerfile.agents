@@ -1,0 +1,7 @@
+FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir celery==5.4.0 redis==5.1.1 asyncpg==0.29.0
+COPY . .
+CMD ["celery", "-A", "v4.tasks", "worker", "--loglevel=info", "--concurrency=4"]

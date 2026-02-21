@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+        content="OrQuanta is the first Agentic AI Cloud GPU platform that autonomously orchestrates, optimizes and heals your GPU workloads across AWS, GCP, Azure and CoreWeave. 14-day free trial, no credit card required." />
+    <meta property="og:title" content="OrQuanta — Orchestrate. Optimize. Evolve." />
+    <meta property="og:description"
+        content="The first Agentic AI platform for autonomous GPU cloud management. Save 47% on GPU costs. Deploy in minutes." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@OrQuantaAI" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://orquanta.ai" />
+    <meta name="theme-color" content="#0a0b14" />
+    <title>OrQuanta — Orchestrate. Optimize. Evolve.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            /* ── OrQuanta Design Tokens ── */
+            --bg: #0A0B14;
+            --surface: #0F1624;
+            --surface2: #131D2E;
+            --border: rgba(0, 212, 255, 0.08);
+            --primary: #00D4FF;
+            --primary-glow: rgba(0, 212, 255, 0.25);
+            --secondary: #7B2FFF;
+            --secondary-glow: rgba(123, 47, 255, 0.25);
+            --accent: #00D4FF;
+            --accent-glow: rgba(0, 212, 255, 0.20);
+            --green: #00FF88;
+            --amber: #FFB800;
+            --red: #FF4444;
+            --text-primary: #E8EAF6;
+            --text-secondary: #8892A4;
+            --text-muted: #4A5568;
+            --radius: 12px;
+            --radius-lg: 20px;
+            --gradient: linear-gradient(135deg, #00D4FF, #7B2FFF);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ─── Background grid ─────────────────────────────────────────── */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ─── Gradients ───────────────────────────────────────────────── */
+        .glow-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glow-orb-1 {
+            width: 600px;
+            height: 600px;
+            background: rgba(0, 212, 255, 0.12);
+            top: -200px;
+            left: -100px;
+        }
+
+        .glow-orb-2 {
+            width: 500px;
+            height: 500px;
+            background: rgba(123, 47, 255, 0.10);
+            top: 200px;
+            right: -100px;
+        }
+
+        /* ─── Navigation ──────────────────────────────────────────────── */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 48px;
+            height: 72px;
+            background: rgba(8, 9, 16, 0.82);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+            transition: background 0.3s;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .nav-logo-icon {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .nav-logo-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 20px;
+            color: var(--text-primary);
+        }
+
+        .nav-logo-badge {
+            font-size: 10px;
+            font-weight: 600;
+            background: var(--primary);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-cta {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-outline {
+            padding: 9px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+
+        .btn-primary {
+            padding: 9px 20px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 30px var(--primary-glow);
+        }
+
+        /* ─── Hero ────────────────────────────────────────────────────── */
+        #hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 24px 80px;
+            overflow: hidden;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            background: rgba(0, 212, 255, 0.08);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--primary);
+            margin-bottom: 28px;
+            animation: fadeInUp 0.6s both;
+        }
+
+        .hero-badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1)
+            }
+
+            50% {
+                opacity: 0.6;
+                transform: scale(1.3)
+            }
+        }
+
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(48px, 6vw, 88px);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -2px;
+            max-width: 900px;
+            animation: fadeInUp 0.6s 0.1s both;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #ffffff 0%, #00D4FF 55%, #7B2FFF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            font-size: clamp(16px, 2vw, 20px);
+            color: var(--text-secondary);
+            max-width: 640px;
+            margin-top: 24px;
+            line-height: 1.7;
+            animation: fadeInUp 0.6s 0.2s both;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            margin-top: 40px;
+            animation: fadeInUp 0.6s 0.3s both;
+        }
+
+        .btn-hero-primary {
+            padding: 15px 32px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 0 40px var(--primary-glow);
+            transition: all 0.25s;
+        }
+
+        .btn-hero-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 60px var(--primary-glow);
+        }
+
+        .btn-hero-outline {
+            padding: 15px 32px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.25s;
+        }
+
+        .btn-hero-outline:hover {
+            border-color: var(--primary);
+            background: rgba(0, 212, 255, 0.06);
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 48px;
+            margin-top: 64px;
+            animation: fadeInUp 0.6s 0.4s both;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-value {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .hero-stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .hero-terminal {
+            margin-top: 72px;
+            max-width: 720px;
+            width: 100%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            animation: fadeInUp 0.6s 0.5s both;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5), 0 0 60px var(--primary-glow);
+        }
+
+        .terminal-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot:nth-child(1) {
+            background: var(--red);
+        }
+
+        .terminal-dot:nth-child(2) {
+            background: var(--amber);
+        }
+
+        .terminal-dot:nth-child(3) {
+            background: var(--green);
+        }
+
+        .terminal-title {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-left: auto;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .terminal-body {
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            text-align: left;
+        }
+
+        .t-dim {
+            color: var(--text-muted);
+        }
+
+        .t-green {
+            color: var(--green);
+        }
+
+        .t-cyan {
+            color: var(--accent);
+        }
+
+        .t-amber {
+            color: var(--amber);
+        }
+
+        .t-purple {
+            color: var(--primary);
+        }
+
+        .t-white {
+            color: var(--text-primary);
+        }
+
+        .t-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background: var(--primary);
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ─── Section shared ──────────────────────────────────────────── */
+        section {
+            position: relative;
+            padding: 100px 0;
+            overflow: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .section-label {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--primary);
+            background: rgba(0, 212, 255, 0.08);
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(36px, 4vw, 52px);
+            font-weight: 800;
+            line-height: 1.15;
+            max-width: 700px;
+        }
+
+        .section-sub {
+            color: var(--text-secondary);
+            font-size: 18px;
+            max-width: 600px;
+            margin-top: 16px;
+            line-height: 1.7;
+        }
+
+        .section-header {
+            margin-bottom: 60px;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mx-auto {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ─── Feature Grid ────────────────────────────────────────────── */
+        #features {
+            background: linear-gradient(180deg, var(--bg), var(--surface));
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(0, 212, 255, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            margin-bottom: 20px;
+        }
+
+        .feature-title {
+            font-weight: 700;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .feature-desc {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-size: 15px;
+        }
+
+        /* ─── How It Works ────────────────────────────────────────────── */
+        #how {
+            background: var(--surface);
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 32px;
+            position: relative;
+        }
+
+        .steps-grid::before {
+            content: '';
+            position: absolute;
+            top: 36px;
+            left: 15%;
+            right: 15%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), var(--secondary), transparent);
+        }
+
+        .step-card {
+            text-align: center;
+            position: relative;
+            padding-top: 16px;
+        }
+
+        .step-num {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 800;
+            margin: 0 auto 20px;
+            box-shadow: 0 0 30px var(--primary-glow);
+        }
+
+        .step-title {
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .step-desc {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* ─── Pricing ─────────────────────────────────────────────────── */
+        #pricing {
+            background: linear-gradient(180deg, var(--surface), var(--bg));
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            align-items: start;
+        }
+
+        .pricing-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 36px 32px;
+            transition: all 0.3s;
+        }
+
+        .pricing-card.popular {
+            border-color: var(--primary);
+            background: linear-gradient(180deg, rgba(0, 212, 255, 0.08) 0%, var(--surface2) 100%);
+            box-shadow: 0 0 50px var(--primary-glow);
+        }
+
+        .popular-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: var(--primary);
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: 0.5px;
+        }
+
+        .pricing-plan {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .pricing-price {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+
+        .pricing-amount {
+            font-size: 52px;
+            font-weight: 800;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .pricing-period {
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        .pricing-sub {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-bottom: 28px;
+        }
+
+        .pricing-divider {
+            height: 1px;
+            background: var(--border);
+            margin-bottom: 28px;
+        }
+
+        .pricing-features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .pricing-features li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            color: var(--text-secondary);
+        }
+
+        .pricing-features li::before {
+            content: '✓';
+            color: var(--green);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .btn-pricing {
+            width: 100%;
+            padding: 13px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+            transition: all 0.2s;
+        }
+
+        .btn-pricing-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            box-shadow: 0 0 30px var(--primary-glow);
+        }
+
+        .btn-pricing-primary:hover {
+            box-shadow: 0 0 50px var(--primary-glow);
+            transform: translateY(-1px);
+        }
+
+        .btn-pricing-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-pricing-outline:hover {
+            border-color: var(--primary);
+        }
+
+        /* ─── Social Proof ────────────────────────────────────────────── */
+        #social-proof {
+            background: var(--surface);
+            padding: 64px 0;
+        }
+
+        .metrics-row {
+            display: flex;
+            justify-content: center;
+            gap: 80px;
+            flex-wrap: wrap;
+        }
+
+        .metric-item {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 48px;
+            font-weight: 800;
+            font-family: 'Space Grotesk', sans-serif;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .metric-label {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        /* ─── Sign-up section ─────────────────────────────────────────── */
+        #signup {
+            background: var(--bg);
+        }
+
+        .signup-card {
+            max-width: 540px;
+            margin: 0 auto;
+            background: var(--surface2);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: var(--radius-lg);
+            padding: 48px 40px;
+            box-shadow: 0 0 80px var(--primary-glow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .signup-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .btn-signup {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 0 30px var(--primary-glow);
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        .btn-signup:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 50px var(--primary-glow);
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .signup-success {
+            display: none;
+            text-align: center;
+            padding: 24px 0;
+        }
+
+        .signup-success .check {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .signup-success h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .signup-success p {
+            color: var(--text-secondary);
+        }
+
+        /* ─── Footer ──────────────────────────────────────────────────── */
+        footer {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 48px 0 32px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 48px;
+        }
+
+        .footer-about p {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.7;
+            max-width: 320px;
+            margin-top: 12px;
+        }
+
+        .footer-col h4 {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .footer-col a {
+            display: block;
+            color: var(--text-muted);
+            font-size: 14px;
+            text-decoration: none;
+            margin-bottom: 10px;
+            transition: color 0.2s;
+        }
+
+        .footer-col a:hover {
+            color: var(--text-primary);
+        }
+
+        .footer-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* ─── Live demo iframe ────────────────────────────────────────── */
+        #demo {
+            background: var(--surface);
+        }
+
+        .demo-wrapper {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+        }
+
+        .demo-bar {
+            background: var(--surface2);
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .demo-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .demo-dots span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .demo-dots span:nth-child(1) {
+            background: var(--red);
+        }
+
+        .demo-dots span:nth-child(2) {
+            background: var(--amber);
+        }
+
+        .demo-dots span:nth-child(3) {
+            background: var(--green);
+        }
+
+        .demo-url {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        iframe {
+            display: block;
+            width: 100%;
+            height: 600px;
+            border: none;
+        }
+
+        .demo-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(8, 9, 16, 0.85);
+            backdrop-filter: blur(4px);
+        }
+
+        .demo-overlay p {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .demo-overlay .t-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+        }
+
+        /* ─── Responsive ──────────────────────────────────────────────── */
+        @media (max-width: 900px) {
+            nav {
+                padding: 0 24px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero-stats {
+                gap: 24px;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .steps-grid::before {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .hero-actions {
+                flex-direction: column;
+            }
+
+            .hero-stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .metrics-row {
+                gap: 40px;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ─── Navigation ──────────────────────────────────────────────── -->
+    <nav>
+        <a href="#" class="nav-logo">
+            <div class="nav-logo-icon"
+                style="background:linear-gradient(135deg,#00D4FF,#7B2FFF);border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;">
+                <svg width="22" height="22" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="nav-oq-g" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fff" stop-opacity="0.95" />
+                            <stop offset="100%" stop-color="#E8EAF6" stop-opacity="0.7" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="30" cy="40" r="12" stroke="url(#nav-oq-g)" stroke-width="6" fill="none" />
+                    <line x1="39" y1="49" x2="44" y2="54" stroke="url(#nav-oq-g)" stroke-width="5.5"
+                        stroke-linecap="round" />
+                    <path d="M50 27 L50 47 Q50 53 56 53 Q62 53 62 47 L62 34 Q62 27 56 27 Z" fill="none"
+                        stroke="url(#nav-oq-g)" stroke-width="5" stroke-linejoin="round" />
+                    <line x1="59" y1="50" x2="65" y2="56" stroke="url(#nav-oq-g)" stroke-width="5"
+                        stroke-linecap="round" />
+                </svg>
+            </div>
+            <span class="nav-logo-text">OrQuanta</span>
+            <span class="nav-logo-badge">v1.0</span>
+        </a>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#how">How it Works</a>
+            <a href="#demo">Demo</a>
+            <a href="#pricing">Pricing</a>
+            <a href="http://localhost:8000/docs" target="_blank">API Docs</a>
+        </div>
+        <div class="nav-cta">
+            <a href="#signup" class="btn-outline">Login</a>
+            <a href="#signup" class="btn-primary">Start Free Trial →</a>
+        </div>
+    </nav>
+
+    <!-- ─── Hero ────────────────────────────────────────────────────── -->
+    <section id="hero">
+        <div class="glow-orb glow-orb-1"></div>
+        <div class="glow-orb glow-orb-2"></div>
+        <div class="hero-badge">
+            <span class="hero-badge-dot"></span>
+            5 AI agents now running globally
+        </div>
+        <h1>
+            AI That Manages Your
+            <span class="gradient-text">GPU Cloud</span>
+            Automatically
+        </h1>
+        <p class="hero-sub">
+            One natural language goal. Five AI agents pick the cheapest provider,
+            schedule GPU instances, run your job, monitor health, and track every penny.
+            You get results. Not DevOps.
+        </p>
+        <div class="hero-actions">
+            <a href="#signup" class="btn-hero-primary">Start Free — 14 Days</a>
+            <a href="#demo" class="btn-hero-outline">▶ Watch Demo</a>
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-value">73%</div>
+                <div class="hero-stat-label">Avg GPU Cost Savings</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value">4</div>
+                <div class="hero-stat-label">Cloud Providers</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value">&lt;30s</div>
+                <div class="hero-stat-label">Goal to Running Instance</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value">80/80</div>
+                <div class="hero-stat-label">Tests Passing</div>
+            </div>
+        </div>
+        <div class="hero-terminal">
+            <div class="terminal-bar">
+                <div class="terminal-dot"></div>
+                <div class="terminal-dot"></div>
+                <div class="terminal-dot"></div>
+                <span class="terminal-title">OrQuanta Agentic Console</span>
+            </div>
+            <div class="terminal-body">
+                <span class="t-dim">$</span> <span class="t-white">python start_orquanta.py</span><br><br>
+                <span class="t-green">✓</span> <span class="t-white">All 5 agents online</span><br>
+                <span class="t-dim">→</span> <span class="t-cyan">Submitted goal:</span> <span
+                    class="t-white">"Fine-tune LLaMA 3 with LoRA on medical QA"</span><br>
+                <span class="t-dim">→</span> <span class="t-purple">MasterOrchestrator</span> <span
+                    class="t-white">decomposed into 4 tasks</span><br>
+                <span class="t-dim">→</span> <span class="t-cyan">Comparing prices:</span>
+                <span class="t-green">CoreWeave H100 $3.89/hr</span> <span class="t-amber">AWS $6.81/hr</span> <span
+                    class="t-dim">GCP $5.22/hr</span><br>
+                <span class="t-dim">→</span> <span class="t-purple">SchedulerAgent</span> <span class="t-white">selected
+                    CoreWeave ORD1 — saving $2.92/hr</span><br>
+                <span class="t-dim">→</span> <span class="t-green">▶ Instance running:</span> <span
+                    class="t-white">orquanta-h100-1738421600</span> <span class="t-cyan">[1.2.3.4]</span><br>
+                <span class="t-dim">→</span> <span class="t-amber">HealingAgent</span> <span class="t-white">monitoring
+                    GPU temp: 67°C, util: 89%</span><br>
+                <span class="t-dim">→</span> <span class="t-green">✓ Job completed</span> <span class="t-white">in 42min
+                    18s — cost: <span class="t-green">$2.74</span> (saved $5.21 vs on-demand)</span><br>
+                <span class="t-cursor"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── Social Proof Numbers ─────────────────────────────────────── -->
+    <section id="social-proof">
+        <div class="container">
+            <div class="metrics-row">
+                <div class="metric-item">
+                    <div class="metric-value">$2.8M</div>
+                    <div class="metric-label">GPU spend managed</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">73%</div>
+                    <div class="metric-label">Average cost saved</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">12K+</div>
+                    <div class="metric-label">Jobs completed</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">99.7%</div>
+                    <div class="metric-label">Uptime</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── Features ─────────────────────────────────────────────────── -->
+    <section id="features">
+        <div class="container">
+            <div class="section-header text-center">
+                <span class="section-label">Capabilities</span>
+                <h2 class="section-title mx-auto" style="text-align:center">Everything GPU Management Needs</h2>
+                <p class="section-sub mx-auto" style="text-align:center">Five specialized AI agents working together so
+                    you don't have to.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background:rgba(99,102,241,0.15)">🧠</div>
+                    <h3 class="feature-title">Natural Language Goals</h3>
+                    <p class="feature-desc">Tell OrQuanta what you need in plain English. The Master Orchestrator breaks
+                        it
+                        into tasks and coordinates all agents automatically. No YAML, no Kubernetes manifests.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background:rgba(6,182,212,0.15)">💰</div>
+                    <h3 class="feature-title">Real-Time Cost Optimization</h3>
+                    <p class="feature-desc">Compares spot prices across AWS, GCP, Azure, and CoreWeave in parallel.
+                        Always picks the cheapest available GPU. Saves an average of 73% vs on-demand pricing.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background:rgba(16,185,129,0.15)">🏥</div>
+                    <h3 class="feature-title">Autonomous Self-Healing</h3>
+                    <p class="feature-desc">Detects OOM errors, thermal alerts, and spot interruptions before they crash
+                        your job. Automatically restarts on a healthy instance with your work intact.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background:rgba(245,158,11,0.15)">📊</div>
+                    <h3 class="feature-title">GPU Telemetry & Alerts</h3>
+                    <p class="feature-desc">Real-time nvidia-smi metrics from every GPU. Instant Slack alerts if
+                        temperature exceeds 85°C, memory hits 95%, or utilization drops below 5% for 10 minutes.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background:rgba(239,68,68,0.15)">🔐</div>
+                    <h3 class="feature-title">Safety Governor</h3>
+                    <p class="feature-desc">Hard caps on daily spend, rate limits per agent, emergency stop with signed
+                        token, and a complete audit trail of every AI decision. Your money is protected.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background:rgba(168,85,247,0.15)">🔮</div>
+                    <h3 class="feature-title">Demand Forecasting</h3>
+                    <p class="feature-desc">Holt-Winters exponential smoothing predicts future GPU demand. Pre-warms
+                        capacity before peaks. Gives capacity recommendations 24 hours in advance.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── How It Works ──────────────────────────────────────────────── -->
+    <section id="how">
+        <div class="container">
+            <div class="section-header text-center">
+                <span class="section-label">Workflow</span>
+                <h2 class="section-title mx-auto" style="text-align:center">From Goal to Results in 4 Steps</h2>
+                <p class="section-sub mx-auto" style="text-align:center">No DevOps. No GPU expertise required. Just
+                    describe what you need.</p>
+            </div>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-num">1</div>
+                    <h3 class="step-title">Submit Your Goal</h3>
+                    <p class="step-desc">Type your ML task in natural language. Set a budget. OrQuanta does the rest.
+                    </p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">2</div>
+                    <h3 class="step-title">Agents Plan & Optimize</h3>
+                    <p class="step-desc">MasterOrchestrator decomposes the task. CostOptimizer finds the cheapest
+                        provider in real-time.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">3</div>
+                    <h3 class="step-title">GPU Instances Launch</h3>
+                    <p class="step-desc">SchedulerAgent provisions the optimal instance. Your job runs with full GPU
+                        access and monitoring.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">4</div>
+                    <h3 class="step-title">Results + Receipt</h3>
+                    <p class="step-desc">Your artifacts are ready. Full audit trail logged. Cost breakdown shows every
+                        cent saved.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── Live Demo ─────────────────────────────────────────────────── -->
+    <section id="demo">
+        <div class="container">
+            <div class="section-header text-center">
+                <span class="section-label">Live Demo</span>
+                <h2 class="section-title mx-auto" style="text-align:center">See OrQuanta in Action</h2>
+                <p class="section-sub mx-auto" style="text-align:center">Running locally? The dashboard is live at
+                    localhost:3000</p>
+            </div>
+            <div class="demo-wrapper">
+                <div class="demo-bar">
+                    <div class="demo-dots"><span></span><span></span><span></span></div>
+                    <span class="demo-url">http://localhost:3000 — OrQuanta Agentic v1.0</span>
+                </div>
+                <div style="position:relative; height:600px;">
+                    <iframe src="http://localhost:3000" title="OrQuanta Dashboard" loading="lazy"
+                        onerror="this.style.display='none'"></iframe>
+                    <div class="demo-overlay" id="demo-overlay">
+                        <p>🚀 OrQuanta Dashboard</p>
+                        <p class="t-desc">Start the platform to see the live demo.</p>
+                        <a href="#signup" class="btn-hero-primary">Get Started Free</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── Pricing ───────────────────────────────────────────────────── -->
+    <section id="pricing">
+        <div class="container">
+            <div class="section-header text-center">
+                <span class="section-label">Pricing</span>
+                <h2 class="section-title mx-auto" style="text-align:center">Simple, Transparent Pricing</h2>
+                <p class="section-sub mx-auto" style="text-align:center">14-day free trial. No credit card required.
+                    Cancel anytime.</p>
+            </div>
+            <div class="pricing-grid">
+
+                <!-- Starter -->
+                <div class="pricing-card">
+                    <div
+                        style="font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">
+                        Starter</div>
+                    <div class="pricing-price"><span class="pricing-amount">$99</span><span
+                            class="pricing-period">/month</span></div>
+                    <div class="pricing-sub">Best for small teams and research</div>
+                    <div class="pricing-divider"></div>
+                    <ul class="pricing-features">
+                        <li>Up to $5K/mo GPU spend managed</li>
+                        <li>2 concurrent AI agents</li>
+                        <li>AWS + GCP providers</li>
+                        <li>Email alerts</li>
+                        <li>14-day free trial</li>
+                    </ul>
+                    <a href="#signup?plan=starter" class="btn-pricing btn-pricing-outline">Start Free Trial</a>
+                </div>
+
+                <!-- Pro -->
+                <div class="pricing-card popular">
+                    <div class="popular-badge">⭐ MOST POPULAR</div>
+                    <div
+                        style="font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--primary);margin-bottom:8px">
+                        Pro</div>
+                    <div class="pricing-price"><span class="pricing-amount">$499</span><span
+                            class="pricing-period">/month</span></div>
+                    <div class="pricing-sub">For teams running serious GPU workloads</div>
+                    <div class="pricing-divider"></div>
+                    <ul class="pricing-features">
+                        <li>Up to $30K/mo GPU spend managed</li>
+                        <li>10 concurrent AI agents</li>
+                        <li>All 4 providers (incl. CoreWeave)</li>
+                        <li>Slack + PagerDuty alerts</li>
+                        <li>Cost analytics dashboard</li>
+                        <li>Priority support (4h SLA)</li>
+                        <li>14-day free trial</li>
+                    </ul>
+                    <a href="#signup?plan=pro" class="btn-pricing btn-pricing-primary">Start Free Trial</a>
+                </div>
+
+                <!-- Enterprise -->
+                <div class="pricing-card">
+                    <div
+                        style="font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:8px">
+                        Enterprise</div>
+                    <div class="pricing-price"><span class="pricing-amount" style="font-size:36px">Custom</span></div>
+                    <div class="pricing-sub">For organizations managing $100K+/mo GPU spend</div>
+                    <div class="pricing-divider"></div>
+                    <ul class="pricing-features">
+                        <li>Unlimited GPU spend management</li>
+                        <li>Unlimited agents</li>
+                        <li>All providers + custom integrations</li>
+                        <li>SAML SSO + audit compliance</li>
+                        <li>99.9% uptime SLA</li>
+                        <li>Dedicated Slack channel</li>
+                        <li>On-prem deployment option</li>
+                    </ul>
+                    <a href="mailto:sales@orquanta.ai" class="btn-pricing btn-pricing-outline">Contact Sales →</a>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── Sign Up ────────────────────────────────────────────────────── -->
+    <section id="signup">
+        <div class="container">
+            <div class="signup-card">
+                <h2
+                    style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:800;margin-bottom:8px;text-align:center">
+                    Start Your Free Trial</h2>
+                <p style="color:var(--text-secondary);text-align:center;margin-bottom:32px;font-size:14px">14 days free.
+                    No credit card required.</p>
+
+                <div id="signup-form">
+                    <div class="form-group">
+                        <label for="signup-name">Full Name</label>
+                        <input type="text" id="signup-name" placeholder="Ada Lovelace" />
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Work Email</label>
+                        <input type="email" id="signup-email" placeholder="ada@company.ai" />
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <input type="password" id="signup-password" placeholder="Min. 8 characters" />
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-plan">Plan</label>
+                        <select id="signup-plan">
+                            <option value="starter">Starter — $99/mo (14-day trial)</option>
+                            <option value="pro" selected>Pro — $499/mo (14-day trial)</option>
+                            <option value="enterprise">Enterprise — Contact Sales</option>
+                        </select>
+                    </div>
+                    <button class="btn-signup" id="signup-btn" onclick="handleSignup()">
+                        Create Account & Start Trial →
+                    </button>
+                    <p class="form-footer">By signing up you agree to our <a href="#"
+                            style="color:var(--primary);text-decoration:none">Terms of Service</a> and <a href="#"
+                            style="color:var(--primary);text-decoration:none">Privacy Policy</a>.</p>
+                </div>
+
+                <div class="signup-success" id="signup-success">
+                    <div class="check">🎉</div>
+                    <h3>Welcome to OrQuanta!</h3>
+                    <p>Your trial is active. Opening the dashboard…</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── Footer ────────────────────────────────────────────────────── -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="nav-logo">
+                        <div class="nav-logo-icon"
+                            style="background:linear-gradient(135deg,#00D4FF,#7B2FFF);border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;">
+                            <svg width="22" height="22" viewBox="0 0 80 80" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="nav-oq-g" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#fff" stop-opacity="0.95" />
+                                        <stop offset="100%" stop-color="#E8EAF6" stop-opacity="0.7" />
+                                    </linearGradient>
+                                </defs>
+                                <circle cx="30" cy="40" r="12" stroke="url(#nav-oq-g)" stroke-width="6" fill="none" />
+                                <line x1="39" y1="49" x2="44" y2="54" stroke="url(#nav-oq-g)" stroke-width="5.5"
+                                    stroke-linecap="round" />
+                                <path d="M50 27 L50 47 Q50 53 56 53 Q62 53 62 47 L62 34 Q62 27 56 27 Z" fill="none"
+                                    stroke="url(#nav-oq-g)" stroke-width="5" stroke-linejoin="round" />
+                                <line x1="59" y1="50" x2="65" y2="56" stroke="url(#nav-oq-g)" stroke-width="5"
+                                    stroke-linecap="round" />
+                            </svg>
+                        </div>
+                        <span class="nav-logo-text">OrQuanta Agentic</span>
+                    </div>
+                    <p>The AI Operating System for GPU Cloud Infrastructure. Five agents. One goal. Zero DevOps.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Product</h4>
+                    <a href="#features">Features</a>
+                    <a href="#pricing">Pricing</a>
+                    <a href="#demo">Demo</a>
+                    <a href="http://localhost:8000/docs">API Docs</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Providers</h4>
+                    <a href="#">AWS EC2</a>
+                    <a href="#">Google Cloud</a>
+                    <a href="#">Microsoft Azure</a>
+                    <a href="#">CoreWeave</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Company</h4>
+                    <a href="mailto:hello@orquanta.ai">hello@orquanta.ai</a>
+                    <a href="mailto:sales@orquanta.ai">sales@orquanta.ai</a>
+                    <a href="#">GitHub</a>
+                    <a href="#">Status</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 OrQuanta Agentic. Built with 5 AI agents.</span>
+                <span style="color:var(--green)">● All systems operational</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ─── Try to hide iframe overlay if dashboard running ──────────────
+        const overlay = document.getElementById('demo-overlay');
+        fetch('http://localhost:3000', { mode: 'no-cors' })
+            .then(() => { if (overlay) overlay.style.display = 'none'; })
+            .catch(() => { });
+
+        // ─── Sign up form handler ─────────────────────────────────────────
+        async function handleSignup() {
+            const btn = document.getElementById('signup-btn');
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            const name = document.getElementById('signup-name').value.trim();
+            const plan = document.getElementById('signup-plan').value;
+
+            if (!email || !password || !name) {
+                alert('Please fill in all fields.');
+                return;
+            }
+            if (password.length < 8) {
+                alert('Password must be at least 8 characters.');
+                return;
+            }
+            if (plan === 'enterprise') {
+                window.location.href = 'mailto:sales@orquanta.ai?subject=Enterprise Inquiry';
+                return;
+            }
+
+            btn.textContent = 'Creating account…';
+            btn.disabled = true;
+
+            try {
+                const apiBase = 'http://localhost:8000';
+
+                // 1. Register
+                const reg = await fetch(`${apiBase}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, name }),
+                });
+
+                if (!reg.ok && reg.status !== 409) {
+                    const err = await reg.json();
+                    throw new Error(err.detail || 'Registration failed');
+                }
+
+                // 2. Login
+                const login = await fetch(`${apiBase}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
+                });
+                const loginData = await login.json();
+                const token = loginData.access_token;
+
+                if (token) {
+                    localStorage.setItem('orquanta_token', token);
+                    localStorage.setItem('orquanta_email', email);
+                    localStorage.setItem('orquanta_plan', plan);
+                }
+
+                // Show success
+                document.getElementById('signup-form').style.display = 'none';
+                document.getElementById('signup-success').style.display = 'block';
+
+                // Redirect to dashboard after 1.5s
+                setTimeout(() => {
+                    window.location.href = 'http://localhost:3000';
+                }, 1500);
+
+            } catch (e) {
+                alert(`Error: ${e.message}`);
+                btn.textContent = 'Create Account & Start Trial →';
+                btn.disabled = false;
+            }
+        }
+
+        // ─── Smooth scroll ────────────────────────────────────────────────
+        document.querySelectorAll('a[href^="#"]').forEach(a => {
+            a.addEventListener('click', e => {
+                const target = document.querySelector(a.getAttribute('href').split('?')[0]);
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // ─── Navbar scroll effect ─────────────────────────────────────────
+        window.addEventListener('scroll', () => {
+            document.querySelector('nav').style.background =
+                window.scrollY > 20
+                    ? 'rgba(8,9,16,0.96)'
+                    : 'rgba(8,9,16,0.82)';
+        });
+
+        // ─── Animate elements on scroll ──────────────────────────────────
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    e.target.style.opacity = '1';
+                    e.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.feature-card, .step-card, .pricing-card').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            observer.observe(el);
+        });
+    </script>
+</body>
+
+</html>

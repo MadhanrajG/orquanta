@@ -1,0 +1,33 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install v4 dependencies
+RUN pip install --no-cache-dir \
+    fastapi==0.115.4 \
+    uvicorn[standard]==0.32.0 \
+    pydantic==2.9.2 \
+    PyJWT==2.9.0 \
+    python-multipart==0.0.12 \
+    redis==5.1.1 \
+    asyncpg==0.29.0 \
+    sqlalchemy==2.0.36 \
+    chromadb==0.5.18 \
+    celery==5.4.0 \
+    langchain==0.3.7 \
+    openai==1.54.4 \
+    anthropic==0.39.0
+
+COPY . .
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=20s --timeout=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+CMD ["python", "-m", "uvicorn", "v4.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info"]

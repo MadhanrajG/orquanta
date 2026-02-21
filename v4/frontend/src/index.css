@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #0a0b14;
+    color: #e2e8f0;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0f1120; }
+  ::-webkit-scrollbar-thumb { background: #2e3fd8; border-radius: 3px; }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-surface-800/80 backdrop-blur-md border border-white/[0.06] rounded-2xl shadow-xl;
+  }
+  .btn-primary {
+    @apply bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400
+           text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200
+           shadow-lg shadow-brand-600/25 hover:shadow-brand-500/40 hover:-translate-y-0.5
+           active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-ghost {
+    @apply bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 hover:text-white
+           font-medium px-4 py-2 rounded-xl transition-all duration-200 border border-white/[0.08];
+  }
+  .input-field {
+    @apply w-full bg-surface-700 border border-white/[0.1] rounded-xl px-4 py-3
+           text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500
+           focus:ring-2 focus:ring-brand-500/20 transition-all duration-200;
+  }
+  .status-dot {
+    @apply inline-block w-2 h-2 rounded-full;
+  }
+  .metric-card {
+    @apply glass-card p-5 flex flex-col gap-2;
+  }
+  .nav-link {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white
+           hover:bg-white/[0.06] transition-all duration-200 text-sm font-medium cursor-pointer;
+  }
+  .nav-link.active {
+    @apply bg-brand-600/20 text-brand-400 border border-brand-500/20;
+  }
+  .table-row {
+    @apply border-b border-white/[0.04] hover:bg-white/[0.03] transition-colors duration-150;
+  }
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold;
+  }
+  .badge-green  { @apply bg-emerald-500/15 text-emerald-400 border border-emerald-500/20; }
+  .badge-yellow { @apply bg-amber-500/15 text-amber-400 border border-amber-500/20; }
+  .badge-red    { @apply bg-red-500/15 text-red-400 border border-red-500/20; }
+  .badge-blue   { @apply bg-brand-500/15 text-brand-400 border border-brand-500/20; }
+  .badge-gray   { @apply bg-slate-500/15 text-slate-400 border border-slate-500/20; }
+}

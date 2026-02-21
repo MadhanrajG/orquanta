@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+.env
+!.env.example
+
+# Node / React
+node_modules/
+dist/
+.vite/
+*.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs & temp
+*.log
+*.tmp
+*.bak
+logs/
+tmp/
+
+# Database files (local dev)
+*.db
+*.sqlite
+*.sqlite3
+orquanta_quickstart.db
+
+# Credentials (never commit)
+*.pem
+*.key
+*.crt
+*.pfx
+LAUNCH_CERTIFICATE.json
+
+# Python compiled
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Build artifacts
+v4_backup/
+v4/frontend/dist/
+v4/frontend/node_modules/
+
+# OS
+.DS_Store
+desktop.ini

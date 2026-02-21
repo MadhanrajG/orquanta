@@ -1,0 +1,153 @@
+version: '3.9'
+
+services:
+  # ─── PostgreSQL ──────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: orquanta
+      POSTGRES_USER: orquanta
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orquanta-secure-2026}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orquanta"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [orquanta-net]
+
+  # ─── Redis ───────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [orquanta-net]
+
+  # ─── ChromaDB (Vector Memory) ────────────────────────────────────────
+  chromadb:
+    image: chromadb/chroma:latest
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      CHROMA_SERVER_HOST: 0.0.0.0
+      CHROMA_SERVER_HTTP_PORT: 8200
+    ports:
+      - "8200:8200"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8200/api/v1/heartbeat"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks: [orquanta-net]
+
+  # ─── FastAPI (Agents + API) ──────────────────────────────────────────
+  api:
+    build:
+      context: ../..
+      dockerfile: v4/infra/Dockerfile.api
+    environment:
+      - DATABASE_URL=postgresql://orquanta:${POSTGRES_PASSWORD:-orquanta-secure-2026}@postgres:5432/orquanta
+      - REDIS_URL=redis://redis:6379
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8200
+      - JWT_SECRET=${JWT_SECRET:-orquanta-jwt-secret-change-in-production}
+      - ORQUANTA_API_KEY=${ORQUANTA_API_KEY:-dev-key-change-in-production}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@orquanta.ai}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-orquanta-admin-2026}
+      - LLM_PROVIDER=${LLM_PROVIDER:-mock}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - LEGACY_BRIDGE_ENABLED=true
+      - ENV=production
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      chromadb: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+    networks: [orquanta-net]
+    volumes:
+      - ../../orquanta_policy_prod.json:/app/orquanta_policy_prod.json
+
+  # ─── Celery Worker (async tasks) ─────────────────────────────────────
+  celery_worker:
+    build:
+      context: ../..
+      dockerfile: v4/infra/Dockerfile.agents
+    command: celery -A v4.tasks worker --loglevel=info --concurrency=4
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://orquanta:${POSTGRES_PASSWORD:-orquanta-secure-2026}@postgres:5432/orquanta
+      - LLM_PROVIDER=${LLM_PROVIDER:-mock}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    depends_on: [redis, postgres]
+    networks: [orquanta-net]
+
+  # ─── React Frontend ───────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: ../infra/Dockerfile.frontend
+      args:
+        VITE_API_URL: ""   # Empty = same-origin (via nginx proxy)
+    networks: [orquanta-net]
+
+  # ─── NGINX Reverse Proxy ─────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "80:80"
+    depends_on: [api, frontend]
+    networks: [orquanta-net]
+
+  # ─── Prometheus ───────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=15d'
+    ports:
+      - "9090:9090"
+    networks: [orquanta-net]
+
+  # ─── Grafana ─────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-orquanta-grafana-2026}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana:/etc/grafana/provisioning/dashboards:ro
+    ports:
+      - "3001:3000"
+    depends_on: [prometheus]
+    networks: [orquanta-net]
+
+volumes:
+  postgres_data:
+  redis_data:
+  chroma_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  orquanta-net:
+    driver: bridge
