@@ -1,0 +1,10 @@
+1|PASS|80 tests passed
+2|WARN|E2E requires live API -- run with API started for full check
+3|PASS|No hardcoded secrets found in 1933 files
+4|SKIP|Docker check skipped (--skip-docker)
+5|SKIP|API check skipped (--skip-live-api)
+6|SKIP|WebSocket check skipped (--skip-live-api)
+7|WARN|DB driver not installed locally (No module named 'asyncpg') — OK in production
+8|FAIL|Billing error: 'price_usd_month'
+9|PASS|All 5 agents instantiated successfully
+10|PASS|All 6 required elements found (53.0KB)

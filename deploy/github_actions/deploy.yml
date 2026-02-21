@@ -1,0 +1,355 @@
+name: OrQuanta CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy_env:
+        description: 'Deploy to environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options: [staging, production]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPO_API: orquanta-api
+  ECR_REPO_AGENTS: orquanta-agents
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+
+jobs:
+  # ─── 1. Test ───────────────────────────────────────────────────────
+  test:
+    name: Run Test Suite (80+ tests)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: orquanta
+          POSTGRES_PASSWORD: orquanta
+          POSTGRES_DB: orquanta_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports: ['5432:5432']
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports: ['6379:6379']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r v4/requirements.txt
+
+      - name: Run all tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://orquanta:orquanta@localhost:5432/orquanta_test
+          REDIS_URL: redis://localhost:6379/0
+          JWT_SECRET_KEY: test-secret-key-ci
+          LLM_PROVIDER: mock
+          USE_REAL_PROVIDERS: 'false'
+          PYTHONPATH: .
+        run: |
+          python -m pytest v4/tests/ -v \
+            --tb=short \
+            --junitxml=test-results.xml \
+            --cov=v4 \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            -p no:warnings
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            test-results.xml
+            coverage.xml
+
+      - name: Check test coverage (>= 80%)
+        run: |
+          python -c "
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('coverage.xml')
+          root = tree.getroot()
+          pct = float(root.attrib.get('line-rate', 0)) * 100
+          print(f'Coverage: {pct:.1f}%')
+          assert pct >= 80, f'Coverage {pct:.1f}% is below 80% threshold'
+          print('✓ Coverage requirement met')
+          "
+
+  # ─── 2. Security Scan ─────────────────────────────────────────────
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install security tools
+        run: pip install bandit safety semgrep
+
+      - name: Bandit security linter
+        run: |
+          bandit -r v4/ \
+            -x v4/tests \
+            --severity-level medium \
+            -f json -o bandit-report.json || true
+          # Fail on HIGH severity only
+          bandit -r v4/ -x v4/tests --severity-level high
+
+      - name: Check for known vulnerabilities
+        run: safety check -r v4/requirements.txt --full-report
+
+      - name: Check for hardcoded secrets
+        run: |
+          # Fail if any real API key patterns found
+          if grep -rn "sk-[a-zA-Z0-9]{48}" v4/ --include="*.py" | grep -v test | grep -v ".env"; then
+            echo "ERROR: Possible hardcoded OpenAI key found"
+            exit 1
+          fi
+          if grep -rn "AKIA[A-Z0-9]{16}" v4/ --include="*.py" | grep -v test; then
+            echo "ERROR: Possible hardcoded AWS key found"
+            exit 1
+          fi
+          echo "✓ No hardcoded secrets detected"
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-report
+          path: bandit-report.json
+
+  # ─── 3. Build Docker Images ────────────────────────────────────────
+  build:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    needs: [test, security-scan]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    outputs:
+      api-image: ${{ steps.build-api.outputs.image }}
+      agents-image: ${{ steps.build-agents.outputs.image }}
+      image-tag: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: meta
+        run: |
+          SHA_SHORT=$(echo $GITHUB_SHA | cut -c1-8)
+          BRANCH=$(echo $GITHUB_REF_NAME | tr '/' '-')
+          TAG="${BRANCH}-${SHA_SHORT}"
+          echo "tags=${TAG}" >> $GITHUB_OUTPUT
+          echo "Image tag: ${TAG}"
+
+      - name: Build and push API image
+        id: build-api
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.meta.outputs.tags }}
+        run: |
+          IMAGE_URI="${ECR_REGISTRY}/${{ env.ECR_REPO_API }}:${IMAGE_TAG}"
+          docker build -f Dockerfile.api -t "${IMAGE_URI}" .
+          docker push "${IMAGE_URI}"
+          # Also tag as latest for the branch
+          docker tag "${IMAGE_URI}" "${ECR_REGISTRY}/${{ env.ECR_REPO_API }}:latest"
+          docker push "${ECR_REGISTRY}/${{ env.ECR_REPO_API }}:latest"
+          echo "image=${IMAGE_URI}" >> $GITHUB_OUTPUT
+
+      - name: Build and push Agents image
+        id: build-agents
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.meta.outputs.tags }}
+        run: |
+          IMAGE_URI="${ECR_REGISTRY}/${{ env.ECR_REPO_AGENTS }}:${IMAGE_TAG}"
+          docker build -f Dockerfile.agents -t "${IMAGE_URI}" .
+          docker push "${IMAGE_URI}"
+          echo "image=${IMAGE_URI}" >> $GITHUB_OUTPUT
+
+  # ─── 4. Deploy to Staging ──────────────────────────────────────────
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: staging
+      url: https://staging.orquanta.ai
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.0
+
+      - name: Terraform Deploy (Staging)
+        env:
+          TF_VAR_environment: staging
+          TF_VAR_api_image: ${{ needs.build.outputs.api-image }}
+          TF_VAR_agents_image: ${{ needs.build.outputs.agents-image }}
+          TF_VAR_aws_region: ${{ env.AWS_REGION }}
+          TF_VAR_domain_name: ${{ secrets.STAGING_DOMAIN }}
+        run: |
+          cd deploy/terraform
+          terraform init
+          terraform apply -auto-approve -input=false
+
+      - name: Wait for deployment health
+        run: |
+          echo "Waiting for staging health check..."
+          for i in $(seq 1 30); do
+            if curl -sS https://staging.orquanta.ai/health | grep -q '"status":"ok"'; then
+              echo "✓ Staging is healthy"
+              exit 0
+            fi
+            echo "Attempt $i/30 — waiting..."
+            sleep 10
+          done
+          echo "Health check failed after 5 minutes"
+          exit 1
+
+      - name: Notify Slack — Staging Deploy
+        if: always()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "${{ job.status == 'success' && '✅' || '❌' }} Staging deploy ${{ job.status }}: ${{ github.repository }}@${{ github.sha }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # ─── 5. Deploy to Production (Manual Approval) ────────────────────
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment:
+      name: production
+      url: https://orquanta.ai
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.0
+
+      - name: Terraform Deploy (Production)
+        env:
+          TF_VAR_environment: production
+          TF_VAR_api_image: ${{ needs.build.outputs.api-image }}
+          TF_VAR_agents_image: ${{ needs.build.outputs.agents-image }}
+          TF_VAR_aws_region: ${{ env.AWS_REGION }}
+          TF_VAR_domain_name: orquanta.ai
+          TF_VAR_min_api_tasks: 2
+          TF_VAR_max_api_tasks: 10
+          TF_VAR_db_instance_class: db.r7g.large
+        run: |
+          cd deploy/terraform
+          terraform init
+          terraform apply -auto-approve -input=false
+
+      - name: Production health check
+        run: |
+          echo "Waiting for production health..."
+          for i in $(seq 1 60); do
+            if curl -sS https://orquanta.ai/health | grep -q '"status":"ok"'; then
+              echo "✓ Production is healthy!"
+              exit 0
+            fi
+            sleep 10
+          done
+          # Trigger rollback
+          echo "Production health check failed — ROLLING BACK"
+          exit 1
+
+      - name: Auto-rollback on failure
+        if: failure()
+        run: |
+          echo "Triggering rollback to previous ECS task definition..."
+          # Get previous task definition
+          PREVIOUS_TD=$(aws ecs describe-services \
+            --cluster orquanta-production-cluster \
+            --services orquanta-production-api \
+            --query 'services[0].deployments[1].taskDefinition' \
+            --output text)
+          # Update service to previous version
+          aws ecs update-service \
+            --cluster orquanta-production-cluster \
+            --service orquanta-production-api \
+            --task-definition "$PREVIOUS_TD"
+          echo "Rollback initiated to: $PREVIOUS_TD"
+
+      - name: Notify Slack — Production Deploy
+        if: always()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "${{ job.status == 'success' && '🚀' || '🔴' }} Production deploy ${{ job.status }}! Version: ${{ github.sha }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
