@@ -135,6 +135,10 @@ class ProviderRouter:
         timeout_s: float = 8.0,
     ) -> list[SpotPrice]:
         """Fetch spot prices from ALL providers in parallel and return sorted list."""
+        # In demo mode, always return full 5-provider mock data
+        if not USE_REAL_PROVIDERS:
+            return self._mock_prices(gpu_type, regions)
+
         tasks = {
             name: asyncio.create_task(provider.get_spot_prices(gpu_type, regions))
             for name, provider in self._providers.items()
@@ -352,7 +356,11 @@ class ProviderRouter:
     # ------------------------------------------------------------------
 
     def _mock_prices(self, gpu_type: str, regions: list[str] | None) -> list[SpotPrice]:
-        """Return realistic simulated prices for demo/test mode."""
+        """Return realistic simulated prices for demo/test mode.
+
+        Returns 15 price points across 5 providers × 3 regions each,
+        with realistic regional variance to look like real spot market data.
+        """
         import random
         base_prices = {
             "H100": (3.89, 5.20), "A100": (1.80, 2.95), "A100-80G": (2.20, 3.73),
@@ -360,15 +368,34 @@ class ProviderRouter:
             "RTX_A5000": (0.60, 0.90), "A10G": (0.50, 1.01),
         }
         cw_price, od_price = base_prices.get(gpu_type, (1.50, 3.00))
-        # Lambda Labs prices (from real catalog — stable, low volatility)
         lambda_prices = {"H100": 2.99, "A100": 1.99, "A100-80G": 1.99, "A10G": 0.75, "V100": 1.10, "T4": 0.35}
         lambda_price = lambda_prices.get(gpu_type, cw_price * 0.95)
+
+        def _v(base, pct=0.08):
+            """Add ±pct% random variance."""
+            return round(base * (1 + random.uniform(-pct, pct)), 2)
+
         mock = [
-            SpotPrice("lambda",    "us-tx-3",    gpu_type, "gpu_1x_a100",      round(lambda_price + random.uniform(-0.01, 0.01), 3), od_price, "high",   0.0),
-            SpotPrice("coreweave", "ORD1",       gpu_type, "cw-node",          round(cw_price    + random.uniform(-0.05, 0.05), 3), od_price, "high",   0.0),
-            SpotPrice("gcp",       "us-central1",gpu_type, "a3-highgpu-1g",    round(od_price * 0.30 + random.uniform(-0.02, 0.05), 3), od_price, "high",  15.0),
-            SpotPrice("aws",       "us-east-1",  gpu_type, "p5.48xlarge",      round(od_price * 0.72 + random.uniform(-0.05, 0.1),  3), od_price, "medium", 5.0),
-            SpotPrice("azure",     "eastus",     gpu_type, "ND96isr_H100_v5",  round(od_price * 0.70 + random.uniform(-0.05, 0.1),  3), od_price, "medium",10.0),
+            # Lambda Labs — 3 regions, low interruption
+            SpotPrice("lambda",    "us-tx-3",      gpu_type, "gpu_1x_a100",     _v(lambda_price, 0.01), od_price, "high",   0.0),
+            SpotPrice("lambda",    "us-west-2",    gpu_type, "gpu_1x_a100",     _v(lambda_price, 0.02), od_price, "high",   0.0),
+            SpotPrice("lambda",    "us-east-1",    gpu_type, "gpu_1x_a100",     _v(lambda_price, 0.02), od_price, "medium", 0.0),
+            # AWS — 3 regions, moderate spot interruption
+            SpotPrice("aws",       "us-east-1",    gpu_type, "p5.48xlarge",     _v(od_price * 0.68),    od_price, "high",   5.0),
+            SpotPrice("aws",       "us-west-2",    gpu_type, "p5.48xlarge",     _v(od_price * 0.71),    od_price, "high",   7.0),
+            SpotPrice("aws",       "eu-west-1",    gpu_type, "p5.48xlarge",     _v(od_price * 0.74),    od_price, "medium", 8.0),
+            # GCP — 3 regions, higher interruption but cheapest spot
+            SpotPrice("gcp",       "us-central1",  gpu_type, "a3-highgpu-1g",   _v(od_price * 0.30),    od_price, "high",  15.0),
+            SpotPrice("gcp",       "europe-west4", gpu_type, "a3-highgpu-1g",   _v(od_price * 0.32),    od_price, "high",  18.0),
+            SpotPrice("gcp",       "asia-east1",   gpu_type, "a3-highgpu-1g",   _v(od_price * 0.34),    od_price, "medium",12.0),
+            # CoreWeave — 3 regions, no interruption (dedicated)
+            SpotPrice("coreweave", "ORD1",         gpu_type, "cw-vgpu",         _v(cw_price, 0.03),     od_price, "high",   0.0),
+            SpotPrice("coreweave", "LAS1",         gpu_type, "cw-vgpu",         _v(cw_price, 0.04),     od_price, "high",   0.0),
+            SpotPrice("coreweave", "EWR1",         gpu_type, "cw-vgpu",         _v(cw_price, 0.05),     od_price, "medium", 0.0),
+            # Azure — 3 regions, moderate interruption
+            SpotPrice("azure",     "eastus",       gpu_type, "ND96isr_H100_v5", _v(od_price * 0.70),    od_price, "medium",10.0),
+            SpotPrice("azure",     "westus2",      gpu_type, "ND96isr_H100_v5", _v(od_price * 0.72),    od_price, "medium",12.0),
+            SpotPrice("azure",     "westeurope",   gpu_type, "ND96isr_H100_v5", _v(od_price * 0.75),    od_price, "low",   14.0),
         ]
         return sorted(mock, key=lambda p: p.current_price_usd_hr)
 

@@ -71,10 +71,10 @@ async def get_demo_status() -> JSONResponse:
             "goal": j.goal[:60],
             "phase": j.phase.value,
             "progress_pct": j.progress_pct,
-            "cost_so_far": j.cost_so_far,
-            "saved_vs_aws": j.saved_vs_aws,
-            "gpu_util": j.gpu_util,
-            "memory_pct": j.memory_pct,
+            "cost_so_far": round(j.cost_so_far, 2),
+            "saved_vs_aws": round(j.saved_vs_aws, 2),
+            "gpu_util": round(j.gpu_util, 1),
+            "memory_pct": round(j.memory_pct, 1),
             "healed": j.healed,
         }
         for j in engine.get_all_jobs()

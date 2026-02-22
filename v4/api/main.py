@@ -14,7 +14,8 @@ from datetime import datetime, timezone
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from .routers import goals, jobs, agents, metrics, audit
 from .routers.admin import router as admin_router
@@ -24,8 +25,11 @@ from .models.schemas import (
     HealthResponse, LoginRequest, RegisterRequest, TokenResponse
 )
 
-# Demo mode (lazy import — only pulled in when DEMO_MODE=true)
-_DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() in ("true", "1", "yes")
+# Demo mode — check both env var names for compatibility
+_DEMO_MODE = (
+    os.getenv("ORQUANTA_DEMO_MODE", "false").lower() in ("true", "1", "yes")
+    or os.getenv("DEMO_MODE", "false").lower() in ("true", "1", "yes")
+)
 
 # ─── Logging ──────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -137,6 +141,24 @@ app.add_middleware(
 )
 
 
+# ─── Security Headers Middleware ──────────────────────────────────────────
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Add production-grade security headers to every response."""
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
+
+
 # ─── Global exception handler ─────────────────────────────────────────────
 
 @app.exception_handler(Exception)
@@ -203,8 +225,15 @@ async def health():
     )
 
 
-@app.get("/", tags=["System"], summary="API root")
+@app.get("/", include_in_schema=False)
 async def root():
+    """Redirect visitors to the demo landing page."""
+    return RedirectResponse(url="/demo", status_code=302)
+
+
+@app.get("/api", tags=["System"], summary="API info")
+async def api_info():
+    """API metadata endpoint for programmatic discovery."""
     return {
         "name": "OrQuanta Agentic",
         "version": VERSION,
@@ -268,6 +297,14 @@ async def provider_prices(gpu_type: str = "A100"):
 @app.get("/providers/health", tags=["Providers"], summary="Provider API health check")
 async def provider_health():
     """Check connectivity to all 5 cloud providers."""
+    if _DEMO_MODE:
+        return {
+            "providers": {
+                "aws": True, "gcp": True, "azure": True,
+                "coreweave": True, "lambda": True,
+            },
+            "all_healthy": True,
+        }
     from ..providers.provider_router import get_router
     router_obj = get_router()
     health = await router_obj.check_provider_health()
