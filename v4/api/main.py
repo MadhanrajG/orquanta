@@ -244,12 +244,10 @@ _REGISTER_HTML = """
     <button class="btn" onclick="doRegister()" id="sub-btn">Start Free Trial &rarr;</button>
   </div>
   <div id="success-msg" class="success">
-    <div style="font-size:2.2rem;margin-bottom:10px">&#127881;</div>
-    <strong>Welcome to OrQuanta!</strong><br><br>
-    Your account is ready. The AI agents are standing by.<br><br>
-    <a href="/docs">Explore the API &rarr;</a>
-    &nbsp;&nbsp;
-    <a class="pu" href="/demo">Back to Demo &rarr;</a>
+    <div style="font-size:2rem;margin-bottom:8px">&#127881;</div>
+    <strong>Account created!</strong><br><br>
+    Taking you to your welcome page...<br>
+    <div style="margin-top:14px;font-size:.85rem;color:#64748b">Redirecting in 2 seconds</div>
   </div>
   <hr>
   <div class="login-link">Already have an account? <a href="/docs#/Auth/login_auth_login_post">Sign in via API</a></div>
@@ -271,9 +269,11 @@ async function doRegister() {
     var res = await fetch('/auth/register', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name:name, email:email, password:pw, organization:org||'Personal'})});
     var data = await res.json();
     if (res.ok) {
+      if (data.access_token) localStorage.setItem('orquanta_token', data.access_token);
+      if (data.email) localStorage.setItem('orquanta_email', data.email);
       document.getElementById('form-section').style.display = 'none';
       document.getElementById('success-msg').style.display = 'block';
-      if (data.access_token) localStorage.setItem('orquanta_token', data.access_token);
+      setTimeout(function(){ window.location.href = '/welcome'; }, 2000);
     } else {
       errDiv.textContent = data.detail || data.error || 'Registration failed. Please try again.';
       errDiv.style.display = 'block';
@@ -290,6 +290,81 @@ document.addEventListener('keypress', function(e){ if (e.key === 'Enter') doRegi
 </body>
 </html>
 """
+
+
+_WELCOME_HTML = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to OrQuanta</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#050608;color:#e2e8f0;font-family:'Inter',sans-serif;min-height:100vh;padding:24px 16px}
+    .top{text-align:center;padding:40px 0 32px}
+    .logo{font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;background:linear-gradient(135deg,#00D4FF,#7B2FFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    h1{font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;margin:16px 0 8px}
+    .sub{color:#8892A4;font-size:.95rem;margin-bottom:8px}
+    .email-badge{display:inline-block;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);border-radius:20px;color:#00D4FF;font-size:.82rem;padding:4px 14px;margin-bottom:32px}
+    .steps{font-family:'Space Grotesk',sans-serif;font-size:.75rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#8892A4;text-align:center;margin-bottom:16px}
+    .cards{display:grid;grid-template-columns:1fr;gap:14px;max-width:480px;margin:0 auto 40px}
+    .card{background:rgba(15,22,36,0.9);border:1px solid rgba(0,212,255,0.15);border-radius:14px;padding:24px;cursor:pointer;text-decoration:none;display:block;transition:transform .15s,box-shadow .15s}
+    .card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,212,255,0.12)}
+    .card.primary{border-color:rgba(0,212,255,0.4);background:rgba(0,212,255,0.05)}
+    .num{font-family:'Space Grotesk',sans-serif;font-size:.75rem;font-weight:700;color:#00D4FF;letter-spacing:1px;margin-bottom:8px}
+    .card-title{font-family:'Space Grotesk',sans-serif;font-size:1.05rem;font-weight:700;margin-bottom:6px}
+    .card-desc{color:#8892A4;font-size:.88rem;line-height:1.55}
+    .tag{display:inline-block;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.25);color:#00FF88;font-size:.72rem;padding:2px 10px;border-radius:12px;margin-top:10px}
+    .footer{text-align:center;color:#64748b;font-size:.82rem;padding-bottom:32px}
+    .footer a{color:#00D4FF;text-decoration:none}
+  </style>
+</head>
+<body>
+<div class="top">
+  <div class="logo">OrQuanta</div>
+  <h1>You're in. Welcome aboard!</h1>
+  <p class="sub">Your 14-day free trial has started. Here's what to do next:</p>
+  <div class="email-badge" id="user-email">Account active</div>
+</div>
+<p class="steps">Start here</p>
+<div class="cards">
+  <a class="card primary" href="/demo">
+    <div class="num">STEP 1 &mdash; RECOMMENDED</div>
+    <div class="card-title">Try the Live Demo</div>
+    <div class="card-desc">Watch 5 AI agents manage a real GPU job in real time. See cost savings, self-healing, and multi-cloud routing live. Takes 2 minutes.</div>
+    <div class="tag">No setup required</div>
+  </a>
+  <a class="card" href="/demo#goal-input">
+    <div class="num">STEP 2</div>
+    <div class="card-title">Analyze Your First GPU Goal</div>
+    <div class="card-desc">Type your workload in plain English &mdash; "Fine-tune Llama 3 on my data, keep cost under $100" &mdash; and get an instant cost breakdown from the AI.</div>
+    <div class="tag">AI-powered</div>
+  </a>
+  <a class="card" href="/docs">
+    <div class="num">STEP 3 &mdash; FOR DEVELOPERS</div>
+    <div class="card-title">Connect via API</div>
+    <div class="card-desc">Integrate OrQuanta into your ML pipeline using the REST API. Your JWT token is saved &mdash; use it as a Bearer token in the Authorize button.</div>
+    <div class="tag">Developers only</div>
+  </a>
+</div>
+<div class="footer">
+  Questions? Reply to this page &mdash; <a href="/demo">Back to Demo</a>
+</div>
+<script>
+var em = localStorage.getItem('orquanta_email');
+if (em) document.getElementById('user-email').textContent = em;
+</script>
+</body>
+</html>
+"""
+
+
+@app.get("/welcome", response_class=HTMLResponse, tags=["Auth"], summary="Post-signup welcome page", include_in_schema=False)
+async def welcome_page():
+    """Welcome page shown after successful registration."""
+    return HTMLResponse(content=_WELCOME_HTML, status_code=200)
 
 
 @app.get("/auth/register", response_class=HTMLResponse, tags=["Auth"], summary="Signup page", include_in_schema=False)
