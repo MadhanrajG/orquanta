@@ -419,13 +419,13 @@ async function analyzeGoal() {
         setTimeout(function(){ goalEl.style.borderColor = 'rgba(0,212,255,0.2)'; }, 1500);
         return;
     }
-    btn.textContent = '\ud83e\udd16 Agents thinking...';
+    btn.textContent = 'AI Agents thinking...';
     btn.disabled = true;
     result.style.display = 'block';
     result.innerHTML = '<div style="color:#8892A4;font-family:monospace;font-size:13px;">'
-        + '\u27b6 OrMind: Parsing goal...<br>'
-        + '\u27b6 Cost Optimizer: Checking 5 providers...<br>'
-        + '\u27b6 Scheduler: Calculating ETA...</div>';
+        + '&rarr; OrMind: Parsing goal...<br>'
+        + '&rarr; Cost Optimizer: Checking 5 providers...<br>'
+        + '&rarr; Scheduler: Calculating ETA...</div>';
 
     await new Promise(function(r){ setTimeout(r, 2000); });
 
@@ -436,9 +436,6 @@ async function analyzeGoal() {
         if (gl.indexOf(keys[i]) !== -1) { rec = GPU_MAP[keys[i]]; break; }
     }
 
-    var card = '<div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;">'
-        + '<div style="color:#8892A4;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">LABEL</div>'
-        + '<div style="color:COLOR;font-weight:700;">VALUE</div>SUB</div>';
 
     function mkCard(label, value, color, sub) {
         return '<div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;">'
@@ -449,7 +446,7 @@ async function analyzeGoal() {
     }
 
     result.innerHTML =
-        '<div style="color:#00FF88;font-weight:600;margin-bottom:16px;font-size:1.05rem;">\u2705 OrMind Agent Analysis Complete</div>'
+        '<div style="color:#00FF88;font-weight:600;margin-bottom:16px;font-size:1.05rem;">&#10003; OrMind Agent Analysis Complete</div>'
         + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">'
         +   mkCard('RECOMMENDED GPU',   rec.gpu,      '#00D4FF', null)
         +   mkCard('CHEAPEST PROVIDER', rec.provider, '#00D4FF', null)
@@ -457,16 +454,16 @@ async function analyzeGoal() {
         +   mkCard('EST. DURATION',     rec.time,     '#E8EAF6', rec.cost)
         + '</div>'
         + '<div style="background:rgba(123,47,255,0.08);border:1px solid rgba(123,47,255,0.25);border-radius:8px;padding:12px;color:#8892A4;font-size:13px;margin-bottom:16px;">'
-        + '\ud83e\udd16 <strong style="color:#E8EAF6;">OrMind reasoning:</strong> '
+        + 'AI Agent <strong style="color:#E8EAF6;">OrMind reasoning:</strong> '
         + 'Selected ' + rec.provider + ' after real-time price comparison across 5 providers (AWS, GCP, Azure, Lambda, CoreWeave). '
         + 'Self-Healing agent monitors every 1 second and auto-recovers OOM failures. Audit log signed with HMAC-SHA256.'
         + '</div>'
         + '<a href="/auth/register" style="display:block;text-align:center;background:linear-gradient(135deg,#00D4FF,#7B2FFF);'
         + 'color:white;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;'
         + 'font-family:\'Space Grotesk\',sans-serif;font-size:1rem;box-shadow:0 0 30px rgba(0,212,255,0.2);">'
-        + 'Run This Job Free \u2014 14 Day Trial \u2192</a>';
+        + 'Run This Job Free &mdash; 14 Day Trial &rarr;</a>';
 
-    btn.textContent = 'Analyze with AI Agents \u2192';
+    btn.textContent = 'Analyze with AI Agents ->';
     btn.disabled = false;
 }
 
