@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from .routers import goals, jobs, agents, metrics, audit
@@ -72,21 +72,26 @@ async def lifespan(app: FastAPI):
     forecast_agent = ForecastAgent()
     await forecast_agent.start()
 
-    # Seed a default admin user for first-boot
+    # Seed a default admin user for first-boot and promote to admin role
     try:
-        register_user(
-            email=os.getenv("ADMIN_EMAIL", "admin@orquanta.ai"),
-            password=os.getenv("ADMIN_PASSWORD", "orquanta-admin-2026"),
-            name="OrQuanta Admin",
-        )
-        # Promote to admin role
-        from .middleware.auth import _USERS
         admin_email = os.getenv("ADMIN_EMAIL", "admin@orquanta.ai")
-        if admin_email in _USERS:
-            _USERS[admin_email]["role"] = "admin"
-        logger.info("Default admin user created.")
+        admin_password = os.getenv("ADMIN_PASSWORD", "orquanta-admin-2024")
+        register_user(email=admin_email, password=admin_password, name="OrQuanta Admin")
+        logger.info(f"Admin user '{admin_email}' created.")
     except ValueError:
-        pass  # Already registered
+        pass  # Already registered — that's fine
+
+    # Promote admin email to 'admin' role in SQLite
+    try:
+        from .middleware.auth import _get_db
+        admin_email = os.getenv("ADMIN_EMAIL", "admin@orquanta.ai")
+        conn = _get_db()
+        conn.execute("UPDATE users SET role = 'admin' WHERE email = ?", (admin_email.lower(),))
+        conn.commit()
+        conn.close()
+        logger.info(f"User '{admin_email}' promoted to admin role.")
+    except Exception as exc:
+        logger.warning(f"Admin role promotion skipped: {exc}")
 
     # Start demo engine if in demo mode
     if _DEMO_MODE:
@@ -174,7 +179,124 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
-# ─── Auth endpoints ────────────────────────────────────────────────────────
+# ─── Auth endpoints ────────────────────────────────────────────────────────────
+
+_REGISTER_HTML = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join OrQuanta — Free 14-Day Trial</title>
+  <meta name="description" content="Create your free OrQuanta account. 14-day trial, no credit card required.">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#050608;color:#e2e8f0;font-family:'Inter',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .card{background:rgba(15,22,36,0.95);border:1px solid rgba(0,212,255,0.2);border-radius:20px;padding:48px 40px;width:100%;max-width:440px;box-shadow:0 0 80px rgba(0,212,255,0.1)}
+    .logo-text{font-family:'Space Grotesk',sans-serif;font-size:1.8rem;font-weight:700;background:linear-gradient(135deg,#00D4FF,#7B2FFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center}
+    .tagline{text-align:center;color:#64748b;font-size:.88rem;margin-bottom:24px}
+    .badge-row{text-align:center;margin-bottom:28px}
+    .badge{display:inline-block;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);color:#00FF88;font-size:.8rem;padding:5px 14px;border-radius:20px}
+    .features{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:28px}
+    .feat{background:rgba(0,0,0,0.2);border-radius:8px;padding:8px 12px;font-size:.8rem;color:#94a3b8}
+    .feat span{color:#00FF88;margin-right:5px}
+    h1{font-family:'Space Grotesk',sans-serif;font-size:1.45rem;font-weight:700;text-align:center;margin-bottom:6px}
+    .sub{text-align:center;color:#94a3b8;font-size:.92rem;margin-bottom:26px}
+    label{display:block;color:#94a3b8;font-size:.83rem;margin-bottom:5px;margin-top:14px}
+    input{width:100%;background:rgba(0,0,0,0.4);border:1px solid rgba(0,212,255,0.2);border-radius:8px;color:#e2e8f0;font-size:1rem;padding:11px 15px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+    input:focus{border-color:#00D4FF;box-shadow:0 0 0 3px rgba(0,212,255,0.1)}
+    .btn{width:100%;background:linear-gradient(135deg,#00D4FF,#7B2FFF);border:none;border-radius:10px;color:white;font-size:1.05rem;font-weight:600;padding:14px;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:22px;transition:opacity .2s,transform .1s}
+    .btn:hover{opacity:.9;transform:translateY(-1px)}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .error{background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:8px;color:#ff6b6b;padding:12px;margin-top:14px;font-size:.88rem;display:none}
+    .success{background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.25);border-radius:12px;color:#00FF88;padding:28px;margin-top:14px;font-size:.95rem;text-align:center;display:none}
+    .success a{color:#00D4FF;text-decoration:none;font-weight:600}
+    .success .pu{color:#A78BFA;text-decoration:none;font-weight:600}
+    hr{border:none;border-top:1px solid rgba(255,255,255,0.07);margin:22px 0}
+    .login-link{text-align:center;color:#64748b;font-size:.88rem}
+    .login-link a{color:#00D4FF;text-decoration:none}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo-text">OrQuanta</div>
+  <div class="tagline">Orchestrate. Optimize. Evolve.</div>
+  <div class="badge-row"><span class="badge">Free 14-Day Trial &mdash; No Credit Card</span></div>
+  <div class="features">
+    <div class="feat"><span>&#10003;</span>5 AI agents</div>
+    <div class="feat"><span>&#10003;</span>Multi-cloud routing</div>
+    <div class="feat"><span>&#10003;</span>Self-healing jobs</div>
+    <div class="feat"><span>&#10003;</span>Cost tracking</div>
+  </div>
+  <h1>Create Your Account</h1>
+  <p class="sub">Start managing GPU cloud automatically</p>
+  <div id="form-section">
+    <label>Full Name</label>
+    <input type="text" id="name" placeholder="Your name" autocomplete="name">
+    <label>Work Email</label>
+    <input type="email" id="email" placeholder="you@company.com" autocomplete="email">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="Min 8 characters" autocomplete="new-password">
+    <label>Organization (optional)</label>
+    <input type="text" id="org" placeholder="Your company or project">
+    <div id="err" class="error"></div>
+    <button class="btn" onclick="doRegister()" id="sub-btn">Start Free Trial &rarr;</button>
+  </div>
+  <div id="success-msg" class="success">
+    <div style="font-size:2.2rem;margin-bottom:10px">&#127881;</div>
+    <strong>Welcome to OrQuanta!</strong><br><br>
+    Your account is ready. The AI agents are standing by.<br><br>
+    <a href="/docs">Explore the API &rarr;</a>
+    &nbsp;&nbsp;
+    <a class="pu" href="/demo">Back to Demo &rarr;</a>
+  </div>
+  <hr>
+  <div class="login-link">Already have an account? <a href="/docs#/Auth/login_auth_login_post">Sign in via API</a></div>
+</div>
+<script>
+async function doRegister() {
+  var name = document.getElementById('name').value.trim();
+  var email = document.getElementById('email').value.trim();
+  var pw = document.getElementById('password').value;
+  var org = document.getElementById('org').value.trim();
+  var errDiv = document.getElementById('err');
+  var btn = document.getElementById('sub-btn');
+  errDiv.style.display = 'none';
+  if (!name) { errDiv.textContent = 'Please enter your name'; errDiv.style.display = 'block'; return; }
+  if (!email || email.indexOf('@') < 0) { errDiv.textContent = 'Please enter a valid email'; errDiv.style.display = 'block'; return; }
+  if (pw.length < 8) { errDiv.textContent = 'Password must be at least 8 characters'; errDiv.style.display = 'block'; return; }
+  btn.textContent = 'Creating account...'; btn.disabled = true;
+  try {
+    var res = await fetch('/auth/register', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name:name, email:email, password:pw, organization:org||'Personal'})});
+    var data = await res.json();
+    if (res.ok) {
+      document.getElementById('form-section').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'block';
+      if (data.access_token) localStorage.setItem('orquanta_token', data.access_token);
+    } else {
+      errDiv.textContent = data.detail || data.error || 'Registration failed. Please try again.';
+      errDiv.style.display = 'block';
+      btn.textContent = 'Start Free Trial ->'; btn.disabled = false;
+    }
+  } catch(e) {
+    errDiv.textContent = 'Connection error. Please try again.';
+    errDiv.style.display = 'block';
+    btn.textContent = 'Start Free Trial ->'; btn.disabled = false;
+  }
+}
+document.addEventListener('keypress', function(e){ if (e.key === 'Enter') doRegister(); });
+</script>
+</body>
+</html>
+"""
+
+
+@app.get("/auth/register", response_class=HTMLResponse, tags=["Auth"], summary="Signup page", include_in_schema=False)
+async def register_page():
+    """Serve the signup HTML page (GET). The form POSTs to /auth/register."""
+    return HTMLResponse(content=_REGISTER_HTML, status_code=200)
+
 
 @app.post("/auth/register", tags=["Auth"], summary="Register a new user")
 async def register(req: RegisterRequest):
