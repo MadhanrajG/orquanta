@@ -409,56 +409,65 @@ const GPU_MAP = {
 const DEFAULT_REC = {gpu:'A100 40GB', provider:'GCP us-central1', cost:'$0.88/hr', time:'3.0 hrs', total:'$2.64', savings:'$3.00 vs AWS'};
 
 async function analyzeGoal() {
-    const goalEl = document.getElementById('goal-input');
-    const btn    = document.getElementById('analyze-btn');
-    const result = document.getElementById('goal-result');
-    const goal   = goalEl.value.trim();
-    if (!goal) { goalEl.focus(); goalEl.style.borderColor='var(--red)'; setTimeout(()=>goalEl.style.borderColor='rgba(0,212,255,0.2)',1500); return; }
-
-    btn.textContent = '🤖 Agents thinking...';
-    btn.disabled    = true;
+    var goalEl = document.getElementById('goal-input');
+    var btn    = document.getElementById('analyze-btn');
+    var result = document.getElementById('goal-result');
+    var goal   = goalEl.value.trim();
+    if (!goal) {
+        goalEl.focus();
+        goalEl.style.borderColor = '#FF4444';
+        setTimeout(function(){ goalEl.style.borderColor = 'rgba(0,212,255,0.2)'; }, 1500);
+        return;
+    }
+    btn.textContent = '\ud83e\udd16 Agents thinking...';
+    btn.disabled = true;
     result.style.display = 'block';
-    result.innerHTML = '<div style="color:var(--muted);font-family:\\'JetBrains Mono\\',monospace;font-size:13px;">⟶ OrMind: Parsing goal...<br>⟶ Cost Optimizer: Checking 5 providers...<br>⟶ Scheduler: Calculating ETA...</div>';
+    result.innerHTML = '<div style="color:#8892A4;font-family:monospace;font-size:13px;">'
+        + '\u27b6 OrMind: Parsing goal...<br>'
+        + '\u27b6 Cost Optimizer: Checking 5 providers...<br>'
+        + '\u27b6 Scheduler: Calculating ETA...</div>';
 
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(function(r){ setTimeout(r, 2000); });
 
-    let rec = DEFAULT_REC;
-    const gl = goal.toLowerCase();
-    for (const [key, val] of Object.entries(GPU_MAP)) { if (gl.includes(key)) { rec = val; break; } }
+    var rec = DEFAULT_REC;
+    var gl = goal.toLowerCase();
+    var keys = Object.keys(GPU_MAP);
+    for (var i = 0; i < keys.length; i++) {
+        if (gl.indexOf(keys[i]) !== -1) { rec = GPU_MAP[keys[i]]; break; }
+    }
 
-    result.innerHTML = \`
-        <div style="color:#00FF88;font-weight:600;margin-bottom:16px;font-size:1.05rem;">✅ OrMind Agent Analysis Complete</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
-            <div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;">
-                <div style="color:#8892A4;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">RECOMMENDED GPU</div>
-                <div style="color:#00D4FF;font-weight:700;">\${rec.gpu}</div>
-            </div>
-            <div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;">
-                <div style="color:#8892A4;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">CHEAPEST PROVIDER</div>
-                <div style="color:#00D4FF;font-weight:700;">\${rec.provider}</div>
-            </div>
-            <div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;">
-                <div style="color:#8892A4;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">ESTIMATED COST</div>
-                <div style="color:#00FF88;font-weight:700;">\${rec.total}</div>
-                <div style="color:#8892A4;font-size:11px;">saved \${rec.savings}</div>
-            </div>
-            <div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;">
-                <div style="color:#8892A4;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">EST. DURATION</div>
-                <div style="color:#E8EAF6;font-weight:700;">\${rec.time}</div>
-                <div style="color:#8892A4;font-size:11px;">\${rec.cost}</div>
-            </div>
-        </div>
-        <div style="background:rgba(123,47,255,0.08);border:1px solid rgba(123,47,255,0.25);border-radius:8px;padding:12px;color:#8892A4;font-size:13px;margin-bottom:16px;">
-            🤖 <strong style="color:#E8EAF6;">OrMind reasoning:</strong>
-            Selected \${rec.provider} after real-time price comparison across 5 providers (AWS, GCP, Azure, Lambda, CoreWeave).
-            Self-Healing agent will monitor every 1 second and auto-recover any OOM failures. Audit log signed with HMAC-SHA256.
-        </div>
-        <a href="/auth/register" style="display:block;text-align:center;background:linear-gradient(135deg,#00D4FF,#7B2FFF);color:white;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-family:'Space Grotesk',sans-serif;font-size:1rem;box-shadow:0 0 30px rgba(0,212,255,0.2);">
-            Run This Job Free — 14 Day Trial →
-        </a>
-    \`;
-    btn.textContent = 'Analyze with AI Agents →';
-    btn.disabled    = false;
+    var card = '<div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;">'
+        + '<div style="color:#8892A4;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">LABEL</div>'
+        + '<div style="color:COLOR;font-weight:700;">VALUE</div>SUB</div>';
+
+    function mkCard(label, value, color, sub) {
+        return '<div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;">'
+            + '<div style="color:#8892A4;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">' + label + '</div>'
+            + '<div style="color:' + color + ';font-weight:700;">' + value + '</div>'
+            + (sub ? '<div style="color:#8892A4;font-size:11px;">' + sub + '</div>' : '')
+            + '</div>';
+    }
+
+    result.innerHTML =
+        '<div style="color:#00FF88;font-weight:600;margin-bottom:16px;font-size:1.05rem;">\u2705 OrMind Agent Analysis Complete</div>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">'
+        +   mkCard('RECOMMENDED GPU',   rec.gpu,      '#00D4FF', null)
+        +   mkCard('CHEAPEST PROVIDER', rec.provider, '#00D4FF', null)
+        +   mkCard('ESTIMATED COST',    rec.total,    '#00FF88', 'saved ' + rec.savings)
+        +   mkCard('EST. DURATION',     rec.time,     '#E8EAF6', rec.cost)
+        + '</div>'
+        + '<div style="background:rgba(123,47,255,0.08);border:1px solid rgba(123,47,255,0.25);border-radius:8px;padding:12px;color:#8892A4;font-size:13px;margin-bottom:16px;">'
+        + '\ud83e\udd16 <strong style="color:#E8EAF6;">OrMind reasoning:</strong> '
+        + 'Selected ' + rec.provider + ' after real-time price comparison across 5 providers (AWS, GCP, Azure, Lambda, CoreWeave). '
+        + 'Self-Healing agent monitors every 1 second and auto-recovers OOM failures. Audit log signed with HMAC-SHA256.'
+        + '</div>'
+        + '<a href="/auth/register" style="display:block;text-align:center;background:linear-gradient(135deg,#00D4FF,#7B2FFF);'
+        + 'color:white;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;'
+        + 'font-family:\'Space Grotesk\',sans-serif;font-size:1rem;box-shadow:0 0 30px rgba(0,212,255,0.2);">'
+        + 'Run This Job Free \u2014 14 Day Trial \u2192</a>';
+
+    btn.textContent = 'Analyze with AI Agents \u2192';
+    btn.disabled = false;
 }
 
 startStream();
