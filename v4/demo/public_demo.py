@@ -458,9 +458,7 @@ async function analyzeGoal() {
         + 'Selected ' + rec.provider + ' after real-time price comparison across 5 providers (AWS, GCP, Azure, Lambda, CoreWeave). '
         + 'Self-Healing agent monitors every 1 second and auto-recovers OOM failures. Audit log signed with HMAC-SHA256.'
         + '</div>'
-        + '<a href="/auth/register" style="display:block;text-align:center;background:linear-gradient(135deg,#00D4FF,#7B2FFF);'
-        + 'color:white;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;'
-        + 'font-family:\'Space Grotesk\',sans-serif;font-size:1rem;box-shadow:0 0 30px rgba(0,212,255,0.2);">'
+        + '<a href="/auth/register" style="display:block;text-align:center;background:linear-gradient(135deg,#00D4FF,#7B2FFF);color:white;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:1rem;box-shadow:0 0 30px rgba(0,212,255,0.2);">'
         + 'Run This Job Free &mdash; 14 Day Trial &rarr;</a>';
 
     btn.textContent = 'Analyze with AI Agents ->';
@@ -471,6 +469,7 @@ startStream();
 </script>
 </body>
 </html>"""
+
 
 
 __all__ = ["demo_router"]
