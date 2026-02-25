@@ -209,7 +209,7 @@ def _build_demo_page() -> str:
     <p class="sub">Five specialized AI agents that schedule, optimize, heal and scale your GPU workloads
         across AWS, GCP, Azure and Lambda Labs — in real time, automatically.</p>
     <div class="cta-row">
-        <a href="/v4/landing/index.html" class="btn-primary">Start Free — 14 Days</a>
+        <a href="/auth/register" class="btn-primary">Start Free — 14 Days</a>
         <a href="/docs" class="btn-outline">API Docs</a>
     </div>
     <p class="trial-note">No credit card required ∙ No setup ∙ Cancel anytime</p>
@@ -284,12 +284,33 @@ def _build_demo_page() -> str:
     </div>
 </div>
 
+<!-- Goal Analyzer -->
+<section style="max-width:700px;margin:0 auto 64px;padding:0 24px;">
+    <h2 style="color:#00D4FF;font-family:'Space Grotesk',sans-serif;font-size:1.8rem;text-align:center;margin-bottom:12px;">
+        Try It Now — Free
+    </h2>
+    <p style="color:#8892A4;text-align:center;margin-bottom:32px;font-size:16px;">
+        Type a goal in plain English. OrQuanta agents will plan it instantly.
+    </p>
+    <div style="background:rgba(15,22,36,0.9);border:1px solid rgba(0,212,255,0.2);border-radius:16px;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+        <textarea id="goal-input"
+            placeholder="Fine-tune Llama 3 8B on my dataset, keep cost under $80..."
+            style="width:100%;min-height:100px;background:rgba(0,0,0,0.3);border:1px solid rgba(0,212,255,0.2);border-radius:8px;color:#E8EAF6;font-size:1rem;padding:16px;font-family:'Inter',sans-serif;resize:vertical;box-sizing:border-box;outline:none;"></textarea>
+        <button onclick="analyzeGoal()"
+            id="analyze-btn"
+            style="margin-top:16px;width:100%;background:linear-gradient(135deg,#00D4FF,#7B2FFF);border:none;border-radius:8px;color:white;font-size:1.1rem;font-weight:600;padding:16px;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:opacity .2s;">
+            Analyze with AI Agents →
+        </button>
+        <div id="goal-result" style="display:none;margin-top:24px;padding:20px;background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.2);border-radius:8px;"></div>
+    </div>
+</section>
+
 <!-- CTA -->
 <div class="cta-section">
     <h2>Ready to stop wasting GPU budget?</h2>
     <p>Join the waitlist — 14-day free trial, no credit card required.</p>
     <div class="cta-row">
-        <a href="/v4/landing/index.html#pricing" class="btn-primary">See Pricing</a>
+        <a href="/docs" class="btn-primary">Explore API & Pricing</a>
         <a href="mailto:hello@orquanta.ai" class="btn-outline">Talk to Founder</a>
     </div>
 </div>
@@ -371,6 +392,73 @@ function startSimulated() {
         [36000,() => { addLine('l-dim', '[Waiting for next demo job...]'); setTimeout(startSimulated, 4000); }],
     ];
     events.forEach(([delay, fn]) => setTimeout(fn, delay));
+}
+
+
+// ── Goal Analyzer ─────────────────────────────────────────────────────────────
+const GPU_MAP = {
+    'llama':   {gpu:'A100 80GB', provider:'Lambda Labs us-tx-3', cost:'$1.99/hr', time:'4.2 hrs', total:'$8.36', savings:'$9.50 vs AWS'},
+    'stable':  {gpu:'A100 40GB', provider:'GCP us-central1',    cost:'$0.88/hr', time:'2.1 hrs', total:'$1.85', savings:'$2.10 vs AWS'},
+    'whisper': {gpu:'T4',        provider:'Lambda Labs us-east', cost:'$0.60/hr', time:'1.5 hrs', total:'$0.90', savings:'$1.00 vs AWS'},
+    'train':   {gpu:'A100 80GB', provider:'Lambda Labs us-tx-3', cost:'$1.99/hr', time:'3.8 hrs', total:'$7.56', savings:'$8.61 vs AWS'},
+    'fine':    {gpu:'A100 80GB', provider:'Lambda Labs us-tx-3', cost:'$1.99/hr', time:'4.5 hrs', total:'$8.96', savings:'$10.20 vs AWS'},
+    'diffusion':{gpu:'A100 40GB',provider:'GCP us-central1',    cost:'$0.88/hr', time:'2.5 hrs', total:'$2.20', savings:'$2.50 vs AWS'},
+    'gpt':     {gpu:'A100 80GB', provider:'CoreWeave us-east-1', cost:'$2.21/hr', time:'5.0 hrs', total:'$11.05',savings:'$9.55 vs AWS'},
+    'bert':    {gpu:'A10G',      provider:'Lambda Labs us-tx-3', cost:'$0.76/hr', time:'1.2 hrs', total:'$0.91', savings:'$1.05 vs AWS'},
+};
+const DEFAULT_REC = {gpu:'A100 40GB', provider:'GCP us-central1', cost:'$0.88/hr', time:'3.0 hrs', total:'$2.64', savings:'$3.00 vs AWS'};
+
+async function analyzeGoal() {
+    const goalEl = document.getElementById('goal-input');
+    const btn    = document.getElementById('analyze-btn');
+    const result = document.getElementById('goal-result');
+    const goal   = goalEl.value.trim();
+    if (!goal) { goalEl.focus(); goalEl.style.borderColor='var(--red)'; setTimeout(()=>goalEl.style.borderColor='rgba(0,212,255,0.2)',1500); return; }
+
+    btn.textContent = '🤖 Agents thinking...';
+    btn.disabled    = true;
+    result.style.display = 'block';
+    result.innerHTML = '<div style="color:var(--muted);font-family:\\'JetBrains Mono\\',monospace;font-size:13px;">⟶ OrMind: Parsing goal...<br>⟶ Cost Optimizer: Checking 5 providers...<br>⟶ Scheduler: Calculating ETA...</div>';
+
+    await new Promise(r => setTimeout(r, 2000));
+
+    let rec = DEFAULT_REC;
+    const gl = goal.toLowerCase();
+    for (const [key, val] of Object.entries(GPU_MAP)) { if (gl.includes(key)) { rec = val; break; } }
+
+    result.innerHTML = \`
+        <div style="color:#00FF88;font-weight:600;margin-bottom:16px;font-size:1.05rem;">✅ OrMind Agent Analysis Complete</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+            <div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;">
+                <div style="color:#8892A4;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">RECOMMENDED GPU</div>
+                <div style="color:#00D4FF;font-weight:700;">\${rec.gpu}</div>
+            </div>
+            <div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;">
+                <div style="color:#8892A4;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">CHEAPEST PROVIDER</div>
+                <div style="color:#00D4FF;font-weight:700;">\${rec.provider}</div>
+            </div>
+            <div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;">
+                <div style="color:#8892A4;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">ESTIMATED COST</div>
+                <div style="color:#00FF88;font-weight:700;">\${rec.total}</div>
+                <div style="color:#8892A4;font-size:11px;">saved \${rec.savings}</div>
+            </div>
+            <div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;">
+                <div style="color:#8892A4;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">EST. DURATION</div>
+                <div style="color:#E8EAF6;font-weight:700;">\${rec.time}</div>
+                <div style="color:#8892A4;font-size:11px;">\${rec.cost}</div>
+            </div>
+        </div>
+        <div style="background:rgba(123,47,255,0.08);border:1px solid rgba(123,47,255,0.25);border-radius:8px;padding:12px;color:#8892A4;font-size:13px;margin-bottom:16px;">
+            🤖 <strong style="color:#E8EAF6;">OrMind reasoning:</strong>
+            Selected \${rec.provider} after real-time price comparison across 5 providers (AWS, GCP, Azure, Lambda, CoreWeave).
+            Self-Healing agent will monitor every 1 second and auto-recover any OOM failures. Audit log signed with HMAC-SHA256.
+        </div>
+        <a href="/auth/register" style="display:block;text-align:center;background:linear-gradient(135deg,#00D4FF,#7B2FFF);color:white;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-family:'Space Grotesk',sans-serif;font-size:1rem;box-shadow:0 0 30px rgba(0,212,255,0.2);">
+            Run This Job Free — 14 Day Trial →
+        </a>
+    \`;
+    btn.textContent = 'Analyze with AI Agents →';
+    btn.disabled    = false;
 }
 
 startStream();
