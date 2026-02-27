@@ -132,23 +132,47 @@ async def require_admin(user: dict = Depends(get_current_user)) -> dict[str, Any
 
 
 # ---------------------------------------------------------------------------
-# In-memory user store (replace with PostgreSQL in production)
+# SQLite user store (persistent across deployments)
 # ---------------------------------------------------------------------------
 
 import hashlib
+import sqlite3
 import secrets as sec_module
 from typing import Optional
 
-_USERS: dict[str, dict[str, Any]] = {}
+_DB_PATH = os.getenv("DATABASE_URL", "sqlite:///./orquanta.db")
+# Strip 'sqlite:///' prefix for sqlite3.connect()
+_DB_FILE = _DB_PATH.replace("sqlite:///", "") if _DB_PATH.startswith("sqlite:///") else "./orquanta.db"
+
+
+def _get_db() -> sqlite3.Connection:
+    """Get a SQLite connection with auto-created user table."""
+    conn = sqlite3.connect(_DB_FILE)
+    conn.row_factory = sqlite3.Row
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id          TEXT PRIMARY KEY,
+            email       TEXT UNIQUE NOT NULL,
+            name        TEXT NOT NULL DEFAULT '',
+            hashed_pw   TEXT NOT NULL,
+            salt        TEXT NOT NULL,
+            role        TEXT NOT NULL DEFAULT 'user',
+            created_at  TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    return conn
 
 
 def hash_password(password: str, salt: str) -> str:
-    """Hash a password with salt using SHA-256."""
-    return hashlib.sha256(f"{salt}:{password}".encode()).hexdigest()
+    """Hash a password with salt using SHA-256 + PBKDF2 stretching."""
+    return hashlib.pbkdf2_hmac(
+        "sha256", password.encode(), salt.encode(), iterations=100_000
+    ).hex()
 
 
 def register_user(email: str, password: str, name: str = "") -> dict[str, Any]:
-    """Register a new user.
+    """Register a new user (persisted to SQLite).
 
     Args:
         email: User email.
@@ -161,33 +185,55 @@ def register_user(email: str, password: str, name: str = "") -> dict[str, Any]:
     Raises:
         ValueError: If email already registered.
     """
-    if email.lower() in _USERS:
-        raise ValueError(f"Email '{email}' is already registered.")
+    conn = _get_db()
+    try:
+        # Check if email exists
+        existing = conn.execute(
+            "SELECT id FROM users WHERE email = ?", (email.lower(),)
+        ).fetchone()
+        if existing:
+            raise ValueError(f"Email '{email}' is already registered.")
 
-    user_id = sec_module.token_hex(16)
-    salt = sec_module.token_hex(8)
-    hashed = hash_password(password, salt)
+        user_id = sec_module.token_hex(16)
+        salt = sec_module.token_hex(8)
+        hashed = hash_password(password, salt)
+        created_at = datetime.now(timezone.utc).isoformat()
 
-    user = {
-        "id": user_id,
-        "email": email.lower(),
-        "name": name or email.split("@")[0],
-        "hashed_pw": hashed,
-        "salt": salt,
-        "role": "user",
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }
-    _USERS[email.lower()] = user
-    logger.info(f"User registered: {email} (id={user_id})")
-    return user
+        conn.execute(
+            "INSERT INTO users (id, email, name, hashed_pw, salt, role, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (user_id, email.lower(), name or email.split("@")[0], hashed, salt, "user", created_at),
+        )
+        conn.commit()
+
+        user = {
+            "id": user_id,
+            "email": email.lower(),
+            "name": name or email.split("@")[0],
+            "hashed_pw": hashed,
+            "salt": salt,
+            "role": "user",
+            "created_at": created_at,
+        }
+        logger.info(f"User registered: {email} (id={user_id}) — persisted to SQLite")
+        return user
+    finally:
+        conn.close()
 
 
 def authenticate_user(email: str, password: str) -> Optional[dict[str, Any]]:
-    """Verify credentials and return user if valid."""
-    user = _USERS.get(email.lower())
-    if not user:
+    """Verify credentials and return user if valid (reads from SQLite)."""
+    conn = _get_db()
+    try:
+        row = conn.execute(
+            "SELECT * FROM users WHERE email = ?", (email.lower(),)
+        ).fetchone()
+        if not row:
+            return None
+        expected = hash_password(password, row["salt"])
+        if expected == row["hashed_pw"]:
+            return dict(row)
         return None
-    expected = hash_password(password, user["salt"])
-    if expected == user["hashed_pw"]:
-        return user
-    return None
+    finally:
+        conn.close()
+

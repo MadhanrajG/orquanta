@@ -28,13 +28,14 @@ class LLMProvider(str, Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     MOCK = "mock"  # Used in tests / when no API key is set
+    AUTO = "auto"  # Auto-detect best available provider
 
 
 class LLMConfig(BaseModel):
     """Runtime LLM configuration loaded from environment variables."""
     provider: LLMProvider = Field(
         default_factory=lambda: LLMProvider(
-            os.getenv("LLM_PROVIDER", "mock")
+            os.getenv("LLM_PROVIDER", "auto")
         )
     )
     openai_api_key: str = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""))
@@ -147,6 +148,29 @@ Reply ONLY with JSON:
   "reasoning": "<chain-of-thought>"
 }
 """,
+
+    "gpu_recommend": """
+You are the GPU RecommendationAgent for OrQuanta. Based on the user's
+workload description, recommend the optimal GPU type and provider.
+
+Workload: "$workload"
+Available GPUs: $available_gpus
+Current spot prices: $prices_json
+
+Consider: VRAM requirements, estimated training time, cost efficiency,
+model size (parameter count → VRAM mapping: 7B≈16GB, 13B≈28GB, 70B≈80GB).
+
+Reply ONLY with JSON:
+{
+  "recommended_gpu": "<H100/A100/A100-80G/T4/L4>",
+  "recommended_provider": "<provider>",
+  "recommended_region": "<region>",
+  "estimated_cost_usd": <float>,
+  "estimated_duration_hours": <float>,
+  "vram_required_gb": <int>,
+  "reasoning": "<chain-of-thought>"
+}
+""",
 }
 
 
@@ -237,30 +261,49 @@ class LLMReasoningEngine:
     # ------------------------------------------------------------------
 
     def _init_clients(self) -> None:
-        """Lazily initialise LLM clients based on provider setting."""
-        if self.cfg.provider == LLMProvider.OPENAI and self.cfg.openai_api_key:
+        """Initialise all available LLM clients.
+
+        AUTO mode: detect from API keys (OpenAI → Anthropic → Mock).
+        Explicit mode: initialise the specified provider.
+        Either way, we try to init ALL available clients for fallback.
+        """
+        # Try OpenAI
+        if self.cfg.openai_api_key:
             try:
                 import openai  # type: ignore
                 self._openai_client = openai.AsyncOpenAI(api_key=self.cfg.openai_api_key)
-                logger.info("OpenAI client initialised.")
+                logger.info("OpenAI client initialised (available for reasoning).")
             except ImportError:
-                logger.warning("openai package not installed. Falling back to mock.")
-                self.cfg.provider = LLMProvider.MOCK
+                logger.warning("openai package not installed — skipping OpenAI.")
 
-        elif self.cfg.provider == LLMProvider.ANTHROPIC and self.cfg.anthropic_api_key:
+        # Try Anthropic
+        if self.cfg.anthropic_api_key:
             try:
                 import anthropic  # type: ignore
                 self._anthropic_client = anthropic.AsyncAnthropic(
                     api_key=self.cfg.anthropic_api_key
                 )
-                logger.info("Anthropic client initialised.")
+                logger.info("Anthropic client initialised (available for fallback).")
             except ImportError:
-                logger.warning("anthropic package not installed. Falling back to mock.")
-                self.cfg.provider = LLMProvider.MOCK
+                logger.warning("anthropic package not installed — skipping Anthropic.")
 
-        else:
-            logger.info("No valid LLM API keys found — using MOCK provider.")
-            self.cfg.provider = LLMProvider.MOCK
+        # Auto-detect primary provider from available clients
+        if self.cfg.provider == LLMProvider.AUTO:
+            if self._openai_client:
+                self.cfg.provider = LLMProvider.OPENAI
+                logger.info("AUTO: Selected OpenAI as primary LLM provider.")
+            elif self._anthropic_client:
+                self.cfg.provider = LLMProvider.ANTHROPIC
+                logger.info("AUTO: Selected Anthropic as primary LLM provider.")
+            else:
+                self.cfg.provider = LLMProvider.MOCK
+                logger.info("AUTO: No API keys found — using MOCK provider.")
+        elif self.cfg.provider == LLMProvider.OPENAI and not self._openai_client:
+            logger.warning("OpenAI requested but not available. Falling back.")
+            self.cfg.provider = LLMProvider.ANTHROPIC if self._anthropic_client else LLMProvider.MOCK
+        elif self.cfg.provider == LLMProvider.ANTHROPIC and not self._anthropic_client:
+            logger.warning("Anthropic requested but not available. Falling back.")
+            self.cfg.provider = LLMProvider.OPENAI if self._openai_client else LLMProvider.MOCK
 
     # ------------------------------------------------------------------
     # Public API
@@ -322,17 +365,48 @@ class LLMReasoningEngine:
         return Template(tmpl_str).safe_substitute(str_vars)
 
     async def _call_llm(self, prompt: str) -> str:
-        """Dispatch to the correct LLM provider."""
+        """Dispatch to LLM with automatic fallback chain.
+
+        Chain: Primary provider → Secondary provider → Mock.
+        This ensures the platform always returns a response.
+        """
         if self.cfg.provider == LLMProvider.MOCK:
             return json.dumps({"mock": True})
 
-        if self.cfg.provider == LLMProvider.OPENAI:
-            return await self._call_openai(prompt)
+        # Try primary provider
+        primary_error = None
+        if self.cfg.provider == LLMProvider.OPENAI and self._openai_client:
+            try:
+                return await self._call_openai(prompt)
+            except Exception as exc:
+                primary_error = exc
+                logger.warning(f"OpenAI call failed: {exc}")
 
-        if self.cfg.provider == LLMProvider.ANTHROPIC:
-            return await self._call_anthropic(prompt)
+        elif self.cfg.provider == LLMProvider.ANTHROPIC and self._anthropic_client:
+            try:
+                return await self._call_anthropic(prompt)
+            except Exception as exc:
+                primary_error = exc
+                logger.warning(f"Anthropic call failed: {exc}")
 
-        raise RuntimeError(f"Unknown provider: {self.cfg.provider}")
+        # Try fallback provider
+        if primary_error:
+            if self.cfg.provider != LLMProvider.ANTHROPIC and self._anthropic_client:
+                try:
+                    logger.info("Falling back to Anthropic...")
+                    return await self._call_anthropic(prompt)
+                except Exception as exc:
+                    logger.warning(f"Anthropic fallback also failed: {exc}")
+            elif self.cfg.provider != LLMProvider.OPENAI and self._openai_client:
+                try:
+                    logger.info("Falling back to OpenAI...")
+                    return await self._call_openai(prompt)
+                except Exception as exc:
+                    logger.warning(f"OpenAI fallback also failed: {exc}")
+
+        # Last resort: mock
+        logger.info("All LLM providers unavailable. Returning mock data.")
+        return json.dumps({"mock": True})
 
     async def _call_openai(self, prompt: str) -> str:
         """Call OpenAI Chat Completions API."""
