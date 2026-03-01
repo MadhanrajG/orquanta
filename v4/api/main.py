@@ -14,7 +14,8 @@ from datetime import datetime, timezone
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
+from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from .routers import goals, jobs, agents, metrics, audit
@@ -424,8 +425,8 @@ async def health():
 
 @app.get("/", include_in_schema=False)
 async def root():
-    """Redirect visitors to the demo landing page."""
-    return RedirectResponse(url="/demo", status_code=302)
+    """Redirect visitors to the main web app."""
+    return RedirectResponse(url="/app", status_code=302)
 
 
 @app.get("/api", tags=["System"], summary="API info")
@@ -457,6 +458,33 @@ try:
     app.include_router(demo_router, prefix="/demo", tags=["Demo"])
 except Exception:
     pass  # demo package optional
+
+
+# ─── Serve built React frontend ────────────────────────────────────────────
+
+_DIST_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "v4", "frontend", "dist")
+_DIST_DIR = os.path.abspath(_DIST_DIR)
+
+if os.path.isdir(_DIST_DIR):
+    # Serve static assets (JS/CSS chunks Vite generates into dist/assets/)
+    _assets_dir = os.path.join(_DIST_DIR, "assets")
+    if os.path.isdir(_assets_dir):
+        app.mount("/app/assets", StaticFiles(directory=_assets_dir), name="react-assets")
+
+    @app.get("/app", include_in_schema=False)
+    @app.get("/app/{path:path}", include_in_schema=False)
+    async def serve_react_app(path: str = ""):
+        """Serve the React SPA — index.html handles all client-side routes."""
+        return FileResponse(os.path.join(_DIST_DIR, "index.html"))
+else:
+    # Frontend not built — tell developers clearly
+    @app.get("/app", include_in_schema=False)
+    @app.get("/app/{path:path}", include_in_schema=False)
+    async def react_not_built(path: str = ""):
+        return HTMLResponse(
+            content="<h2>Frontend not built. Run <code>npm run build</code> inside v4/frontend/.</h2>",
+            status_code=503,
+        )
 
 
 # ─── Providers endpoint (public — no auth required) ────────────────────────

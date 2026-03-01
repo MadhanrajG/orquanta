@@ -223,7 +223,7 @@ function AppLayout() {
 export default function App() {
     return (
         <AuthProvider>
-            <BrowserRouter>
+            <BrowserRouter basename="/app">
                 <AppRouter />
             </BrowserRouter>
         </AuthProvider>
