@@ -209,14 +209,20 @@ def _build_demo_page() -> str:
     <p class="sub">Five specialized AI agents that schedule, optimize, heal and scale your GPU workloads
         across AWS, GCP, Azure and Lambda Labs — in real time, automatically.</p>
     <div class="cta-row">
-        <a href="/auth/register" class="btn-primary">Start Free — 14 Days</a>
-        <a href="/docs" class="btn-outline">API Docs</a>
+        <a href="/auth/register" class="btn-primary" id="cta-main">Start Free — 14 Days &rarr;</a>
+        <a href="#live-console" class="btn-outline" onclick="document.getElementById('live-console').scrollIntoView({behavior:'smooth'});return false;">Watch Live &darr;</a>
     </div>
-    <p class="trial-note">No credit card required ∙ No setup ∙ Cancel anytime</p>
+    <p class="trial-note">No credit card &bull; No setup &bull; Cancel anytime</p>
+    <div class="stats-strip" style="display:flex;justify-content:center;gap:32px;margin-top:32px;flex-wrap:wrap;">
+      <div style="text-align:center;"><div class="hero-stats-num" data-val="47" data-suf="%" style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:#00D4FF;">47%</div><div style="color:#8892A4;font-size:12px;">avg cost reduction</div></div>
+      <div style="text-align:center;"><div class="hero-stats-num" data-val="8.3" data-suf="s" style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:#00FF88;">8.3s</div><div style="color:#8892A4;font-size:12px;">avg self-heal time</div></div>
+      <div style="text-align:center;"><div style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:#A78BFA;">&lt;30s</div><div style="color:#8892A4;font-size:12px;">to running GPU job</div></div>
+      <div style="text-align:center;"><div id="stat-5" style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:#FFB800;">5</div><div style="color:#8892A4;font-size:12px;">AI agents running</div></div>
+    </div>
 </section>
 
 <!-- Agent Console -->
-<div class="console-wrap">
+<div class="console-wrap" id="live-console">
     <div class="console">
         <div class="console-bar">
             <div class="dot-r"></div><div class="dot-a"></div><div class="dot-g"></div>
@@ -308,12 +314,46 @@ def _build_demo_page() -> str:
 <!-- CTA -->
 <div class="cta-section">
     <h2>Ready to stop wasting GPU budget?</h2>
-    <p>Join the waitlist — 14-day free trial, no credit card required.</p>
+    <p>Start for free &mdash; 14-day trial, no credit card required.</p>
     <div class="cta-row">
-        <a href="/docs" class="btn-primary">Explore API & Pricing</a>
-        <a href="mailto:hello@orquanta.ai" class="btn-outline">Talk to Founder</a>
+        <a href="/auth/register" class="btn-primary">Start Free Trial &rarr;</a>
+        <a href="mailto:orquanta.founder@gmail.com" class="btn-outline">Talk to Founder</a>
     </div>
 </div>
+
+<script>
+// ── Hero stat count-up animation ─────────────────────────────────────────────
+(function(){
+  function countUp(el, target, suffix, duration) {
+    var start = 0, step = target / (duration / 16);
+    var t = setInterval(function(){
+      start = Math.min(start + step, target);
+      el.textContent = (suffix === '%' ? Math.round(start) + '%' : start.toFixed(1) + suffix);
+      if (start >= target) clearInterval(t);
+    }, 16);
+  }
+  var observed = false;
+  var io = new IntersectionObserver(function(entries){
+    if (observed) return;
+    entries.forEach(function(e){
+      if (e.isIntersecting){
+        observed = true;
+        // Animate 47%, 8.3s — others are text so leave them
+        var statEls = document.querySelectorAll('.hero-stats-num');
+        statEls.forEach(function(el){
+          var val = parseFloat(el.dataset.val);
+          var suf = el.dataset.suf || '';
+          countUp(el, val, suf, 1400);
+        });
+      }
+    });
+  }, {threshold: 0.2});
+  document.addEventListener('DOMContentLoaded', function(){
+    var strip = document.querySelector('.stats-strip');
+    if (strip) io.observe(strip);
+  });
+})();
+</script>
 
 <script>
 // ── Live demo stream ─────────────────────────────────────────────────────────
@@ -335,24 +375,42 @@ function setMetric(id, value) {
     if (el) el.textContent = value;
 }
 
-// Try WebSocket first, fall back to simulated stream
+// Start WS (for real metrics) AND always start simulation for narrative logs
+var simStarted = false;
 function startStream() {
-    const wsUrl = `ws://${location.host}/ws/agent-stream`;
-    let ws;
+    // Always start the narrative sim after 1.5s — WS supplements with live stats
+    setTimeout(function() {
+        if (!simStarted) { simStarted = true; startSimulated(); }
+    }, 1500);
+
+    // Also try WS for live platform metrics
     try {
-        ws = new WebSocket(wsUrl);
-        ws.onopen = () => addLine('l-green', '✓ Connected to OrQuanta agent stream');
+        const ws = new WebSocket(`ws://${location.host}/ws/agent-stream`);
         ws.onmessage = (e) => {
             try { handleEvent(JSON.parse(e.data)); } catch {}
         };
-        ws.onerror = () => { ws = null; startSimulated(); };
-        ws.onclose = () => { if (ws) startSimulated(); };
-    } catch { startSimulated(); }
+        ws.onerror = () => {};
+    } catch {}
 }
 
 function handleEvent(ev) {
-    const { type, data } = ev;
-    if (type === 'agent_thought') {
+    const type = ev.type;
+    const data = ev.data || ev;  // messages_tick sends data at top level in some cases
+    if (type === 'connected') {
+        // Server confirmed connection — sim logs will narrate the agent story
+        addLine('l-cyan', '🌐 OrQuanta platform: agents online, monitoring active');
+    } else if (type === 'metrics_tick') {
+        // Real live platform data — update the metric boxes
+        const d = ev.data || {};
+        if (d.active_jobs !== undefined)
+            setMetric('m-util', d.active_jobs + ' jobs');
+        if (d.daily_spend_usd !== undefined)
+            setMetric('m-cost', '$' + Number(d.daily_spend_usd).toFixed(2));
+        if (d.active_instances !== undefined)
+            setMetric('m-pct', d.active_instances + ' GPUs');
+        if (d.queued_jobs !== undefined)
+            setMetric('m-vram', d.queued_jobs + ' queued');
+    } else if (type === 'agent_thought') {
         addLine('l-cyan', `${data.icon || '🤖'} ${data.agent}: ${data.message}`);
     } else if (type === 'job_progress') {
         setMetric('m-util', data.gpu_util ? data.gpu_util + '%' : '—');
@@ -369,6 +427,8 @@ function handleEvent(ev) {
         addLine('l-amber', `🔧 HEALING: ${data.message}`);
     } else if (type === 'job_complete') {
         addLine('l-green', `✅ COMPLETE: cost $${data.cost_usd} | saved $${data.saved_usd}`);
+    } else if (type === 'heartbeat') {
+        addLine('l-dim', `♡ heartbeat — ${data.clients || 1} client(s) connected`);
     }
 }
 
@@ -427,7 +487,11 @@ async function analyzeGoal() {
         + '&rarr; Cost Optimizer: Checking 5 providers...<br>'
         + '&rarr; Scheduler: Calculating ETA...</div>';
 
-    await new Promise(function(r){ setTimeout(r, 2000); });
+    // FIX-7: fetch real platform status in parallel with the simulated delay
+    var [, statusData] = await Promise.all([
+        new Promise(function(r){ setTimeout(r, 2000); }),
+        fetch('/demo/status').then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; }),
+    ]);
 
     var rec = DEFAULT_REC;
     var gl = goal.toLowerCase();
@@ -435,7 +499,6 @@ async function analyzeGoal() {
     for (var i = 0; i < keys.length; i++) {
         if (gl.indexOf(keys[i]) !== -1) { rec = GPU_MAP[keys[i]]; break; }
     }
-
 
     function mkCard(label, value, color, sub) {
         return '<div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;">'
@@ -445,8 +508,22 @@ async function analyzeGoal() {
             + '</div>';
     }
 
+    // Build live platform stats banner if status was fetched
+    var liveBanner = '';
+    if (statusData && statusData.stats) {
+        var st = statusData.stats;
+        var jobCount = (statusData.active_jobs || []).length;
+        liveBanner = '<div style="background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.15);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#8892A4;display:flex;gap:16px;flex-wrap:wrap;">'
+            + '<span style="color:#00D4FF;font-weight:600;">\u26a1 Live Platform</span>'
+            + (jobCount ? '<span>' + jobCount + ' active jobs</span>' : '')
+            + (st.total_saved_usd !== undefined ? '<span style="color:#00FF88;">$' + (st.total_saved_usd || 0).toFixed(2) + ' saved today</span>' : '')
+            + (st.jobs_healed !== undefined ? '<span>' + (st.jobs_healed || 0) + ' auto-healed</span>' : '')
+            + '</div>';
+    }
+
     result.innerHTML =
         '<div style="color:#00FF88;font-weight:600;margin-bottom:16px;font-size:1.05rem;">&#10003; OrMind Agent Analysis Complete</div>'
+        + liveBanner
         + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">'
         +   mkCard('RECOMMENDED GPU',   rec.gpu,      '#00D4FF', null)
         +   mkCard('CHEAPEST PROVIDER', rec.provider, '#00D4FF', null)

@@ -35,6 +35,7 @@ anthropic==0.40.0
 chromadb==0.5.23
 
 # ─── Cloud Providers ─────────────────────────────────────────────────────────
+runpod>=1.7.0                        # RunPod — cheapest GPU cloud (H100 @$2.49/hr)
 boto3==1.35.86                       # AWS
 google-cloud-compute==1.22.0         # GCP Compute
 google-cloud-monitoring==2.23.0      # GCP Monitoring

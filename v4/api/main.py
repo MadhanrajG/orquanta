@@ -20,6 +20,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from .routers import goals, jobs, agents, metrics, audit
 from .routers.admin import router as admin_router
+from .routers.billing import router as billing_router
 from .websocket.agent_stream import router as ws_router
 from .middleware.auth import authenticate_user, create_access_token, register_user
 from .models.schemas import (
@@ -47,8 +48,22 @@ ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup: boot agents. Shutdown: graceful stop."""
+    """Startup: validate env, boot agents, wire pipeline. Shutdown: graceful stop."""
     logger.info(f"OrQuanta Agentic v{VERSION} starting up…")
+
+    # ── 0. Validate production environment ────────────────────────────────
+    try:
+        from ..startup_validator import validate_env
+        env_report = validate_env(strict=False)
+        logger.info(
+            f"Env validated: {env_report['configured']} vars set | "
+            f"providers={'real' if env_report['has_real_providers'] else 'mock'} | "
+            f"stripe={'yes' if env_report['stripe_configured'] else 'no'}"
+        )
+    except SystemExit:
+        raise
+    except Exception as exc:
+        logger.warning(f"Env validation error (non-fatal): {exc}")
 
     # Start MasterOrchestrator
     from .routers.goals import get_orchestrator
@@ -72,6 +87,17 @@ async def lifespan(app: FastAPI):
 
     forecast_agent = ForecastAgent()
     await forecast_agent.start()
+
+    # ── Init production job pipeline ──────────────────────────────────────
+    from ..execution.pipeline import get_pipeline
+    pipeline = get_pipeline()
+    # Wire WebSocket broadcaster so pipeline can push live events to clients
+    try:
+        from .websocket.agent_stream import broadcast_to_all
+        pipeline.set_ws_broadcaster(broadcast_to_all)
+        logger.info("[Pipeline] WebSocket broadcaster wired.")
+    except Exception as exc:
+        logger.warning(f"[Pipeline] WS broadcaster not available: {exc}")
 
     # Seed a default admin user for first-boot and promote to admin role
     try:
@@ -251,7 +277,7 @@ _REGISTER_HTML = """
     <div style="margin-top:14px;font-size:.85rem;color:#64748b">Redirecting in 2 seconds</div>
   </div>
   <hr>
-  <div class="login-link">Already have an account? <a href="/docs#/Auth/login_auth_login_post">Sign in via API</a></div>
+  <div class="login-link">Already have an account? <a href="/app">Sign in &rarr;</a></div>
 </div>
 <script>
 async function doRegister() {
@@ -299,67 +325,197 @@ _WELCOME_HTML = """
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to OrQuanta</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <title>Welcome to OrQuanta — You're In!</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{background:#050608;color:#e2e8f0;font-family:'Inter',sans-serif;min-height:100vh;padding:24px 16px}
-    .top{text-align:center;padding:40px 0 32px}
-    .logo{font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;background:linear-gradient(135deg,#00D4FF,#7B2FFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-    h1{font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;margin:16px 0 8px}
-    .sub{color:#8892A4;font-size:.95rem;margin-bottom:8px}
-    .email-badge{display:inline-block;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);border-radius:20px;color:#00D4FF;font-size:.82rem;padding:4px 14px;margin-bottom:32px}
-    .steps{font-family:'Space Grotesk',sans-serif;font-size:.75rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#8892A4;text-align:center;margin-bottom:16px}
-    .cards{display:grid;grid-template-columns:1fr;gap:14px;max-width:480px;margin:0 auto 40px}
-    .card{background:rgba(15,22,36,0.9);border:1px solid rgba(0,212,255,0.15);border-radius:14px;padding:24px;cursor:pointer;text-decoration:none;display:block;transition:transform .15s,box-shadow .15s}
-    .card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,212,255,0.12)}
-    .card.primary{border-color:rgba(0,212,255,0.4);background:rgba(0,212,255,0.05)}
-    .num{font-family:'Space Grotesk',sans-serif;font-size:.75rem;font-weight:700;color:#00D4FF;letter-spacing:1px;margin-bottom:8px}
-    .card-title{font-family:'Space Grotesk',sans-serif;font-size:1.05rem;font-weight:700;margin-bottom:6px}
-    .card-desc{color:#8892A4;font-size:.88rem;line-height:1.55}
-    .tag{display:inline-block;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.25);color:#00FF88;font-size:.72rem;padding:2px 10px;border-radius:12px;margin-top:10px}
-    .footer{text-align:center;color:#64748b;font-size:.82rem;padding-bottom:32px}
-    .footer a{color:#00D4FF;text-decoration:none}
+    body{background:#050608;color:#e2e8f0;font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
+
+    /* ── Animated gradient hero ── */
+    .hero{position:relative;text-align:center;padding:64px 24px 48px;overflow:hidden}
+    .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(0,212,255,0.13),transparent 70%);pointer-events:none}
+    .hero::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:1px;height:120px;background:linear-gradient(to bottom,rgba(0,212,255,0.6),transparent)}
+
+    /* ── Success badge ── */
+    .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 18px;border-radius:999px;border:1px solid rgba(0,255,136,0.4);background:rgba(0,255,136,0.08);font-size:13px;font-weight:600;color:#00FF88;margin-bottom:28px;animation:fadeSlideDown .5s ease}
+    .badge-dot{width:8px;height:8px;border-radius:50%;background:#00FF88;animation:pulse 2s infinite}
+
+    /* ── Typography ── */
+    .logo{font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:600;color:#8892A4;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px}
+    h1{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;line-height:1.15;margin-bottom:12px;animation:fadeSlideDown .5s .1s ease both}
+    .h1-sub{color:#8892A4;font-size:.95rem;margin-bottom:20px;animation:fadeSlideDown .5s .15s ease both}
+    .email-pill{display:inline-block;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);border-radius:999px;color:#00D4FF;font-size:.82rem;padding:5px 16px;margin-bottom:40px;animation:fadeSlideDown .5s .2s ease both}
+
+    /* ── Token box (collapsed) ── */
+    .token-section{max-width:540px;margin:0 auto 40px;animation:fadeSlideDown .5s .25s ease both}
+    .token-toggle{background:rgba(15,22,36,0.8);border:1px solid rgba(0,212,255,0.15);border-radius:10px;padding:12px 18px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:.85rem;color:#8892A4;user-select:none;transition:border-color .2s}
+    .token-toggle:hover{border-color:rgba(0,212,255,0.35)}
+    .token-toggle span{color:#00D4FF;font-weight:600}
+    .token-body{display:none;background:rgba(0,0,0,0.4);border:1px solid rgba(0,212,255,0.12);border-top:none;border-radius:0 0 10px 10px;padding:14px 16px}
+    .token-body.open{display:block}
+    .token-val{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#A78BFA;word-break:break-all;line-height:1.6;margin-bottom:10px}
+    .copy-btn{background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:6px;color:#00D4FF;font-size:.78rem;padding:5px 14px;cursor:pointer;font-family:'Inter',sans-serif;transition:background .2s}
+    .copy-btn:hover{background:rgba(0,212,255,0.2)}
+    .copy-hint{font-size:.75rem;color:#64748b;margin-top:8px}
+
+    /* ── Action cards ── */
+    .cards-label{font-family:'Space Grotesk',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#8892A4;text-align:center;margin-bottom:14px}
+    .cards{display:grid;grid-template-columns:1fr;gap:14px;max-width:520px;margin:0 auto 40px;padding:0 20px}
+    .card{background:rgba(15,22,36,0.9);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:24px 26px;text-decoration:none;display:block;transition:transform .15s,box-shadow .15s,border-color .15s}
+    .card:hover{transform:translateY(-3px);box-shadow:0 12px 36px rgba(0,0,0,.4)}
+    .card.c1{border-color:rgba(0,212,255,0.3);background:linear-gradient(135deg,rgba(0,212,255,0.05),rgba(123,47,255,0.04))}
+    .card.c1:hover{box-shadow:0 12px 36px rgba(0,212,255,.15)}
+    .card.c2:hover{box-shadow:0 12px 36px rgba(0,255,136,.08);border-color:rgba(0,255,136,0.2)}
+    .card.c3:hover{box-shadow:0 12px 36px rgba(167,139,250,.08);border-color:rgba(167,139,250,0.2)}
+    .card-num{font-family:'Space Grotesk',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px}
+    .c1 .card-num{color:#00D4FF} .c2 .card-num{color:#00FF88} .c3 .card-num{color:#A78BFA}
+    .card-icon{font-size:26px;margin-bottom:10px}
+    .card-title{font-family:'Space Grotesk',sans-serif;font-size:1.05rem;font-weight:700;margin-bottom:6px;color:#e2e8f0}
+    .card-desc{color:#8892A4;font-size:.86rem;line-height:1.6}
+    .card-tag{display:inline-flex;align-items:center;gap:5px;margin-top:12px;font-size:.75rem;font-weight:600;padding:3px 12px;border-radius:999px}
+    .c1 .card-tag{background:rgba(0,212,255,0.1);color:#00D4FF;border:1px solid rgba(0,212,255,0.25)}
+    .c2 .card-tag{background:rgba(0,255,136,0.08);color:#00FF88;border:1px solid rgba(0,255,136,0.25)}
+    .c3 .card-tag{background:rgba(167,139,250,0.08);color:#A78BFA;border:1px solid rgba(167,139,250,0.25)}
+
+    /* ── Footer ── */
+    .foot{text-align:center;color:#475569;font-size:.82rem;padding:0 24px 40px;line-height:1.8}
+    .foot a{color:#00D4FF;text-decoration:none}
+
+    /* ── Animations ── */
+    @keyframes fadeSlideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+
+    /* ── Confetti canvas ── */
+    #confetti{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:100}
   </style>
 </head>
 <body>
-<div class="top">
+<canvas id="confetti"></canvas>
+
+<div class="hero">
   <div class="logo">OrQuanta</div>
-  <h1>You're in. Welcome aboard!</h1>
-  <p class="sub">Your 14-day free trial has started. Here's what to do next:</p>
-  <div class="email-badge" id="user-email">Account active</div>
+  <div class="badge"><span class="badge-dot"></span> Account created successfully</div>
+  <h1>You're in.<br>Welcome aboard! 🚀</h1>
+  <p class="h1-sub">Your 14-day free trial starts now. Zero setup. Cancel anytime.</p>
+  <div class="email-pill" id="user-email">Account active</div>
 </div>
-<p class="steps">Start here</p>
+
+<!-- JWT Token for devs -->
+<div class="token-section">
+  <div class="token-toggle" onclick="toggleToken(this)">
+    <span>🔑 Your API token is ready</span>
+    <span id="tok-arrow" style="transition:transform .2s">▾</span>
+  </div>
+  <div class="token-body" id="tok-body">
+    <div class="token-val" id="tok-val">Loading your JWT token...</div>
+    <button class="copy-btn" onclick="copyToken()">Copy Token</button>
+    <div class="copy-hint">Use as <code style="color:#A78BFA">Authorization: Bearer &lt;token&gt;</code> in API calls</div>
+  </div>
+</div>
+
+<p class="cards-label">Start here</p>
 <div class="cards">
-  <a class="card primary" href="/demo">
-    <div class="num">STEP 1 &mdash; RECOMMENDED</div>
-    <div class="card-title">Try the Live Demo</div>
-    <div class="card-desc">Watch 5 AI agents manage a real GPU job in real time. See cost savings, self-healing, and multi-cloud routing live. Takes 2 minutes.</div>
-    <div class="tag">No setup required</div>
+
+  <a class="card c1" href="/app">
+    <div class="card-num">Step 1 — Recommended</div>
+    <div class="card-icon">⚡</div>
+    <div class="card-title">Open Your Dashboard</div>
+    <div class="card-desc">Your personal mission control. Submit AI goals, monitor live agents, track costs, and view audit logs — all in one place.</div>
+    <div class="card-tag">↗ Open now</div>
   </a>
-  <a class="card" href="/demo#goal-input">
-    <div class="num">STEP 2</div>
+
+  <a class="card c2" href="/demo#goal-input">
+    <div class="card-num">Step 2</div>
+    <div class="card-icon">🧠</div>
     <div class="card-title">Analyze Your First GPU Goal</div>
-    <div class="card-desc">Type your workload in plain English &mdash; "Fine-tune Llama 3 on my data, keep cost under $100" &mdash; and get an instant cost breakdown from the AI.</div>
-    <div class="tag">AI-powered</div>
+    <div class="card-desc">Type your workload in plain English — "Fine-tune Llama 3 on my data, cost under $100" — and our AI gives you an instant cost breakdown across 5 cloud providers.</div>
+    <div class="card-tag">2 min · No setup</div>
   </a>
-  <a class="card" href="/docs">
-    <div class="num">STEP 3 &mdash; FOR DEVELOPERS</div>
-    <div class="card-title">Connect via API</div>
-    <div class="card-desc">Integrate OrQuanta into your ML pipeline using the REST API. Your JWT token is saved &mdash; use it as a Bearer token in the Authorize button.</div>
-    <div class="tag">Developers only</div>
+
+  <a class="card c3" href="/demo">
+    <div class="card-num">Step 3</div>
+    <div class="card-icon">📡</div>
+    <div class="card-title">Watch Agents Work Live</div>
+    <div class="card-desc">See 5 specialized AI agents — Scheduler, Cost Optimizer, Healing, Forecast, Audit — orchestrating a real GPU job with live streaming logs and metrics.</div>
+    <div class="card-tag">Live stream</div>
   </a>
+
 </div>
-<div class="footer">
-  Questions? Reply to this page &mdash; <a href="/demo">Back to Demo</a>
+
+<div class="foot">
+  Need help? <a href="mailto:orquanta.founder@gmail.com">orquanta.founder@gmail.com</a> &nbsp;·&nbsp;
+  <a href="/demo">Back to Demo</a> &nbsp;·&nbsp;
+  <a href="/app">Dashboard →</a>
 </div>
+
 <script>
-var em = localStorage.getItem('orquanta_email');
+// ── Token display ──────────────────────────────────────────────
+var tok = localStorage.getItem('orquanta_token');
+var em  = localStorage.getItem('orquanta_email');
 if (em) document.getElementById('user-email').textContent = em;
+if (tok) {
+  var el = document.getElementById('tok-val');
+  el.textContent = tok;
+}
+
+function toggleToken(btn){
+  var body  = document.getElementById('tok-body');
+  var arrow = document.getElementById('tok-arrow');
+  var open  = body.classList.toggle('open');
+  arrow.style.transform = open ? 'rotate(180deg)' : '';
+}
+
+function copyToken(){
+  var t = document.getElementById('tok-val').textContent;
+  navigator.clipboard.writeText(t).then(function(){
+    var b = document.querySelector('.copy-btn');
+    b.textContent = '✓ Copied!';
+    setTimeout(function(){ b.textContent = 'Copy Token'; }, 2000);
+  });
+}
+
+// ── Confetti burst ─────────────────────────────────────────────
+(function(){
+  var cv = document.getElementById('confetti');
+  var cx = cv.getContext('2d');
+  cv.width = window.innerWidth; cv.height = window.innerHeight;
+  var pieces = [];
+  var colors = ['#00D4FF','#7B2FFF','#00FF88','#FFB800','#FF4444','#A78BFA'];
+  for(var i=0;i<120;i++){
+    pieces.push({
+      x: Math.random()*cv.width, y: -20-Math.random()*200,
+      w: 8+Math.random()*8, h: 4+Math.random()*4,
+      r: Math.random()*Math.PI*2, dr: (Math.random()-.5)*.2,
+      dx: (Math.random()-.5)*3, dy: 2+Math.random()*3,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      alpha: 1
+    });
+  }
+  var frame=0;
+  function draw(){
+    cx.clearRect(0,0,cv.width,cv.height);
+    var alive=false;
+    pieces.forEach(function(p){
+      if(p.y>cv.height+20||p.alpha<=0) return;
+      alive=true;
+      p.x+=p.dx; p.y+=p.dy; p.r+=p.dr;
+      if(p.y>cv.height*0.7) p.alpha-=0.02;
+      cx.save(); cx.globalAlpha=Math.max(0,p.alpha);
+      cx.translate(p.x,p.y); cx.rotate(p.r);
+      cx.fillStyle=p.color;
+      cx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      cx.restore();
+    });
+    if(alive && frame++<180) requestAnimationFrame(draw);
+    else { cx.clearRect(0,0,cv.width,cv.height); cv.style.display='none'; }
+  }
+  draw();
+})();
 </script>
 </body>
 </html>
 """
+
 
 
 @app.get("/welcome", response_class=HTMLResponse, tags=["Auth"], summary="Post-signup welcome page", include_in_schema=False)
@@ -450,6 +606,7 @@ app.include_router(agents.router)
 app.include_router(metrics.router)
 app.include_router(audit.router)
 app.include_router(admin_router)
+app.include_router(billing_router)   # /api/v1/billing — Stripe + subscriptions
 app.include_router(ws_router)
 
 # Demo router — always included; active only when DEMO_MODE=true
@@ -462,7 +619,8 @@ except Exception:
 
 # ─── Serve built React frontend ────────────────────────────────────────────
 
-_DIST_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "v4", "frontend", "dist")
+# FIX-9: Resolve from the v4/ root (two levels up from api/) — avoids double v4/ prefix
+_DIST_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 _DIST_DIR = os.path.abspath(_DIST_DIR)
 
 if os.path.isdir(_DIST_DIR):
@@ -521,19 +679,47 @@ async def provider_prices(gpu_type: str = "A100"):
 
 @app.get("/providers/health", tags=["Providers"], summary="Provider API health check")
 async def provider_health():
-    """Check connectivity to all 5 cloud providers."""
+    """Check connectivity to all 6 cloud providers."""
     if _DEMO_MODE:
         return {
             "providers": {
-                "aws": True, "gcp": True, "azure": True,
-                "coreweave": True, "lambda": True,
+                "runpod": True, "lambda": True, "aws": True,
+                "gcp": True, "azure": True, "coreweave": True,
             },
             "all_healthy": True,
+            "mode": "demo",
         }
     from ..providers.provider_router import get_router
     router_obj = get_router()
     health = await router_obj.check_provider_health()
     return {"providers": health, "all_healthy": all(health.values())}
+
+
+@app.get("/health/readiness", tags=["System"], summary="Production readiness scorecard")
+async def readiness_check():
+    """Return a production readiness score: JWT, RunPod, LLM, Stripe, DB, Redis."""
+    from ..startup_validator import get_production_readiness
+    from ..execution.pipeline import get_pipeline
+    pipeline = get_pipeline()
+    stats = pipeline.get_stats()
+    readiness = get_production_readiness()
+
+    # FIX B02: In demo mode, report as ready so load balancers don't block
+    if _DEMO_MODE:
+        readiness["ready"] = True
+        readiness["verdict"] = "🟡 Demo Mode — All Systems Operational"
+        readiness["demo_mode"] = True
+
+    return {
+        "readiness": readiness,
+        "pipeline": {
+            "total_jobs": stats["total"],
+            "total_cost_usd": stats["total_cost_usd"],
+            "total_gpu_hours": stats["total_gpu_hours"],
+        },
+        "version": VERSION,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 # ─── Entry point ──────────────────────────────────────────────────────────

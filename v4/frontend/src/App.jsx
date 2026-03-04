@@ -57,8 +57,8 @@ function AuthProvider({ children }) {
 /* ─── Login Page ───────────────────────────────────────────────────────── */
 function LoginPage() {
     const { login } = useAuth()
-    const [email, setEmail] = useState('admin@orquanta.ai')
-    const [password, setPassword] = useState('orquanta-admin-2024')
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
 
@@ -117,10 +117,49 @@ function LoginPage() {
                         </button>
                     </form>
 
-                    <p style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', marginTop: 20 }}>
-                        Default: admin@orquanta.ai / orquanta-admin-2024
-                    </p>
+
                 </div>
+            </div>
+        </div>
+    )
+}
+
+/* ─── Carbon Tracker (Coming Soon) ─────────────────────────────────────── */
+function CarbonTrackerPage() {
+    return (
+        <div className="space-y-6 animate-fade-in">
+            <div>
+                <h1 className="text-2xl font-bold text-white">Carbon Tracker</h1>
+                <p className="text-slate-400 text-sm mt-0.5">Route workloads to the greenest regions automatically</p>
+            </div>
+            {/* Coming soon banner */}
+            <div className="glass-card p-8 text-center relative overflow-hidden">
+                <div className="absolute inset-0 opacity-5" style={{ background: 'radial-gradient(ellipse at 50% 0%, #00FF88, transparent 70%)' }} />
+                <div style={{ fontSize: 56, marginBottom: 16 }}>🌿</div>
+                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', marginBottom: 12, color: 'white' }}>Carbon-Aware Scheduling</h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: 28, maxWidth: 480, margin: '0 auto 28px' }}>
+                    OrQuanta will automatically detect real-time carbon intensity per region
+                    and shift your GPU jobs to the lowest-carbon available locations.
+                </p>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 20px', border: '1px solid rgba(0,255,136,0.3)', borderRadius: 999, background: 'rgba(0,255,136,0.06)', color: '#00FF88', fontSize: 13 }}>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#00FF88', display: 'inline-block', animation: 'pulse 2s infinite' }} />
+                    In Development — Available in v1.1
+                </div>
+            </div>
+            {/* Preview cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[
+                    { icon: '⚡', title: 'Real-Time Carbon Intensity', desc: 'gCO₂eq/kWh tracked per region via ElectricityMaps API', color: '#00FF88' },
+                    { icon: '🗺️', title: 'Green Region Routing', desc: 'Automatic job migration to lowest-carbon providers', color: '#00D4FF' },
+                    { icon: '📊', title: 'Emissions Reporting', desc: 'Monthly carbon footprint reports & offset tracking', color: '#7B2FFF' },
+                ].map(c => (
+                    <div key={c.title} className="glass-card p-5" style={{ opacity: 0.75 }}>
+                        <div className="text-3xl mb-3">{c.icon}</div>
+                        <h3 className="font-semibold text-white text-sm mb-1.5">{c.title}</h3>
+                        <p className="text-xs text-slate-500 leading-relaxed">{c.desc}</p>
+                        <div className="mt-3 h-0.5 rounded-full" style={{ background: `${c.color}30` }} />
+                    </div>
+                ))}
             </div>
         </div>
     )
@@ -137,69 +176,141 @@ const navItems = [
     { to: '/carbon', icon: Leaf, label: 'Carbon Tracker' },
 ]
 
-function Sidebar({ collapsed, onToggle }) {
+function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
     const { logout, user } = useAuth()
     const w = collapsed ? 64 : 220
 
     return (
-        <aside style={{ width: w, minHeight: '100vh', background: 'var(--surface-800)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, zIndex: 50, transition: 'width 0.25s ease', overflow: 'hidden' }}>
-            {/* Logo strip */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '18px 14px 14px', borderBottom: '1px solid var(--border)', minHeight: 64 }}>
-                <div style={{ width: 32, height: 32, minWidth: 32, background: 'linear-gradient(135deg,#3a52eb,#7a9bfa)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Cpu size={16} color="#fff" />
-                </div>
-                {!collapsed && <span style={{ fontWeight: 800, fontSize: 14, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>OrQuanta v1.0</span>}
-                <button onClick={onToggle} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
-                    {collapsed ? <Menu size={16} /> : <X size={16} />}
-                </button>
-            </div>
-
-            {/* Nav items */}
-            <nav style={{ flex: 1, padding: '10px 8px' }}>
-                {!collapsed && <div className="nav-label">Platform</div>}
-                {navItems.map(({ to, icon: Icon, label, exact }) => (
-                    <NavLink
-                        key={to} to={to} end={exact}
-                        className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-                        title={collapsed ? label : undefined}
-                    >
-                        <Icon size={17} style={{ minWidth: 17 }} />
-                        {!collapsed && <span>{label}</span>}
-                    </NavLink>
-                ))}
-            </nav>
-
-            {/* User footer */}
-            <div style={{ padding: '12px 10px', borderTop: '1px solid var(--border)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
-                    <div className="user-avatar" style={{ flexShrink: 0 }}>
-                        {user?.email?.[0]?.toUpperCase() || 'A'}
+        <>
+            {/* Mobile backdrop overlay */}
+            {mobileOpen && (
+                <div
+                    onClick={onMobileClose}
+                    style={{
+                        position: 'fixed', inset: 0,
+                        background: 'rgba(0,0,0,0.6)',
+                        zIndex: 49, backdropFilter: 'blur(2px)',
+                    }}
+                />
+            )}
+            <aside
+                className="orq-sidebar"
+                data-mobile-open={mobileOpen}
+                style={{
+                    width: w, minHeight: '100vh',
+                    background: 'var(--surface-800)',
+                    borderRight: '1px solid var(--border)',
+                    display: 'flex', flexDirection: 'column',
+                    position: 'fixed', top: 0, left: 0,
+                    zIndex: 50,
+                    transition: 'width 0.25s ease, transform 0.25s ease',
+                    overflow: 'hidden',
+                }}
+            >
+                {/* Logo strip */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '18px 14px 14px', borderBottom: '1px solid var(--border)', minHeight: 64 }}>
+                    <div style={{ width: 32, height: 32, minWidth: 32, background: 'linear-gradient(135deg,#3a52eb,#7a9bfa)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Cpu size={16} color="#fff" />
                     </div>
-                    {!collapsed && (
-                        <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {user?.email || 'Admin'}
-                        </span>
-                    )}
-                    <button onClick={logout} title="Logout" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
-                        <LogOut size={14} />
+                    {!collapsed && <span style={{ fontWeight: 800, fontSize: 14, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>OrQuanta v1.0</span>}
+                    <button onClick={onToggle} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
+                        {collapsed ? <Menu size={16} /> : <X size={16} />}
                     </button>
                 </div>
-            </div>
-        </aside>
+
+                {/* Nav items */}
+                <nav style={{ flex: 1, padding: '10px 8px' }}>
+                    {!collapsed && <div className="nav-label">Platform</div>}
+                    {navItems.map(({ to, icon: Icon, label, exact }) => (
+                        <NavLink
+                            key={to} to={to} end={exact}
+                            onClick={onMobileClose}
+                            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+                            title={collapsed ? label : undefined}
+                        >
+                            <Icon size={17} style={{ minWidth: 17 }} />
+                            {!collapsed && <span>{label}</span>}
+                        </NavLink>
+                    ))}
+                </nav>
+
+                {/* User footer */}
+                <div style={{ padding: '12px 10px', borderTop: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
+                        <div className="user-avatar" style={{ flexShrink: 0 }}>
+                            {user?.email?.[0]?.toUpperCase() || 'A'}
+                        </div>
+                        {!collapsed && (
+                            <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {user?.email || 'Admin'}
+                            </span>
+                        )}
+                        <button onClick={logout} title="Logout" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
+                            <LogOut size={14} />
+                        </button>
+                    </div>
+                </div>
+            </aside>
+        </>
     )
 }
 
 /* ─── Protected Layout ──────────────────────────────────────────────────── */
 function AppLayout() {
     const [collapsed, setCollapsed] = useState(false)
+    const [mobileOpen, setMobileOpen] = useState(false)
+    const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768)
     const navigate = useNavigate()
     const { paletteOpen, setPaletteOpen, shortcutsOpen, setShortcutsOpen } = useCommandPalette(navigate)
-    const ml = collapsed ? 72 : 228
+
+    useEffect(() => {
+        const handler = () => setIsMobile(window.innerWidth < 768)
+        window.addEventListener('resize', handler)
+        return () => window.removeEventListener('resize', handler)
+    }, [])
+
+    const ml = isMobile ? 0 : (collapsed ? 72 : 228)
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh' }}>
-            <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(c => !c)} />
-            <main style={{ flex: 1, marginLeft: ml, padding: 28, minHeight: '100vh', transition: 'margin-left 0.25s ease' }}>
+            <Sidebar
+                collapsed={collapsed}
+                onToggle={() => setCollapsed(c => !c)}
+                mobileOpen={mobileOpen}
+                onMobileClose={() => setMobileOpen(false)}
+            />
+
+            {/* Mobile top bar */}
+            {isMobile && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, height: 56,
+                    background: 'var(--surface-800)',
+                    borderBottom: '1px solid var(--border)',
+                    display: 'flex', alignItems: 'center',
+                    padding: '0 16px', gap: 12, zIndex: 48,
+                }}>
+                    <button
+                        onClick={() => setMobileOpen(true)}
+                        style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}
+                    >
+                        <Menu size={20} />
+                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 26, height: 26, background: 'linear-gradient(135deg,#3a52eb,#7a9bfa)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Cpu size={13} color="#fff" />
+                        </div>
+                        <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>OrQuanta</span>
+                    </div>
+                </div>
+            )}
+
+            <main style={{
+                flex: 1,
+                marginLeft: ml,
+                padding: isMobile ? '76px 16px 24px' : 28,
+                minHeight: '100vh',
+                transition: 'margin-left 0.25s ease',
+            }}>
                 <Routes>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/goals" element={<GoalSubmit />} />
@@ -207,7 +318,7 @@ function AppLayout() {
                     <Route path="/jobs" element={<JobManager />} />
                     <Route path="/costs" element={<CostAnalytics />} />
                     <Route path="/audit" element={<AuditLog />} />
-                    <Route path="/carbon" element={<CostAnalytics />} />
+                    <Route path="/carbon" element={<CarbonTrackerPage />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </main>

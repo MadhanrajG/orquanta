@@ -149,12 +149,16 @@ export default function CostAnalytics() {
                             { provider: 'azure', region: 'eastus', current_price_usd_hr: 5.10, availability: 'high' },
                             { provider: 'aws', region: 'us-east-1', current_price_usd_hr: 5.20, availability: 'low' },
                         ]).map((p, i) => (
-                            <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.04]">
+                            <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                                style={{
+                                    background: i === 0 ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.06)',
+                                    border: i === 0 ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(255,255,255,0.1)',
+                                }}>
                                 {i === 0 && <span className="badge badge-green text-xs">Best</span>}
-                                {i > 0 && <span className="text-xs text-slate-600 w-8 text-center">#{i + 1}</span>}
+                                {i > 0 && <span className="text-xs font-semibold w-8 text-center" style={{ color: '#64748b' }}>#{i + 1}</span>}
                                 <span className="text-sm text-slate-300 flex-1">{p.provider} — {p.region}</span>
                                 <span className={`badge ${p.availability === 'high' ? 'badge-green' : p.availability === 'medium' ? 'badge-yellow' : 'badge-red'}`}>{p.availability}</span>
-                                <span className="text-sm font-bold text-white">${(p.current_price_usd_hr ?? 0).toFixed(2)}<span className="text-xs text-slate-500">/hr</span></span>
+                                <span className="text-sm font-bold text-white">${(p.current_price_usd_hr ?? 0).toFixed(2)}<span className="text-xs text-slate-400">/hr</span></span>
                             </div>
                         ))}
                     </div>

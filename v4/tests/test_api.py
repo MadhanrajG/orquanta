@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from fastapi.testclient import TestClient
 from v4.api.main import app
-from v4.api.middleware.auth import _USERS, register_user, create_access_token
+from v4.api.middleware.auth import register_user, authenticate_user, create_access_token
 
 
 @pytest.fixture(scope="module")
@@ -20,14 +20,19 @@ def client():
 
 @pytest.fixture(scope="module")
 def admin_token():
+    """Register a test user (idempotent) and return an admin JWT for testing."""
     try:
         register_user("test@orquanta.ai", "testpass123", "Test User")
     except ValueError:
-        pass
-    from v4.api.middleware.auth import _USERS
-    user = _USERS.get("test@orquanta.ai")
+        pass  # Already registered — fine
+    # Promote to admin directly in SQLite for testing
+    from v4.api.middleware.auth import _get_db
+    conn = _get_db()
+    conn.execute("UPDATE users SET role = 'admin' WHERE email = ?", ("test@orquanta.ai",))
+    conn.commit()
+    user = conn.execute("SELECT * FROM users WHERE email = ?", ("test@orquanta.ai",)).fetchone()
+    conn.close()
     if user:
-        _USERS["test@orquanta.ai"]["role"] = "admin"
         return create_access_token(user["id"], user["email"], "admin")
     return "no-user"
 
@@ -49,7 +54,8 @@ def test_health_check(client):
 
 
 def test_root(client):
-    res = client.get("/")
+    # Root redirects to /app (302). Follow redirect to get the API info.
+    res = client.get("/api")
     assert res.status_code == 200
     data = res.json()
     assert "OrQuanta" in data["name"]

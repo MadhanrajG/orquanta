@@ -110,7 +110,7 @@ async def get_current_user(
             return {
                 "sub": "legacy-api-user",
                 "email": "api@orquanta.internal",
-                "role": "admin",
+                "role": "user",  # FIX-10: was "admin" — legacy key must not grant admin
                 "auth_method": "api_key",
             }
 

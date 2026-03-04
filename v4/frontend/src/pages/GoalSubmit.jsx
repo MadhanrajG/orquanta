@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Send, Mic, Loader, ChevronRight, Cpu, Zap, DollarSign, Clock, CheckCircle, AlertCircle } from 'lucide-react'
 import { useAuth } from '../App.jsx'
+import { useNavigate } from 'react-router-dom'
 
 const API = import.meta.env.VITE_API_URL || ''
 
@@ -67,11 +68,17 @@ function CostPreview({ goal }) {
     if (!est) return null
     return (
         <div className="animate-fade-in rounded-2xl p-5 mt-4"
-            style={{ background: 'rgba(0,212,255,0.04)', border: '1px solid rgba(0,212,255,0.15)' }}>
+            style={{
+                background: 'rgba(0,212,255,0.08)',
+                border: '1px solid rgba(0,212,255,0.25)',
+                boxShadow: '0 0 24px rgba(0,212,255,0.06)'
+            }}>
             <div className="flex items-center gap-2 mb-4">
                 <span className="text-sm font-semibold text-cyan-400">AI Estimate</span>
-                <span className="text-xs px-2 py-0.5 rounded-full text-slate-400"
-                    style={{ background: 'rgba(255,255,255,0.06)' }}>{est.confidence}% confidence</span>
+                <span className="text-xs px-2 py-0.5 rounded-full"
+                    style={{ background: 'rgba(0,212,255,0.15)', color: '#7dd3fc', border: '1px solid rgba(0,212,255,0.2)' }}>
+                    {est.confidence}% confidence
+                </span>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
@@ -81,15 +88,19 @@ function CostPreview({ goal }) {
                     { label: 'Est. Cost', value: `$${est.total}`, icon: '💰', highlight: true },
                 ].map(item => (
                     <div key={item.label} className="rounded-xl p-3 text-center"
-                        style={{ background: item.highlight ? 'rgba(0,255,136,0.08)' : 'rgba(255,255,255,0.04)' }}>
+                        style={{
+                            background: item.highlight ? 'rgba(0,255,136,0.12)' : 'rgba(255,255,255,0.07)',
+                            border: item.highlight ? '1px solid rgba(0,255,136,0.25)' : '1px solid rgba(255,255,255,0.1)',
+                        }}>
                         <div className="text-lg mb-1">{item.icon}</div>
                         <div className="text-sm font-bold" style={{ color: item.highlight ? '#00FF88' : 'white' }}>{item.value}</div>
-                        <div className="text-xs text-slate-500 mt-0.5">{item.label}</div>
+                        <div className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>{item.label}</div>
                     </div>
                 ))}
             </div>
             {est.saved_vs_aws > 0 && (
-                <div className="mt-3 text-center text-xs text-slate-400">
+                <div className="mt-3 text-center text-xs"
+                    style={{ color: '#94a3b8' }}>
                     Saves <span className="text-green-400 font-semibold">${est.saved_vs_aws}</span> vs AWS on-demand
                 </div>
             )}
@@ -181,13 +192,16 @@ function AgentTheater({ phase, activeAgent }) {
 /* ─── Main GoalSubmit ─────────────────────────────────────────────────── */
 export default function GoalSubmit() {
     const { token } = useAuth()
+    const navigate = useNavigate()
     const [goal, setGoal] = useState('')
     const [phase, setPhase] = useState('idle') // idle | planning | running | complete | error
     const [activeAgent, setAgent] = useState(0)
     const [jobId, setJobId] = useState(null)
+    const [jobResult, setJobResult] = useState(null)
     const [error, setError] = useState('')
     const [pIdx, setPIdx] = useState(0)
     const textRef = useRef(null)
+    const costEstRef = useRef(null)
 
     // Cycle placeholder
     useEffect(() => {
@@ -210,23 +224,55 @@ export default function GoalSubmit() {
     const handleSubmit = async (e) => {
         e?.preventDefault()
         if (!goal.trim() || phase === 'planning') return
-        setError(''); setPhase('planning'); setAgent(0); setJobId(null)
+        setError(''); setPhase('planning'); setAgent(0); setJobId(null); setJobResult(null)
+
+        // Detect GPU type from goal text for real job submission
+        const isLarge = /70b|72b|large|xl|huge|8x/i.test(goal)
+        const isMedium = /7b|13b|medium|fine-?tune|llama|mistral|whisper/i.test(goal)
+        const gpuType = isLarge ? 'A100' : isMedium ? 'A100' : 'T4'
+        const maxCost = costEstRef.current?.total || (isLarge ? 60 : isMedium ? 20 : 5)
+
         try {
-            const res = await fetch(`${API}/goals`, {
+            // FIX B01: Correct API path — was /goals, now /api/v1/goals
+            const res = await fetch(`${API}/api/v1/goals`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ goal, priority: 'normal' }),
             })
-            if (res.ok) {
-                const data = await res.json()
-                setJobId(data.job_id || data.goal_id || 'demo-' + Date.now().toString(36))
+            const data = res.ok ? await res.json() : {}
+            const goalJobId = data.job_id || data.goal_id || null
+
+            // FIX B01 cont: Also create job in pipeline so it shows in Job Manager
+            try {
+                const jobRes = await fetch(`${API}/api/v1/jobs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({
+                        intent: goal,
+                        gpu_type: gpuType,
+                        gpu_count: 1,
+                        provider: null,
+                        max_cost_usd: maxCost,
+                        max_runtime_minutes: 120,
+                    }),
+                })
+                if (jobRes.ok) {
+                    const jobData = await jobRes.json()
+                    setJobId(jobData.job_id || goalJobId || 'demo-' + Date.now().toString(36))
+                    setJobResult(jobData)
+                } else {
+                    setJobId(goalJobId || 'demo-' + Date.now().toString(36))
+                }
+            } catch {
+                setJobId(goalJobId || 'demo-' + Date.now().toString(36))
             }
         } catch {
             // In demo mode, just animate through without real API
+            setJobId('demo-' + Date.now().toString(36))
         }
     }
 
-    const handleReset = () => { setPhase('idle'); setGoal(''); setAgent(0); setJobId(null) }
+    const handleReset = () => { setPhase('idle'); setGoal(''); setAgent(0); setJobId(null); setJobResult(null) }
 
     return (
         <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
@@ -303,13 +349,24 @@ export default function GoalSubmit() {
                                 <CheckCircle size={20} className="text-green-400" />
                             </div>
                             <div className="flex-1">
-                                <p className="font-semibold text-white mb-1">Job Running on Lambda Labs A100</p>
-                                <p className="text-sm text-slate-400 mb-3">5 agents coordinated. GPU provisioned in 18 seconds. Cost tracking live.</p>
+                                {/* FIX B02: Dynamic provider/GPU from real job result, not hardcoded */}
+                                <p className="font-semibold text-white mb-1">
+                                    {jobResult?.provider
+                                        ? `Job Running on ${jobResult.provider.charAt(0).toUpperCase() + jobResult.provider.slice(1)} ${jobResult.gpu_type || 'GPU'}`
+                                        : 'Job Running on GPU Cloud'}
+                                </p>
+                                <p className="text-sm text-slate-400 mb-3">
+                                    {jobResult?.job_id
+                                        ? `Job ${jobResult.job_id.slice(0, 14)}… provisioned. Cost tracking live.`
+                                        : '5 agents coordinated. GPU provisioned. Cost tracking live.'}
+                                </p>
                                 <div className="flex gap-2">
-                                    <button onClick={() => window.location.hash = '/jobs'}
+                                    {/* FIX B03: Broken hash nav replaced with React Router navigate */}
+                                    <button
+                                        onClick={() => navigate('/jobs')}
                                         className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-white"
                                         style={{ background: 'rgba(0,212,255,0.12)', border: '1px solid rgba(0,212,255,0.25)' }}>
-                                        View Job <ChevronRight size={14} />
+                                        View in Job Manager <ChevronRight size={14} />
                                     </button>
                                     <button onClick={handleReset}
                                         className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400"
@@ -325,25 +382,44 @@ export default function GoalSubmit() {
 
             {/* Quick-start templates */}
             <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Quick Start Templates</p>
+                {/* Section header — clearly visible */}
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full"
+                        style={{ background: 'rgba(0,212,255,0.10)', border: '1px solid rgba(0,212,255,0.2)' }}>
+                        <span className="text-xs font-semibold text-cyan-400">⚡ Quick Start Templates</span>
+                        <span className="text-xs rounded-full px-1.5 py-0.5 font-bold"
+                            style={{ background: 'rgba(0,212,255,0.2)', color: '#7dd3fc' }}>4</span>
+                    </div>
+                    <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {[
-                        { icon: '🦙', title: 'Fine-tune LLaMA 3 8B', sub: 'Custom dataset · ~$39 · 20hrs', goal: 'Fine-tune LLaMA 3 8B on my customer support dataset, keep cost under $50', color: '#00D4FF' },
+                        { icon: '🦩', title: 'Fine-tune LLaMA 3 8B', sub: 'Custom dataset · ~$39 · 20hrs', goal: 'Fine-tune LLaMA 3 8B on my customer support dataset, keep cost under $50', color: '#00D4FF' },
                         { icon: '🎨', title: 'Stable Diffusion Batch', sub: '500 images · ~$8 · 2hrs', goal: 'Generate 500 product images with Stable Diffusion XL, 1024x1024', color: '#7B2FFF' },
-                        { icon: '🎙️', title: 'Whisper Transcription', sub: '10 hours audio · ~$5 · 1hr', goal: 'Transcribe 10 hours of audio using Whisper Large v3', color: '#00FF88' },
+                        { icon: '🎤', title: 'Whisper Transcription', sub: '10 hours audio · ~$5 · 1hr', goal: 'Transcribe 10 hours of audio using Whisper Large v3', color: '#00FF88' },
                         { icon: '🔬', title: 'Hyperparameter Sweep', sub: '32 trials · ~$22 · 6hrs', goal: 'Run hyperparameter sweep 32 trials for my PyTorch model on A10 GPUs', color: '#FFB800' },
                     ].map(t => (
                         <button key={t.title} onClick={() => { setGoal(t.goal); textRef.current?.focus() }}
                             disabled={phase !== 'idle'}
-                            className="text-left p-4 rounded-2xl transition-all hover:-translate-y-0.5 group"
-                            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                            className="text-left p-4 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 group"
+                            style={{
+                                background: 'rgba(255,255,255,0.06)',
+                                border: `1px solid rgba(255,255,255,0.12)`,
+                                borderLeft: `3px solid ${t.color}`,
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)'; e.currentTarget.style.boxShadow = `0 4px 20px ${t.color}20` }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)' }}
+                        >
                             <div className="flex items-center gap-3">
-                                <span className="text-xl">{t.icon}</span>
-                                <div>
+                                <span className="text-2xl flex-shrink-0" style={{ filter: `drop-shadow(0 0 6px ${t.color}80)` }}>{t.icon}</span>
+                                <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-white group-hover:text-cyan-300 transition-colors">{t.title}</p>
-                                    <p className="text-xs text-slate-500 mt-0.5">{t.sub}</p>
+                                    <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>{t.sub}</p>
                                 </div>
-                                <ChevronRight size={14} className="ml-auto text-slate-600 group-hover:text-cyan-400 transition-colors" />
+                                <ChevronRight size={14} style={{ color: t.color, opacity: 0.7, flexShrink: 0 }} className="group-hover:opacity-100 transition-opacity" />
                             </div>
                         </button>
                     ))}

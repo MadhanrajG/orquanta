@@ -3,9 +3,9 @@ OrQuanta Agentic v1.0 — Intelligent Provider Router
 
 The ProviderRouter is the single point of entry for all cloud operations.
 It:
-  1. Compares spot prices across AWS, GCP, Azure, CoreWeave in parallel
+  1. Compares spot prices across RunPod, Lambda Labs, AWS, GCP, Azure, CoreWeave in parallel
   2. Picks the cheapest available provider for each GPU type
-  3. Fails over: AWS → GCP → Azure → CoreWeave on any error
+  3. Fails over: RunPod → Lambda → CoreWeave → AWS → GCP → Azure on any error
   4. Tracks total spend and saves estimates vs on-demand
 
 Used by the SchedulerAgent and CostOptimizerAgent.
@@ -29,6 +29,7 @@ from .gcp_provider import GCPProvider
 from .azure_provider import AzureProvider
 from .coreweave_provider import CoreWeaveProvider
 from .lambda_labs_provider import LambdaLabsProvider
+from .runpod_provider import RunPodProvider
 
 logger = logging.getLogger("orquanta.providers.router")
 
@@ -78,7 +79,8 @@ class ProviderRouter:
     """
 
     # Provider priority for failover (lower index = tried first)
-    FAILOVER_ORDER = ["lambda", "coreweave", "aws", "gcp", "azure"]
+    # RunPod leads: cheapest H100 ($2.49/hr vs $2.99 Lambda), near-zero interruption
+    FAILOVER_ORDER = ["runpod", "lambda", "coreweave", "aws", "gcp", "azure"]
 
     def __init__(self) -> None:
         self._providers: dict[str, BaseGPUProvider] = {}
@@ -93,6 +95,10 @@ class ProviderRouter:
 
     def _init_providers(self) -> None:
         """Initialise real cloud providers."""
+        try:
+            self._providers["runpod"] = RunPodProvider()
+        except Exception as exc:
+            logger.warning(f"[Router] RunPod provider init failed: {exc}")
         try:
             self._providers["aws"] = AWSProvider()
         except Exception as exc:
@@ -117,12 +123,13 @@ class ProviderRouter:
     def _init_mock_providers(self) -> None:
         """Register real provider instances but they will operate in
         graceful-degradation mode (return mock data when no credentials)."""
+        self._providers["runpod"] = RunPodProvider()
         self._providers["aws"] = AWSProvider()
         self._providers["gcp"] = GCPProvider()
         self._providers["azure"] = AzureProvider()
         self._providers["coreweave"] = CoreWeaveProvider()
         self._providers["lambda"] = LambdaLabsProvider()
-        logger.info("[Router] Initialised with 5 providers (mock mode — set USE_REAL_PROVIDERS=true for real cloud)")
+        logger.info("[Router] Initialised with 6 providers (mock mode — set USE_REAL_PROVIDERS=true for real cloud)")
 
     # ------------------------------------------------------------------
     # Core routing operations
@@ -358,8 +365,9 @@ class ProviderRouter:
     def _mock_prices(self, gpu_type: str, regions: list[str] | None) -> list[SpotPrice]:
         """Return realistic simulated prices for demo/test mode.
 
-        Returns 15 price points across 5 providers × 3 regions each,
+        Returns 18 price points across 6 providers × 3 regions each,
         with realistic regional variance to look like real spot market data.
+        RunPod is the cheapest provider for H100 and A100 workloads.
         """
         import random
         base_prices = {
@@ -370,13 +378,20 @@ class ProviderRouter:
         cw_price, od_price = base_prices.get(gpu_type, (1.50, 3.00))
         lambda_prices = {"H100": 2.99, "A100": 1.99, "A100-80G": 1.99, "A10G": 0.75, "V100": 1.10, "T4": 0.35}
         lambda_price = lambda_prices.get(gpu_type, cw_price * 0.95)
+        # RunPod is typically 15-20% cheaper than Lambda Labs
+        runpod_prices = {"H100": 2.49, "A100": 1.44, "A100-80G": 1.44, "A10G": 0.60, "V100": 0.90, "T4": 0.26, "L4": 0.55}
+        runpod_price = runpod_prices.get(gpu_type, lambda_price * 0.83)
 
         def _v(base, pct=0.08):
             """Add ±pct% random variance."""
             return round(base * (1 + random.uniform(-pct, pct)), 2)
 
         mock = [
-            # Lambda Labs — 3 regions, low interruption
+            # RunPod — 3 datacenters, very low interruption, cheapest H100/A100
+            SpotPrice("runpod",    "US-TX-3",      gpu_type, "NVIDIA H100 SXM",  _v(runpod_price, 0.01), od_price, "high",   2.0),
+            SpotPrice("runpod",    "US-CA-3",      gpu_type, "NVIDIA H100 SXM",  _v(runpod_price, 0.02), od_price, "high",   2.0),
+            SpotPrice("runpod",    "EU-RO-1",      gpu_type, "NVIDIA H100 SXM",  _v(runpod_price * 0.97, 0.02), od_price, "medium", 3.0),
+            # Lambda Labs — 3 regions, low interruption, on-demand
             SpotPrice("lambda",    "us-tx-3",      gpu_type, "gpu_1x_a100",     _v(lambda_price, 0.01), od_price, "high",   0.0),
             SpotPrice("lambda",    "us-west-2",    gpu_type, "gpu_1x_a100",     _v(lambda_price, 0.02), od_price, "high",   0.0),
             SpotPrice("lambda",    "us-east-1",    gpu_type, "gpu_1x_a100",     _v(lambda_price, 0.02), od_price, "medium", 0.0),

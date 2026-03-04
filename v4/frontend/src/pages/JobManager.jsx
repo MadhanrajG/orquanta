@@ -17,7 +17,7 @@ export default function JobManager() {
     const [queueStatus, setQueueStatus] = useState({})
     const [loading, setLoading] = useState(true)
     const [showForm, setShowForm] = useState(false)
-    const [form, setForm] = useState({ intent: '', gpu_type: 'H100', gpu_count: 1, provider: 'aws', required_vram_gb: 80, max_cost_usd: 500, max_runtime_minutes: 120 })
+    const [form, setForm] = useState({ intent: '', gpu_type: 'H100', gpu_count: 1, provider: '', required_vram_gb: 80, max_cost_usd: 50, max_runtime_minutes: 120 })
     const [submitting, setSubmitting] = useState(false)
     const [statusFilter, setStatusFilter] = useState('')
 
@@ -150,8 +150,8 @@ export default function JobManager() {
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 {[
-                                    { label: 'GPU Type', field: 'gpu_type', type: 'select', options: ['H100', 'A100', 'T4', 'A10G'] },
-                                    { label: 'Provider', field: 'provider', type: 'select', options: ['aws', 'gcp', 'azure', 'coreweave'] },
+                                    { label: 'GPU Type', field: 'gpu_type', type: 'select', options: ['H100', 'A100', 'A10G', 'RTX 4090', 'T4', 'L40S'] },
+                                    { label: 'Provider', field: 'provider', type: 'select', options: ['', 'runpod', 'lambda', 'aws', 'gcp', 'azure', 'coreweave'] },
                                     { label: 'GPU Count', field: 'gpu_count', type: 'number', min: 1, max: 64 },
                                     { label: 'VRAM (GB)', field: 'required_vram_gb', type: 'number', min: 1 },
                                     { label: 'Max Cost ($)', field: 'max_cost_usd', type: 'number', min: 0 },

@@ -274,10 +274,12 @@ class NotificationService:
         """Publish in-app notification via Redis pub/sub (picked up by WebSocket handler)."""
         if self._redis:
             import json
-            self._redis.publish(
-                f"notifications:{event.user_id}",
-                json.dumps({"type": event.type, "data": event.data, "ts": time.time()}),
-            )
+            import asyncio
+            payload = json.dumps({"type": event.type, "data": event.data, "ts": time.time()})
+            channel = f"notifications:{event.user_id}"
+            # FIX-5: sync Redis client must not be called directly in async — use executor
+            loop = asyncio.get_event_loop()
+            loop.run_in_executor(None, self._redis.publish, channel, payload)
         return NotificationRecord(
             notification_id=self._new_id(), user_id=event.user_id,
             type=event.type, channel="in_app", status="sent",

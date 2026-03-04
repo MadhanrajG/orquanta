@@ -71,8 +71,12 @@ export default function AuditLog() {
                 <div className="flex gap-2 flex-wrap">
                     {AGENTS.map(a => (
                         <button key={a} onClick={() => setAgentFilter(a)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border ${agentFilter === a ? 'bg-brand-600/20 text-brand-400 border-brand-500/30' : 'btn-ghost text-slate-400 border-white/[0.08]'
-                                }`}>
+                            className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
+                            style={{
+                                background: agentFilter === a ? 'rgba(82,113,245,0.15)' : 'rgba(255,255,255,0.06)',
+                                color: agentFilter === a ? '#7a9bfa' : '#94a3b8',
+                                border: agentFilter === a ? '1px solid rgba(82,113,245,0.3)' : '1px solid rgba(255,255,255,0.12)',
+                            }}>
                             {a || 'All Agents'}
                         </button>
                     ))}
@@ -94,9 +98,9 @@ export default function AuditLog() {
                     <div className="py-12 text-center text-slate-500">Loading audit trail…</div>
                 ) : entries.length === 0 ? (
                     <div className="py-12 text-center">
-                        <ScrollText size={32} className="text-slate-700 mx-auto mb-3" />
-                        <p className="text-slate-500 text-sm">No audit entries yet.</p>
-                        <p className="text-slate-600 text-xs mt-1">Agent actions will appear here once you submit a goal.</p>
+                        <ScrollText size={32} className="mx-auto mb-3" style={{ color: '#475569' }} />
+                        <p className="text-sm" style={{ color: '#94a3b8' }}>No audit entries yet.</p>
+                        <p className="text-xs mt-1" style={{ color: '#64748b' }}>Agent actions will appear here once you submit a goal.</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-white/[0.04]">
@@ -120,8 +124,8 @@ export default function AuditLog() {
                                             <span className={`badge ${entry.outcome === 'success' ? 'badge-green' : entry.outcome === 'pending' ? 'badge-gray' : 'badge-red'}`}>
                                                 {entry.outcome}
                                             </span>
-                                            <span className="text-xs text-slate-600">{entry.created_at ? new Date(entry.created_at).toLocaleString() : ''}</span>
-                                            <span className="text-xs font-mono text-slate-700">{entry.id?.slice(0, 8)}</span>
+                                            <span className="text-xs" style={{ color: '#94a3b8' }}>{entry.created_at ? new Date(entry.created_at).toLocaleString() : ''}</span>
+                                            <span className="text-xs font-mono" style={{ color: '#64748b' }}>{entry.id?.slice(0, 8)}</span>
                                         </div>
                                     </div>
                                 </div>

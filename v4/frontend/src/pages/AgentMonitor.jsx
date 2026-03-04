@@ -192,7 +192,7 @@ export default function AgentMonitor() {
                                             {node.label}
                                         </text>
                                         <text x={node.x} y={node.y + node.size + 26} textAnchor="middle"
-                                            fill="#374151" fontSize={8.5} fontFamily="Inter, sans-serif">
+                                            fill="#94a3b8" fontSize={8.5} fontFamily="Inter, sans-serif">
                                             {node.sub}
                                         </text>
                                         {/* Pulse dot */}
@@ -204,7 +204,7 @@ export default function AgentMonitor() {
                             })}
                         </svg>
                     </div>
-                    <p className="text-xs text-center text-slate-600 mt-2">Click any agent node to see live reasoning</p>
+                    <p className="text-xs text-center mt-2" style={{ color: '#94a3b8' }}>Click any agent node to see live reasoning</p>
                 </div>
 
                 {/* ── Agent detail panel ── */}
@@ -234,9 +234,9 @@ export default function AgentMonitor() {
                                     { label: 'Uptime', value: '99.97%' },
                                 ].map(stat => (
                                     <div key={stat.label} className="rounded-lg p-2.5 text-center"
-                                        style={{ background: `${selectedNode.color}08`, border: `1px solid ${selectedNode.color}15` }}>
+                                        style={{ background: `${selectedNode.color}12`, border: `1px solid ${selectedNode.color}25` }}>
                                         <div className="text-sm font-bold text-white">{stat.value}</div>
-                                        <div className="text-xs text-slate-500">{stat.label}</div>
+                                        <div className="text-xs" style={{ color: '#94a3b8' }}>{stat.label}</div>
                                     </div>
                                 ))}
                             </div>

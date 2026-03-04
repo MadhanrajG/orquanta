@@ -344,9 +344,10 @@ class MasterOrchestrator:
         raise ValueError(f"Unknown agent: {agent}")
 
     async def _call_scheduler(self, action: str, params: dict) -> dict:
-        """Delegate to SchedulerAgent."""
-        from .scheduler_agent import SchedulerAgent
-        agent = SchedulerAgent()
+        """Delegate to SchedulerAgent shared singleton."""
+        # FIX-4: reuse the shared singleton — new instances lose all job state
+        from ..api.routers.jobs import get_scheduler
+        agent = get_scheduler()
         if action == "schedule_job":
             return await agent.schedule_job(**params)
         if action == "get_queue_status":
@@ -354,9 +355,12 @@ class MasterOrchestrator:
         raise ValueError(f"Unknown scheduler action: {action}")
 
     async def _call_cost_optimizer(self, action: str, params: dict) -> dict:
-        """Delegate to CostOptimizerAgent."""
+        """Delegate to CostOptimizerAgent shared singleton."""
+        # FIX-4: reuse shared singleton to prevent state loss
         from .cost_optimizer_agent import CostOptimizerAgent
-        agent = CostOptimizerAgent()
+        if not hasattr(self, '_cost_agent'):
+            self._cost_agent = CostOptimizerAgent()
+        agent = self._cost_agent
         if action == "find_cheapest_spot":
             return await agent.find_cheapest_spot(**params)
         if action == "forecast_cost":
@@ -364,17 +368,23 @@ class MasterOrchestrator:
         raise ValueError(f"Unknown cost_optimizer action: {action}")
 
     async def _call_healing(self, action: str, params: dict) -> dict:
-        """Delegate to HealingAgent."""
+        """Delegate to HealingAgent shared singleton."""
+        # FIX-4: reuse shared singleton
         from .healing_agent import HealingAgent
-        agent = HealingAgent()
+        if not hasattr(self, '_healing_agent'):
+            self._healing_agent = HealingAgent()
+        agent = self._healing_agent
         if action == "monitor_job":
             return await agent.start_monitoring(**params)
         raise ValueError(f"Unknown healing action: {action}")
 
     async def _call_forecast(self, action: str, params: dict) -> dict:
-        """Delegate to ForecastAgent."""
+        """Delegate to ForecastAgent shared singleton."""
+        # FIX-4: reuse shared singleton
         from .forecast_agent import ForecastAgent
-        agent = ForecastAgent()
+        if not hasattr(self, '_forecast_agent'):
+            self._forecast_agent = ForecastAgent()
+        agent = self._forecast_agent
         if action == "run_forecast":
             return await agent.run_forecast(**params)
         raise ValueError(f"Unknown forecast action: {action}")
