@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate } from 're
 import { useState, useEffect, createContext, useContext } from 'react'
 import {
     LayoutDashboard, Target, Activity, Server, DollarSign,
-    ScrollText, Cpu, Zap, LogOut, Menu, X, AlertTriangle, Leaf
+    ScrollText, Cpu, Zap, LogOut, Menu, X, AlertTriangle, Leaf, Gift, BarChart2
 } from 'lucide-react'
 import Dashboard from './pages/Dashboard.jsx'
 import GoalSubmit from './pages/GoalSubmit.jsx'
@@ -11,10 +11,11 @@ import JobManager from './pages/JobManager.jsx'
 import CostAnalytics from './pages/CostAnalytics.jsx'
 import AuditLog from './pages/AuditLog.jsx'
 import FreeTier from './pages/FreeTier.jsx'
+import LivePricing from './pages/LivePricing.jsx'
 import OrQuantaAssistant from './components/OrQuantaAssistant.jsx'
 import { CommandPalette, ShortcutsModal, useCommandPalette } from './components/CommandPalette.jsx'
 
-/* â”€â”€â”€ Auth Context â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Auth Context Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
 export const AuthContext = createContext(null)
 export const useAuth = () => useContext(AuthContext)
 
@@ -55,7 +56,7 @@ function AuthProvider({ children }) {
     )
 }
 
-/* â”€â”€â”€ Login Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Login Page Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
 function LoginPage() {
     const { login } = useAuth()
     const [mode, setMode] = useState('login')
@@ -119,7 +120,7 @@ function LoginPage() {
                         {mode==='login' ? 'Welcome back' : 'Start for free'}
                     </h2>
                     <p className="auth-sub" style={{ marginBottom:20 }}>
-                        {mode==='login' ? 'Sign in to manage your GPU infrastructure' : '14-day free trial · No credit card required'}
+                        {mode==='login' ? 'Sign in to manage your GPU infrastructure' : '14-day free trial Â· No credit card required'}
                     </p>
                     {error && (
                         <div className="alert alert-error" style={{ marginBottom:16 }}>
@@ -146,17 +147,17 @@ function LoginPage() {
                             <p style={{ fontSize:12,color:'var(--text-muted)',marginBottom:18,lineHeight:1.5 }}>By signing up you agree to our Terms of Service.</p>
                         )}
                         <button id="auth-submit" type="submit" className="btn btn-primary w-full btn-lg" disabled={loading} style={{ width:'100%' }}>
-                            {loading ? <><span className="spinner" style={{ width:16,height:16 }} />{' '}{mode==='login'?'Signing in...':'Creating account...'}</> : mode==='login' ? 'Sign In →' : 'Create Free Account →'}
+                            {loading ? <><span className="spinner" style={{ width:16,height:16 }} />{' '}{mode==='login'?'Signing in...':'Creating account...'}</> : mode==='login' ? 'Sign In â†’' : 'Create Free Account â†’'}
                         </button>
                     </form>
                     <div style={{ marginTop:20,paddingTop:20,borderTop:'1px solid rgba(255,255,255,0.06)',textAlign:'center' }}>
                         <p style={{ fontSize:13,color:'var(--text-muted)' }}>
-                            Want to explore first?{' '}<a href="/demo" style={{ color:'#7a9bfa',textDecoration:'none',fontWeight:600 }}>View live demo →</a>
+                            Want to explore first?{' '}<a href="/demo" style={{ color:'#7a9bfa',textDecoration:'none',fontWeight:600 }}>View live demo â†’</a>
                         </p>
                     </div>
                 </div>
                 <div style={{ display:'flex',justifyContent:'center',gap:20,marginTop:18,flexWrap:'wrap' }}>
-                    {['🔒 Secure JWT auth','⚡ Live in seconds','🌍 Free 14-day trial'].map(b => (
+                    {['ðŸ”’ Secure JWT auth','âš¡ Live in seconds','ðŸŒ Free 14-day trial'].map(b => (
                         <span key={b} style={{ fontSize:12,color:'var(--text-muted)' }}>{b}</span>
                     ))}
                 </div>
@@ -165,7 +166,7 @@ function LoginPage() {
     )
 }
 
-/* â”€â”€â”€ Carbon Tracker (Coming Soon) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Carbon Tracker (Coming Soon) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
 function CarbonTrackerPage() {
     return (
         <div className="space-y-6 animate-fade-in">
@@ -176,7 +177,7 @@ function CarbonTrackerPage() {
             {/* Coming soon banner */}
             <div className="glass-card p-8 text-center relative overflow-hidden">
                 <div className="absolute inset-0 opacity-5" style={{ background: 'radial-gradient(ellipse at 50% 0%, #00FF88, transparent 70%)' }} />
-                <div style={{ fontSize: 56, marginBottom: 16 }}>ðŸŒ¿</div>
+                <div style={{ fontSize: 56, marginBottom: 16 }}>Ã°Å¸Å’Â¿</div>
                 <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', marginBottom: 12, color: 'white' }}>Carbon-Aware Scheduling</h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: 28, maxWidth: 480, margin: '0 auto 28px' }}>
                     OrQuanta will automatically detect real-time carbon intensity per region
@@ -184,15 +185,15 @@ function CarbonTrackerPage() {
                 </p>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 20px', border: '1px solid rgba(0,255,136,0.3)', borderRadius: 999, background: 'rgba(0,255,136,0.06)', color: '#00FF88', fontSize: 13 }}>
                     <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#00FF88', display: 'inline-block', animation: 'pulse 2s infinite' }} />
-                    In Development â€” Available in v1.1
+                    In Development Ã¢â‚¬â€ Available in v1.1
                 </div>
             </div>
             {/* Preview cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
-                    { icon: 'âš¡', title: 'Real-Time Carbon Intensity', desc: 'gCOâ‚‚eq/kWh tracked per region via ElectricityMaps API', color: '#00FF88' },
-                    { icon: 'ðŸ—ºï¸', title: 'Green Region Routing', desc: 'Automatic job migration to lowest-carbon providers', color: '#00D4FF' },
-                    { icon: 'ðŸ“Š', title: 'Emissions Reporting', desc: 'Monthly carbon footprint reports & offset tracking', color: '#7B2FFF' },
+                    { icon: 'Ã¢Å¡Â¡', title: 'Real-Time Carbon Intensity', desc: 'gCOÃ¢â€šâ€šeq/kWh tracked per region via ElectricityMaps API', color: '#00FF88' },
+                    { icon: 'Ã°Å¸â€”ÂºÃ¯Â¸Â', title: 'Green Region Routing', desc: 'Automatic job migration to lowest-carbon providers', color: '#00D4FF' },
+                    { icon: 'Ã°Å¸â€œÅ ', title: 'Emissions Reporting', desc: 'Monthly carbon footprint reports & offset tracking', color: '#7B2FFF' },
                 ].map(c => (
                     <div key={c.title} className="glass-card p-5" style={{ opacity: 0.75 }}>
                         <div className="text-3xl mb-3">{c.icon}</div>
@@ -206,16 +207,17 @@ function CarbonTrackerPage() {
     )
 }
 
-/* â”€â”€â”€ Navigation Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Navigation Sidebar Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
 const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard', exact: true },
     { to: '/goals', icon: Target, label: 'Submit Goal' },
     { to: '/agents', icon: Zap, label: 'Agent Monitor' },
     { to: '/jobs', icon: Server, label: 'Job Manager' },
     { to: '/costs', icon: DollarSign, label: 'Cost Analytics' },
+    { to: '/pricing', icon: BarChart2, label: 'Live Pricing' },
     { to: '/audit', icon: ScrollText, label: 'Audit Log' },
     { to: '/carbon', icon: Leaf, label: 'Carbon Tracker' },
-    { to: '/free', icon: Zap, label: 'Free GPU 🆓' },
+    { to: '/free', icon: Gift, label: 'Free GPU ðŸ†“' },
 ]
 
 function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
@@ -297,7 +299,7 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
     )
 }
 
-/* â”€â”€â”€ Protected Layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Protected Layout Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
 function AppLayout() {
     const [collapsed, setCollapsed] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
@@ -362,6 +364,7 @@ function AppLayout() {
                     <Route path="/audit" element={<AuditLog />} />
                     <Route path="/carbon" element={<CarbonTrackerPage />} />
                     <Route path="/free" element={<FreeTier />} />
+                    <Route path="/pricing" element={<LivePricing />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </main>
@@ -373,7 +376,7 @@ function AppLayout() {
     )
 }
 
-/* â”€â”€â”€ Root App â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Root App Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
 export default function App() {
     return (
         <AuthProvider>
