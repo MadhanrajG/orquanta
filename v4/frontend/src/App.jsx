@@ -1,4 +1,4 @@
-﻿import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate } from 'react-router-dom'
 import { useState, useEffect, createContext, useContext } from 'react'
 import {
     LayoutDashboard, Target, Activity, Server, DollarSign,
@@ -10,6 +10,7 @@ import AgentMonitor from './pages/AgentMonitor.jsx'
 import JobManager from './pages/JobManager.jsx'
 import CostAnalytics from './pages/CostAnalytics.jsx'
 import AuditLog from './pages/AuditLog.jsx'
+import FreeTier from './pages/FreeTier.jsx'
 import OrQuantaAssistant from './components/OrQuantaAssistant.jsx'
 import { CommandPalette, ShortcutsModal, useCommandPalette } from './components/CommandPalette.jsx'
 
@@ -214,6 +215,7 @@ const navItems = [
     { to: '/costs', icon: DollarSign, label: 'Cost Analytics' },
     { to: '/audit', icon: ScrollText, label: 'Audit Log' },
     { to: '/carbon', icon: Leaf, label: 'Carbon Tracker' },
+    { to: '/free', icon: Zap, label: 'Free GPU 🆓' },
 ]
 
 function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
@@ -359,6 +361,7 @@ function AppLayout() {
                     <Route path="/costs" element={<CostAnalytics />} />
                     <Route path="/audit" element={<AuditLog />} />
                     <Route path="/carbon" element={<CarbonTrackerPage />} />
+                    <Route path="/free" element={<FreeTier />} />
                     <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
             </main>

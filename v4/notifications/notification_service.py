@@ -43,15 +43,19 @@ SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
 TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER", "")
+DISCORD_DEFAULT_WEBHOOK = os.getenv("DISCORD_WEBHOOK_URL", "")   # Server-level fallback
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")         # Set via @BotFather
 
 DEDUP_COOLDOWN_SEC = 3600    # 1 hour between identical notifications
 
 
 class Channel(str, Enum):
-    EMAIL = "email"
-    SLACK = "slack"
-    IN_APP = "in_app"
-    SMS = "sms"
+    EMAIL    = "email"
+    SLACK    = "slack"
+    IN_APP   = "in_app"
+    SMS      = "sms"
+    DISCORD  = "discord"    # OpenClaw-inspired: rich embeds via webhook or bot DM
+    TELEGRAM = "telegram"   # OpenClaw-inspired: Bot API with inline keyboards
 
 
 class Priority(str, Enum):
@@ -68,11 +72,14 @@ class UserNotificationPrefs:
     email: str
     phone: str | None = None
     slack_user_id: str | None = None
+    discord_webhook_url: str | None = None   # User's Discord channel webhook
+    discord_user_id: str | None = None       # For bot DM delivery
+    telegram_chat_id: str | None = None      # From /start in the bot
     channels: list[str] = field(default_factory=lambda: ["email", "in_app"])
     unsubscribed_types: list[str] = field(default_factory=list)
-    digest_mode: bool = False   # If true, batch all normal/low priority
-    quiet_hours_start: int = 23   # 11pm
-    quiet_hours_end: int = 8      # 8am
+    digest_mode: bool = False
+    quiet_hours_start: int = 23
+    quiet_hours_end: int = 8
 
 
 @dataclass
@@ -151,10 +158,12 @@ class NotificationService:
 
         # Send to each channel
         channel_fns = {
-            Channel.EMAIL: self._send_email,
-            Channel.SLACK: self._send_slack,
-            Channel.IN_APP: self._send_in_app,
-            Channel.SMS: self._send_sms,
+            Channel.EMAIL:    self._send_email,
+            Channel.SLACK:    self._send_slack,
+            Channel.IN_APP:   self._send_in_app,
+            Channel.SMS:      self._send_sms,
+            Channel.DISCORD:  self._send_discord,
+            Channel.TELEGRAM: self._send_telegram,
         }
 
         send_tasks = []
@@ -320,6 +329,45 @@ class NotificationService:
                 notification_id=self._new_id(), user_id=event.user_id,
                 type=event.type, channel="sms", status="failed", error=str(exc),
             )
+
+    async def _send_discord(self, event: NotificationEvent, prefs: UserNotificationPrefs) -> NotificationRecord:
+        """Send a rich Discord embed via user's webhook URL or bot DM."""
+        from v4.notifications.discord_notifier import DiscordNotifier
+        webhook_url = prefs.discord_webhook_url or DISCORD_DEFAULT_WEBHOOK
+        success = False
+        if webhook_url:
+            success = await DiscordNotifier.send_via_webhook(webhook_url, event.type, event.data)
+        elif prefs.discord_user_id:
+            success = await DiscordNotifier.send_dm(prefs.discord_user_id, event.type, event.data)
+        else:
+            return NotificationRecord(
+                notification_id=self._new_id(), user_id=event.user_id,
+                type=event.type, channel="discord", status="suppressed",
+                error="No Discord webhook URL or user ID configured",
+            )
+        return NotificationRecord(
+            notification_id=self._new_id(), user_id=event.user_id,
+            type=event.type, channel="discord",
+            status="sent" if success else "failed",
+            sent_at=datetime.now(timezone.utc).isoformat(),
+        )
+
+    async def _send_telegram(self, event: NotificationEvent, prefs: UserNotificationPrefs) -> NotificationRecord:
+        """Send a Telegram message via Bot API."""
+        from v4.notifications.telegram_notifier import TelegramNotifier
+        if not prefs.telegram_chat_id:
+            return NotificationRecord(
+                notification_id=self._new_id(), user_id=event.user_id,
+                type=event.type, channel="telegram", status="suppressed",
+                error="No telegram_chat_id in user prefs",
+            )
+        success = await TelegramNotifier.send(prefs.telegram_chat_id, event.type, event.data)
+        return NotificationRecord(
+            notification_id=self._new_id(), user_id=event.user_id,
+            type=event.type, channel="telegram",
+            status="sent" if success else "failed",
+            sent_at=datetime.now(timezone.utc).isoformat(),
+        )
 
     # ─── Preferences ─────────────────────────────────────────────────
 

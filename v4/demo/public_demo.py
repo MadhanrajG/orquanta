@@ -1,11 +1,11 @@
 """
-OrQuanta Agentic v1.0 — Public Demo Endpoint
+OrQuanta Agentic v1.0 â€” Public Demo Endpoint
 =============================================
 
 Provides a read-only, shareable demo URL:
-  GET /demo → serves an interactive pre-auth demo page
-  GET /demo/token → returns a 1-hour read-only demo JWT
-  GET /demo/status → returns current demo scenario state
+  GET /demo â†’ serves an interactive pre-auth demo page
+  GET /demo/token â†’ returns a 1-hour read-only demo JWT
+  GET /demo/status â†’ returns current demo scenario state
 
 This is the shareable link for cold outreach:
   "See OrQuanta live: https://orquanta.ai/demo"
@@ -32,13 +32,13 @@ demo_router = APIRouter()
 
 DEMO_SECRET = os.getenv("DEMO_SECRET", "orquanta-public-demo-2026")
 
-# ─── Routes ───────────────────────────────────────────────────────────────────
+# â”€â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @demo_router.get("/token", summary="Get read-only demo access token")
 async def get_demo_token() -> JSONResponse:
     """
     Issues a 1-hour read-only demo token.
-    No auth required — this is the public entry point.
+    No auth required â€” this is the public entry point.
     """
     payload = {
         "role": "demo_viewer",
@@ -46,7 +46,7 @@ async def get_demo_token() -> JSONResponse:
         "exp": int(time.time()) + 3600,
         "scope": "read:dashboard read:metrics read:agents",
     }
-    # Simple signed payload (not a full JWT — use python-jose for prod)
+    # Simple signed payload (not a full JWT â€” use python-jose for prod)
     token_data = json.dumps(payload, separators=(",", ":"))
     sig = hashlib.sha256(f"{DEMO_SECRET}:{token_data}".encode()).hexdigest()[:24]
     token = f"demo_{sig}_{int(time.time())}"
@@ -101,7 +101,7 @@ async def demo_page(request: Request) -> HTMLResponse:
     return HTMLResponse(content=_build_demo_page(), status_code=200)
 
 
-# ─── Page Builder ─────────────────────────────────────────────────────────────
+# â”€â”€â”€ Page Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def _build_demo_page() -> str:
     """Generate the public demo HTML page."""
@@ -110,9 +110,9 @@ def _build_demo_page() -> str:
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OrQuanta Live Demo — See Agentic AI Manage GPU Cloud</title>
+    <title>OrQuanta Live Demo â€” See Agentic AI Manage GPU Cloud</title>
     <meta name="description" content="See OrQuanta in action: 5 AI agents autonomously orchestrating GPU cloud workloads, cutting costs 47%, healing failures in 8.3 seconds." />
-    <meta property="og:title" content="OrQuanta — Live Demo" />
+    <meta property="og:title" content="OrQuanta â€” Live Demo" />
     <meta property="og:description" content="Watch AI agents manage GPU cloud in real time" />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <style>
@@ -153,7 +153,7 @@ def _build_demo_page() -> str:
         .btn-outline:hover { border-color:var(--primary); color:var(--primary); }
         .trial-note { color:var(--muted); font-size:13px; }
 
-        /* ── Demo Console ── */
+        /* â”€â”€ Demo Console â”€â”€ */
         .console-wrap { max-width:800px; margin:0 auto 64px; padding:0 24px; }
         .console { background:var(--surface); border:1px solid var(--border); border-radius:16px;
             overflow:hidden; box-shadow:0 40px 80px rgba(0,0,0,.5),0 0 60px rgba(0,212,255,.08); }
@@ -174,7 +174,7 @@ def _build_demo_page() -> str:
         .blink { display:inline-block; width:8px; height:13px; background:var(--primary); animation:blink 1s infinite; vertical-align:middle; }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-        /* ── Metrics strip ── */
+        /* â”€â”€ Metrics strip â”€â”€ */
         .metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
             gap:1px; background:var(--border); border-top:1px solid var(--border); }
         .metric { background:var(--surface); padding:16px 20px; }
@@ -182,7 +182,7 @@ def _build_demo_page() -> str:
         .metric-value { font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:700; color:var(--primary); }
         .metric-sub { font-size:11px; color:var(--muted); margin-top:2px; }
 
-        /* ── Features strip ── */
+        /* â”€â”€ Features strip â”€â”€ */
         .features { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
             gap:16px; max-width:960px; margin:0 auto 64px; padding:0 24px; }
         .feat { background:var(--surface); border:1px solid var(--border); border-radius:12px;
@@ -192,7 +192,7 @@ def _build_demo_page() -> str:
         .feat-title { font-weight:700; font-size:16px; margin-bottom:6px; }
         .feat-desc { color:var(--muted); font-size:14px; line-height:1.6; }
 
-        /* ── CTA section ── */
+        /* â”€â”€ CTA section â”€â”€ */
         .cta-section { text-align:center; padding:64px 24px; border-top:1px solid var(--border); }
         .cta-section h2 { font-family:'Space Grotesk',sans-serif; font-size:36px; font-weight:700; margin-bottom:12px; }
         .cta-section p { color:var(--muted); margin-bottom:32px; font-size:17px; }
@@ -203,13 +203,13 @@ def _build_demo_page() -> str:
 <section class="hero">
     <div class="live-badge">
         <div class="dot"></div>
-        OrQuanta is live — Demo running now
+        OrQuanta is live â€” Demo running now
     </div>
     <h1><span class="grad">The Agentic AI That Manages<br>Your GPU Cloud Autonomously</span></h1>
     <p class="sub">Five specialized AI agents that schedule, optimize, heal and scale your GPU workloads
-        across AWS, GCP, Azure and Lambda Labs — in real time, automatically.</p>
+        across AWS, GCP, Azure and Lambda Labs â€” in real time, automatically.</p>
     <div class="cta-row">
-        <a href="/auth/register" class="btn-primary" id="cta-main">Start Free — 14 Days &rarr;</a>
+        <a href="/app" class="btn-primary" id="cta-main">Start Free â€” 14 Days &rarr;</a>
         <a href="#live-console" class="btn-outline" onclick="document.getElementById('live-console').scrollIntoView({behavior:'smooth'});return false;">Watch Live &darr;</a>
     </div>
     <p class="trial-note">No credit card &bull; No setup &bull; Cancel anytime</p>
@@ -226,7 +226,7 @@ def _build_demo_page() -> str:
     <div class="console">
         <div class="console-bar">
             <div class="dot-r"></div><div class="dot-a"></div><div class="dot-g"></div>
-            <span class="console-title">orquanta-agent-stream — demo</span>
+            <span class="console-title">orquanta-agent-stream â€” demo</span>
         </div>
         <div class="console-body" id="console-output">
             <div class="l-dim">Connecting to OrQuanta agent stream...</div>
@@ -234,23 +234,23 @@ def _build_demo_page() -> str:
         <div class="metrics" id="metrics-strip">
             <div class="metric">
                 <div class="metric-label">GPU Utilization</div>
-                <div class="metric-value" id="m-util">—</div>
-                <div class="metric-sub">A100 80GB · Lambda Labs</div>
+                <div class="metric-value" id="m-util">â€”</div>
+                <div class="metric-sub">A100 80GB Â· Lambda Labs</div>
             </div>
             <div class="metric">
                 <div class="metric-label">VRAM Used</div>
-                <div class="metric-value" id="m-vram">—</div>
+                <div class="metric-value" id="m-vram">â€”</div>
                 <div class="metric-sub" id="m-vram-sub">of 80 GB</div>
             </div>
             <div class="metric">
                 <div class="metric-label">Cost So Far</div>
-                <div class="metric-value" id="m-cost" style="color:var(--primary)">—</div>
-                <div class="metric-sub" id="m-saved" style="color:var(--green)">—</div>
+                <div class="metric-value" id="m-cost" style="color:var(--primary)">â€”</div>
+                <div class="metric-sub" id="m-saved" style="color:var(--green)">â€”</div>
             </div>
             <div class="metric">
                 <div class="metric-label">Job Progress</div>
-                <div class="metric-value" id="m-pct">—</div>
-                <div class="metric-sub">Training loss: <span id="m-loss">—</span></div>
+                <div class="metric-value" id="m-pct">â€”</div>
+                <div class="metric-sub">Training loss: <span id="m-loss">â€”</span></div>
             </div>
         </div>
     </div>
@@ -259,32 +259,32 @@ def _build_demo_page() -> str:
 <!-- Features -->
 <div class="features">
     <div class="feat">
-        <div class="feat-icon">🧠</div>
+        <div class="feat-icon">ðŸ§ </div>
         <div class="feat-title">OrMind Orchestrator</div>
-        <div class="feat-desc">Natural language goals → execution DAG in &lt;2 seconds. No config files.</div>
+        <div class="feat-desc">Natural language goals â†’ execution DAG in &lt;2 seconds. No config files.</div>
     </div>
     <div class="feat">
-        <div class="feat-icon">💸</div>
+        <div class="feat-icon">ðŸ’¸</div>
         <div class="feat-title">Real-Time Cost Optimization</div>
         <div class="feat-desc">60-second spot price polling across 4 providers. Automatically picks the cheapest GPU.</div>
     </div>
     <div class="feat">
-        <div class="feat-icon">🔧</div>
+        <div class="feat-icon">ðŸ”§</div>
         <div class="feat-title">1Hz Self-Healing</div>
         <div class="feat-desc">Detects OOM before it crashes. Average recovery: 8.3 seconds. Zero human intervention required.</div>
     </div>
     <div class="feat">
-        <div class="feat-icon">🔒</div>
+        <div class="feat-icon">ðŸ”’</div>
         <div class="feat-title">Tamper-Proof Audit Trail</div>
         <div class="feat-desc">Every agent decision signed with HMAC-SHA256. Legally admissible. GDPR-compliant.</div>
     </div>
     <div class="feat">
-        <div class="feat-icon">⚡</div>
+        <div class="feat-icon">âš¡</div>
         <div class="feat-title">&lt;30s Provisioning</div>
         <div class="feat-desc">From natural language goal to running GPU job in under 30 seconds.</div>
     </div>
     <div class="feat">
-        <div class="feat-icon">📊</div>
+        <div class="feat-icon">ðŸ“Š</div>
         <div class="feat-title">Full Observability</div>
         <div class="feat-desc">Prometheus metrics + Grafana dashboard. 14 panels. 30-second refresh. Every metric you need.</div>
     </div>
@@ -293,7 +293,7 @@ def _build_demo_page() -> str:
 <!-- Goal Analyzer -->
 <section style="max-width:700px;margin:0 auto 64px;padding:0 24px;">
     <h2 style="color:#00D4FF;font-family:'Space Grotesk',sans-serif;font-size:1.8rem;text-align:center;margin-bottom:12px;">
-        Try It Now — Free
+        Try It Now â€” Free
     </h2>
     <p style="color:#8892A4;text-align:center;margin-bottom:32px;font-size:16px;">
         Type a goal in plain English. OrQuanta agents will plan it instantly.
@@ -305,7 +305,7 @@ def _build_demo_page() -> str:
         <button onclick="analyzeGoal()"
             id="analyze-btn"
             style="margin-top:16px;width:100%;background:linear-gradient(135deg,#00D4FF,#7B2FFF);border:none;border-radius:8px;color:white;font-size:1.1rem;font-weight:600;padding:16px;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:opacity .2s;">
-            Analyze with AI Agents →
+            Analyze with AI Agents â†’
         </button>
         <div id="goal-result" style="display:none;margin-top:24px;padding:20px;background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.2);border-radius:8px;"></div>
     </div>
@@ -316,13 +316,13 @@ def _build_demo_page() -> str:
     <h2>Ready to stop wasting GPU budget?</h2>
     <p>Start for free &mdash; 14-day trial, no credit card required.</p>
     <div class="cta-row">
-        <a href="/auth/register" class="btn-primary">Start Free Trial &rarr;</a>
+        <a href="/app" class="btn-primary">Start Free Trial &rarr;</a>
         <a href="mailto:orquanta.founder@gmail.com" class="btn-outline">Talk to Founder</a>
     </div>
 </div>
 
 <script>
-// ── Hero stat count-up animation ─────────────────────────────────────────────
+// â”€â”€ Hero stat count-up animation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 (function(){
   function countUp(el, target, suffix, duration) {
     var start = 0, step = target / (duration / 16);
@@ -338,7 +338,7 @@ def _build_demo_page() -> str:
     entries.forEach(function(e){
       if (e.isIntersecting){
         observed = true;
-        // Animate 47%, 8.3s — others are text so leave them
+        // Animate 47%, 8.3s â€” others are text so leave them
         var statEls = document.querySelectorAll('.hero-stats-num');
         statEls.forEach(function(el){
           var val = parseFloat(el.dataset.val);
@@ -356,7 +356,7 @@ def _build_demo_page() -> str:
 </script>
 
 <script>
-// ── Live demo stream ─────────────────────────────────────────────────────────
+// â”€â”€ Live demo stream â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const output  = document.getElementById('console-output');
 const metrics = { util: 'm-util', vram: 'm-vram', cost: 'm-cost', pct: 'm-pct', loss: 'm-loss', saved: 'm-saved' };
 
@@ -378,7 +378,7 @@ function setMetric(id, value) {
 // Start WS (for real metrics) AND always start simulation for narrative logs
 var simStarted = false;
 function startStream() {
-    // Always start the narrative sim after 1.5s — WS supplements with live stats
+    // Always start the narrative sim after 1.5s â€” WS supplements with live stats
     setTimeout(function() {
         if (!simStarted) { simStarted = true; startSimulated(); }
     }, 1500);
@@ -397,10 +397,10 @@ function handleEvent(ev) {
     const type = ev.type;
     const data = ev.data || ev;  // messages_tick sends data at top level in some cases
     if (type === 'connected') {
-        // Server confirmed connection — sim logs will narrate the agent story
-        addLine('l-cyan', '🌐 OrQuanta platform: agents online, monitoring active');
+        // Server confirmed connection â€” sim logs will narrate the agent story
+        addLine('l-cyan', 'ðŸŒ OrQuanta platform: agents online, monitoring active');
     } else if (type === 'metrics_tick') {
-        // Real live platform data — update the metric boxes
+        // Real live platform data â€” update the metric boxes
         const d = ev.data || {};
         if (d.active_jobs !== undefined)
             setMetric('m-util', d.active_jobs + ' jobs');
@@ -411,51 +411,51 @@ function handleEvent(ev) {
         if (d.queued_jobs !== undefined)
             setMetric('m-vram', d.queued_jobs + ' queued');
     } else if (type === 'agent_thought') {
-        addLine('l-cyan', `${data.icon || '🤖'} ${data.agent}: ${data.message}`);
+        addLine('l-cyan', `${data.icon || 'ðŸ¤–'} ${data.agent}: ${data.message}`);
     } else if (type === 'job_progress') {
-        setMetric('m-util', data.gpu_util ? data.gpu_util + '%' : '—');
-        setMetric('m-vram', data.memory_pct ? data.memory_pct + '%' : '—');
-        setMetric('m-pct',  data.progress_pct ? data.progress_pct + '%' : '—');
-        setMetric('m-loss', data.loss || '—');
+        setMetric('m-util', data.gpu_util ? data.gpu_util + '%' : 'â€”');
+        setMetric('m-vram', data.memory_pct ? data.memory_pct + '%' : 'â€”');
+        setMetric('m-pct',  data.progress_pct ? data.progress_pct + '%' : 'â€”');
+        setMetric('m-loss', data.loss || 'â€”');
         if (data.phase === 'running') {
-            addLine('l-dim', `⟶ Progress: ${data.progress_pct}% | Loss: ${data.loss} | VRAM: ${data.memory_pct}%`);
+            addLine('l-dim', `âŸ¶ Progress: ${data.progress_pct}% | Loss: ${data.loss} | VRAM: ${data.memory_pct}%`);
         }
     } else if (type === 'cost_update') {
         setMetric('m-cost', '$' + (data.cost_usd || 0).toFixed(2));
         setMetric('m-saved', `saved $${(data.saved_usd || 0).toFixed(2)} vs AWS`);
     } else if (type === 'healing_event') {
-        addLine('l-amber', `🔧 HEALING: ${data.message}`);
+        addLine('l-amber', `ðŸ”§ HEALING: ${data.message}`);
     } else if (type === 'job_complete') {
-        addLine('l-green', `✅ COMPLETE: cost $${data.cost_usd} | saved $${data.saved_usd}`);
+        addLine('l-green', `âœ… COMPLETE: cost $${data.cost_usd} | saved $${data.saved_usd}`);
     } else if (type === 'heartbeat') {
-        addLine('l-dim', `♡ heartbeat — ${data.clients || 1} client(s) connected`);
+        addLine('l-dim', `â™¡ heartbeat â€” ${data.clients || 1} client(s) connected`);
     }
 }
 
-// ── Simulated stream (fallback when WS not available) ──────────────────────
+// â”€â”€ Simulated stream (fallback when WS not available) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function startSimulated() {
     addLine('l-dim', '[Demo] Simulating OrQuanta agent stream...');
     const events = [
-        [1200, () => addLine('l-cyan', '🧠 OrMind: Goal parsed. Fine-tune Mistral 7B. Budget $50.')],
-        [2400, () => addLine('l-cyan', '💸 Cost Optimizer: Lambda Labs A100 @ $1.99/hr (vs AWS $4.10) ✓')],
-        [3200, () => { addLine('l-purple', '⚡ Scheduler: Provisioning us-tx-3... ETA 18s'); }],
-        [5000, () => { addLine('l-green', '✓ GPU ready in 18s. Job started.'); setMetric('m-util','0%'); setMetric('m-pct','0%'); }],
-        [6500, () => { setMetric('m-util','62%'); setMetric('m-vram','41%'); setMetric('m-pct','5%'); setMetric('m-loss','3.42'); setMetric('m-cost','$0.03'); setMetric('m-saved','saved $0.07 vs AWS'); addLine('l-dim','⟶ Progress: 5% | Loss: 3.42 | VRAM: 41%'); }],
-        [9500, () => { setMetric('m-util','81%'); setMetric('m-vram','54%'); setMetric('m-pct','18%'); setMetric('m-loss','2.11'); setMetric('m-cost','$0.09'); setMetric('m-saved','saved $0.21 vs AWS'); addLine('l-dim','⟶ Progress: 18% | Loss: 2.11'); }],
+        [1200, () => addLine('l-cyan', 'ðŸ§  OrMind: Goal parsed. Fine-tune Mistral 7B. Budget $50.')],
+        [2400, () => addLine('l-cyan', 'ðŸ’¸ Cost Optimizer: Lambda Labs A100 @ $1.99/hr (vs AWS $4.10) âœ“')],
+        [3200, () => { addLine('l-purple', 'âš¡ Scheduler: Provisioning us-tx-3... ETA 18s'); }],
+        [5000, () => { addLine('l-green', 'âœ“ GPU ready in 18s. Job started.'); setMetric('m-util','0%'); setMetric('m-pct','0%'); }],
+        [6500, () => { setMetric('m-util','62%'); setMetric('m-vram','41%'); setMetric('m-pct','5%'); setMetric('m-loss','3.42'); setMetric('m-cost','$0.03'); setMetric('m-saved','saved $0.07 vs AWS'); addLine('l-dim','âŸ¶ Progress: 5% | Loss: 3.42 | VRAM: 41%'); }],
+        [9500, () => { setMetric('m-util','81%'); setMetric('m-vram','54%'); setMetric('m-pct','18%'); setMetric('m-loss','2.11'); setMetric('m-cost','$0.09'); setMetric('m-saved','saved $0.21 vs AWS'); addLine('l-dim','âŸ¶ Progress: 18% | Loss: 2.11'); }],
         [13000,() => { setMetric('m-util','88%'); setMetric('m-vram','67%'); setMetric('m-pct','35%'); setMetric('m-loss','1.34'); setMetric('m-cost','$0.17'); setMetric('m-saved','saved $0.40 vs AWS'); }],
-        [16000,() => { addLine('l-amber','🔧 ALERT: VRAM at 94.1% — OOM imminent'); }],
-        [17500,() => { addLine('l-amber','🔧 HealingAgent: Prescaling memory config... 8.3s response'); }],
-        [19000,() => { addLine('l-green','✅ HEALED: VRAM 94% → 68%. Job continues. No data lost.'); setMetric('m-vram','68%'); }],
-        [23000,() => { setMetric('m-util','85%'); setMetric('m-pct','65%'); setMetric('m-loss','0.87'); setMetric('m-cost','$0.29'); setMetric('m-saved','saved $0.68 vs AWS'); addLine('l-dim','⟶ Progress: 65% | Loss: 0.87'); }],
-        [29000,() => { setMetric('m-pct','90%'); setMetric('m-loss','0.54'); setMetric('m-cost','$0.38'); addLine('l-dim','⟶ Progress: 90%..'); }],
-        [33000,() => { addLine('l-green','✅ JOB COMPLETE — Cost: $0.42 | Saved: $0.98 | Artifacts → S3'); setMetric('m-pct','100%'); setMetric('m-loss','0.43'); setMetric('m-cost','$0.42'); setMetric('m-saved','saved $0.98 vs AWS'); addLine('l-cyan', '🔒 AuditAgent: Decision log signed. HMAC: 5f3a9c71...'); }],
+        [16000,() => { addLine('l-amber','ðŸ”§ ALERT: VRAM at 94.1% â€” OOM imminent'); }],
+        [17500,() => { addLine('l-amber','ðŸ”§ HealingAgent: Prescaling memory config... 8.3s response'); }],
+        [19000,() => { addLine('l-green','âœ… HEALED: VRAM 94% â†’ 68%. Job continues. No data lost.'); setMetric('m-vram','68%'); }],
+        [23000,() => { setMetric('m-util','85%'); setMetric('m-pct','65%'); setMetric('m-loss','0.87'); setMetric('m-cost','$0.29'); setMetric('m-saved','saved $0.68 vs AWS'); addLine('l-dim','âŸ¶ Progress: 65% | Loss: 0.87'); }],
+        [29000,() => { setMetric('m-pct','90%'); setMetric('m-loss','0.54'); setMetric('m-cost','$0.38'); addLine('l-dim','âŸ¶ Progress: 90%..'); }],
+        [33000,() => { addLine('l-green','âœ… JOB COMPLETE â€” Cost: $0.42 | Saved: $0.98 | Artifacts â†’ S3'); setMetric('m-pct','100%'); setMetric('m-loss','0.43'); setMetric('m-cost','$0.42'); setMetric('m-saved','saved $0.98 vs AWS'); addLine('l-cyan', 'ðŸ”’ AuditAgent: Decision log signed. HMAC: 5f3a9c71...'); }],
         [36000,() => { addLine('l-dim', '[Waiting for next demo job...]'); setTimeout(startSimulated, 4000); }],
     ];
     events.forEach(([delay, fn]) => setTimeout(fn, delay));
 }
 
 
-// ── Goal Analyzer ─────────────────────────────────────────────────────────────
+// â”€â”€ Goal Analyzer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const GPU_MAP = {
     'llama':   {gpu:'A100 80GB', provider:'Lambda Labs us-tx-3', cost:'$1.99/hr', time:'4.2 hrs', total:'$8.36', savings:'$9.50 vs AWS'},
     'stable':  {gpu:'A100 40GB', provider:'GCP us-central1',    cost:'$0.88/hr', time:'2.1 hrs', total:'$1.85', savings:'$2.10 vs AWS'},
@@ -535,7 +535,7 @@ async function analyzeGoal() {
         + 'Selected ' + rec.provider + ' after real-time price comparison across 5 providers (AWS, GCP, Azure, Lambda, CoreWeave). '
         + 'Self-Healing agent monitors every 1 second and auto-recovers OOM failures. Audit log signed with HMAC-SHA256.'
         + '</div>'
-        + '<a href="/auth/register" style="display:block;text-align:center;background:linear-gradient(135deg,#00D4FF,#7B2FFF);color:white;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:1rem;box-shadow:0 0 30px rgba(0,212,255,0.2);">'
+        + '<a href="/app" style="display:block;text-align:center;background:linear-gradient(135deg,#00D4FF,#7B2FFF);color:white;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:1rem;box-shadow:0 0 30px rgba(0,212,255,0.2);">'
         + 'Run This Job Free &mdash; 14 Day Trial &rarr;</a>';
 
     btn.textContent = 'Analyze with AI Agents ->';

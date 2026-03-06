@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — FastAPI Application Entry Point
+OrQuanta Agentic v1.0 â€” FastAPI Application Entry Point
 
 Wires together all routers, middleware, startup/shutdown hooks,
 authentication, Prometheus metrics exposure, and WebSocket stream.
@@ -21,22 +21,25 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from .routers import goals, jobs, agents, metrics, audit
 from .routers.admin import router as admin_router
 from .routers.billing import router as billing_router
+from .routers.webhooks import router as webhooks_router
+from .routers.schedules import router as schedules_router, get_cron_scheduler
+from .routers.free_tier import router as free_tier_router
 from .websocket.agent_stream import router as ws_router
 from .middleware.auth import authenticate_user, create_access_token, register_user
 from .models.schemas import (
     HealthResponse, LoginRequest, RegisterRequest, TokenResponse
 )
 
-# Demo mode — check both env var names for compatibility
+# Demo mode â€” check both env var names for compatibility
 _DEMO_MODE = (
     os.getenv("ORQUANTA_DEMO_MODE", "false").lower() in ("true", "1", "yes")
     or os.getenv("DEMO_MODE", "false").lower() in ("true", "1", "yes")
 )
 
-# ─── Logging ──────────────────────────────────────────────────────────────
+# â”€â”€â”€ Logging â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
+    format="%(asctime)s [%(levelname)s] %(name)s â€” %(message)s",
 )
 logger = logging.getLogger("orquanta.api")
 
@@ -44,14 +47,14 @@ VERSION = "1.0.0"
 ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",")
 
 
-# ─── Lifespan (startup / shutdown) ────────────────────────────────────────
+# â”€â”€â”€ Lifespan (startup / shutdown) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup: validate env, boot agents, wire pipeline. Shutdown: graceful stop."""
-    logger.info(f"OrQuanta Agentic v{VERSION} starting up…")
+    logger.info(f"OrQuanta Agentic v{VERSION} starting upâ€¦")
 
-    # ── 0. Validate production environment ────────────────────────────────
+    # â”€â”€ 0. Validate production environment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     try:
         from ..startup_validator import validate_env
         env_report = validate_env(strict=False)
@@ -88,7 +91,7 @@ async def lifespan(app: FastAPI):
     forecast_agent = ForecastAgent()
     await forecast_agent.start()
 
-    # ── Init production job pipeline ──────────────────────────────────────
+    # â”€â”€ Init production job pipeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     from ..execution.pipeline import get_pipeline
     pipeline = get_pipeline()
     # Wire WebSocket broadcaster so pipeline can push live events to clients
@@ -106,7 +109,7 @@ async def lifespan(app: FastAPI):
         register_user(email=admin_email, password=admin_password, name="OrQuanta Admin")
         logger.info(f"Admin user '{admin_email}' created.")
     except ValueError:
-        pass  # Already registered — that's fine
+        pass  # Already registered â€” that's fine
 
     # Promote admin email to 'admin' role in SQLite
     try:
@@ -130,16 +133,26 @@ async def lifespan(app: FastAPI):
             # Auto-run first scenario in background
             import asyncio
             asyncio.create_task(run_scenario("cost_optimizer", engine))
-            logger.info("[Demo] Demo mode active — scenario 'cost_optimizer' starting")
+            logger.info("[Demo] Demo mode active â€” scenario 'cost_optimizer' starting")
         except Exception as exc:
             logger.warning(f"[Demo] Demo startup error (non-fatal): {exc}")
+
+    # â”€â”€ Start CronScheduler (OpenClaw-inspired recurring GPU jobs) â”€â”€â”€â”€â”€â”€â”€â”€
+    import asyncio as _asyncio
+    cron_scheduler = get_cron_scheduler()
+    cron_task = _asyncio.create_task(cron_scheduler.run())
+    logger.info("[CronScheduler] Recurring job scheduler started.")
 
     logger.info("All agents started. Platform ready.")
 
     yield
 
+    # Stop cron scheduler on shutdown
+    cron_scheduler.stop()
+    cron_task.cancel()
+
     # Shutdown
-    logger.info("OrQuanta shutting down…")
+    logger.info("OrQuanta shutting downâ€¦")
     await orchestrator.stop()
     await scheduler.stop()
     await cost_agent.stop()
@@ -148,13 +161,13 @@ async def lifespan(app: FastAPI):
     logger.info("Shutdown complete.")
 
 
-# ─── FastAPI App ───────────────────────────────────────────────────────────
+# â”€â”€â”€ FastAPI App â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 app = FastAPI(
     title="OrQuanta Agentic v1.0",
     description=(
         "Autonomous GPU Cloud Orchestration Platform. "
-        "Submit natural-language goals — OrQuanta agents handle the rest."
+        "Submit natural-language goals â€” OrQuanta agents handle the rest."
     ),
     version=VERSION,
     docs_url="/docs",
@@ -173,7 +186,7 @@ app.add_middleware(
 )
 
 
-# ─── Security Headers Middleware ──────────────────────────────────────────
+# â”€â”€â”€ Security Headers Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add production-grade security headers to every response."""
@@ -191,7 +204,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 app.add_middleware(SecurityHeadersMiddleware)
 
 
-# ─── Global exception handler ─────────────────────────────────────────────
+# â”€â”€â”€ Global exception handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -206,7 +219,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
-# ─── Auth endpoints ────────────────────────────────────────────────────────────
+# â”€â”€â”€ Auth endpoints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 _REGISTER_HTML = """
 <!DOCTYPE html>
@@ -214,7 +227,7 @@ _REGISTER_HTML = """
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Join OrQuanta — Free 14-Day Trial</title>
+  <title>Join OrQuanta â€” Free 14-Day Trial</title>
   <meta name="description" content="Create your free OrQuanta account. 14-day trial, no credit card required.">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
   <style>
@@ -325,28 +338,28 @@ _WELCOME_HTML = """
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to OrQuanta — You're In!</title>
+  <title>Welcome to OrQuanta â€” You're In!</title>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{background:#050608;color:#e2e8f0;font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
 
-    /* ── Animated gradient hero ── */
+    /* â”€â”€ Animated gradient hero â”€â”€ */
     .hero{position:relative;text-align:center;padding:64px 24px 48px;overflow:hidden}
     .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(0,212,255,0.13),transparent 70%);pointer-events:none}
     .hero::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:1px;height:120px;background:linear-gradient(to bottom,rgba(0,212,255,0.6),transparent)}
 
-    /* ── Success badge ── */
+    /* â”€â”€ Success badge â”€â”€ */
     .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 18px;border-radius:999px;border:1px solid rgba(0,255,136,0.4);background:rgba(0,255,136,0.08);font-size:13px;font-weight:600;color:#00FF88;margin-bottom:28px;animation:fadeSlideDown .5s ease}
     .badge-dot{width:8px;height:8px;border-radius:50%;background:#00FF88;animation:pulse 2s infinite}
 
-    /* ── Typography ── */
+    /* â”€â”€ Typography â”€â”€ */
     .logo{font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:600;color:#8892A4;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px}
     h1{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;line-height:1.15;margin-bottom:12px;animation:fadeSlideDown .5s .1s ease both}
     .h1-sub{color:#8892A4;font-size:.95rem;margin-bottom:20px;animation:fadeSlideDown .5s .15s ease both}
     .email-pill{display:inline-block;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);border-radius:999px;color:#00D4FF;font-size:.82rem;padding:5px 16px;margin-bottom:40px;animation:fadeSlideDown .5s .2s ease both}
 
-    /* ── Token box (collapsed) ── */
+    /* â”€â”€ Token box (collapsed) â”€â”€ */
     .token-section{max-width:540px;margin:0 auto 40px;animation:fadeSlideDown .5s .25s ease both}
     .token-toggle{background:rgba(15,22,36,0.8);border:1px solid rgba(0,212,255,0.15);border-radius:10px;padding:12px 18px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:.85rem;color:#8892A4;user-select:none;transition:border-color .2s}
     .token-toggle:hover{border-color:rgba(0,212,255,0.35)}
@@ -358,7 +371,7 @@ _WELCOME_HTML = """
     .copy-btn:hover{background:rgba(0,212,255,0.2)}
     .copy-hint{font-size:.75rem;color:#64748b;margin-top:8px}
 
-    /* ── Action cards ── */
+    /* â”€â”€ Action cards â”€â”€ */
     .cards-label{font-family:'Space Grotesk',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#8892A4;text-align:center;margin-bottom:14px}
     .cards{display:grid;grid-template-columns:1fr;gap:14px;max-width:520px;margin:0 auto 40px;padding:0 20px}
     .card{background:rgba(15,22,36,0.9);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:24px 26px;text-decoration:none;display:block;transition:transform .15s,box-shadow .15s,border-color .15s}
@@ -377,15 +390,15 @@ _WELCOME_HTML = """
     .c2 .card-tag{background:rgba(0,255,136,0.08);color:#00FF88;border:1px solid rgba(0,255,136,0.25)}
     .c3 .card-tag{background:rgba(167,139,250,0.08);color:#A78BFA;border:1px solid rgba(167,139,250,0.25)}
 
-    /* ── Footer ── */
+    /* â”€â”€ Footer â”€â”€ */
     .foot{text-align:center;color:#475569;font-size:.82rem;padding:0 24px 40px;line-height:1.8}
     .foot a{color:#00D4FF;text-decoration:none}
 
-    /* ── Animations ── */
+    /* â”€â”€ Animations â”€â”€ */
     @keyframes fadeSlideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
     @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
 
-    /* ── Confetti canvas ── */
+    /* â”€â”€ Confetti canvas â”€â”€ */
     #confetti{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:100}
   </style>
 </head>
@@ -395,7 +408,7 @@ _WELCOME_HTML = """
 <div class="hero">
   <div class="logo">OrQuanta</div>
   <div class="badge"><span class="badge-dot"></span> Account created successfully</div>
-  <h1>You're in.<br>Welcome aboard! 🚀</h1>
+  <h1>You're in.<br>Welcome aboard! ðŸš€</h1>
   <p class="h1-sub">Your 14-day free trial starts now. Zero setup. Cancel anytime.</p>
   <div class="email-pill" id="user-email">Account active</div>
 </div>
@@ -403,8 +416,8 @@ _WELCOME_HTML = """
 <!-- JWT Token for devs -->
 <div class="token-section">
   <div class="token-toggle" onclick="toggleToken(this)">
-    <span>🔑 Your API token is ready</span>
-    <span id="tok-arrow" style="transition:transform .2s">▾</span>
+    <span>ðŸ”‘ Your API token is ready</span>
+    <span id="tok-arrow" style="transition:transform .2s">â–¾</span>
   </div>
   <div class="token-body" id="tok-body">
     <div class="token-val" id="tok-val">Loading your JWT token...</div>
@@ -417,39 +430,39 @@ _WELCOME_HTML = """
 <div class="cards">
 
   <a class="card c1" href="/app">
-    <div class="card-num">Step 1 — Recommended</div>
-    <div class="card-icon">⚡</div>
+    <div class="card-num">Step 1 â€” Recommended</div>
+    <div class="card-icon">âš¡</div>
     <div class="card-title">Open Your Dashboard</div>
-    <div class="card-desc">Your personal mission control. Submit AI goals, monitor live agents, track costs, and view audit logs — all in one place.</div>
-    <div class="card-tag">↗ Open now</div>
+    <div class="card-desc">Your personal mission control. Submit AI goals, monitor live agents, track costs, and view audit logs â€” all in one place.</div>
+    <div class="card-tag">â†— Open now</div>
   </a>
 
   <a class="card c2" href="/demo#goal-input">
     <div class="card-num">Step 2</div>
-    <div class="card-icon">🧠</div>
+    <div class="card-icon">ðŸ§ </div>
     <div class="card-title">Analyze Your First GPU Goal</div>
-    <div class="card-desc">Type your workload in plain English — "Fine-tune Llama 3 on my data, cost under $100" — and our AI gives you an instant cost breakdown across 5 cloud providers.</div>
-    <div class="card-tag">2 min · No setup</div>
+    <div class="card-desc">Type your workload in plain English â€” "Fine-tune Llama 3 on my data, cost under $100" â€” and our AI gives you an instant cost breakdown across 5 cloud providers.</div>
+    <div class="card-tag">2 min Â· No setup</div>
   </a>
 
   <a class="card c3" href="/demo">
     <div class="card-num">Step 3</div>
-    <div class="card-icon">📡</div>
+    <div class="card-icon">ðŸ“¡</div>
     <div class="card-title">Watch Agents Work Live</div>
-    <div class="card-desc">See 5 specialized AI agents — Scheduler, Cost Optimizer, Healing, Forecast, Audit — orchestrating a real GPU job with live streaming logs and metrics.</div>
+    <div class="card-desc">See 5 specialized AI agents â€” Scheduler, Cost Optimizer, Healing, Forecast, Audit â€” orchestrating a real GPU job with live streaming logs and metrics.</div>
     <div class="card-tag">Live stream</div>
   </a>
 
 </div>
 
 <div class="foot">
-  Need help? <a href="mailto:orquanta.founder@gmail.com">orquanta.founder@gmail.com</a> &nbsp;·&nbsp;
-  <a href="/demo">Back to Demo</a> &nbsp;·&nbsp;
-  <a href="/app">Dashboard →</a>
+  Need help? <a href="mailto:orquanta.founder@gmail.com">orquanta.founder@gmail.com</a> &nbsp;Â·&nbsp;
+  <a href="/demo">Back to Demo</a> &nbsp;Â·&nbsp;
+  <a href="/app">Dashboard â†’</a>
 </div>
 
 <script>
-// ── Token display ──────────────────────────────────────────────
+// â”€â”€ Token display â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var tok = localStorage.getItem('orquanta_token');
 var em  = localStorage.getItem('orquanta_email');
 if (em) document.getElementById('user-email').textContent = em;
@@ -469,12 +482,12 @@ function copyToken(){
   var t = document.getElementById('tok-val').textContent;
   navigator.clipboard.writeText(t).then(function(){
     var b = document.querySelector('.copy-btn');
-    b.textContent = '✓ Copied!';
+    b.textContent = 'âœ“ Copied!';
     setTimeout(function(){ b.textContent = 'Copy Token'; }, 2000);
   });
 }
 
-// ── Confetti burst ─────────────────────────────────────────────
+// â”€â”€ Confetti burst â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 (function(){
   var cv = document.getElementById('confetti');
   var cx = cv.getContext('2d');
@@ -559,11 +572,11 @@ async def login(req: LoginRequest):
     return TokenResponse(access_token=token, expires_in=86400)
 
 
-# ─── Health check ─────────────────────────────────────────────────────────
+# â”€â”€â”€ Health check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @app.get("/health", tags=["System"], response_model=HealthResponse, summary="Health check")
 async def health():
-    """System health check — no auth required."""
+    """System health check â€” no auth required."""
     return HealthResponse(
         status="healthy",
         version=VERSION,
@@ -598,7 +611,7 @@ async def api_info():
     }
 
 
-# ─── Include routers ──────────────────────────────────────────────────────
+# â”€â”€â”€ Include routers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 app.include_router(goals.router)
 app.include_router(jobs.router)
@@ -606,10 +619,10 @@ app.include_router(agents.router)
 app.include_router(metrics.router)
 app.include_router(audit.router)
 app.include_router(admin_router)
-app.include_router(billing_router)   # /api/v1/billing — Stripe + subscriptions
+app.include_router(billing_router)   # /api/v1/billing â€” Stripe + subscriptions
 app.include_router(ws_router)
 
-# Demo router — always included; active only when DEMO_MODE=true
+# Demo router â€” always included; active only when DEMO_MODE=true
 try:
     from ..demo.public_demo import demo_router
     app.include_router(demo_router, prefix="/demo", tags=["Demo"])
@@ -617,9 +630,9 @@ except Exception:
     pass  # demo package optional
 
 
-# ─── Serve built React frontend ────────────────────────────────────────────
+# â”€â”€â”€ Serve built React frontend â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-# FIX-9: Resolve from the v4/ root (two levels up from api/) — avoids double v4/ prefix
+# FIX-9: Resolve from the v4/ root (two levels up from api/) â€” avoids double v4/ prefix
 _DIST_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 _DIST_DIR = os.path.abspath(_DIST_DIR)
 
@@ -632,10 +645,10 @@ if os.path.isdir(_DIST_DIR):
     @app.get("/app", include_in_schema=False)
     @app.get("/app/{path:path}", include_in_schema=False)
     async def serve_react_app(path: str = ""):
-        """Serve the React SPA — index.html handles all client-side routes."""
+        """Serve the React SPA â€” index.html handles all client-side routes."""
         return FileResponse(os.path.join(_DIST_DIR, "index.html"))
 else:
-    # Frontend not built — tell developers clearly
+    # Frontend not built â€” tell developers clearly
     @app.get("/app", include_in_schema=False)
     @app.get("/app/{path:path}", include_in_schema=False)
     async def react_not_built(path: str = ""):
@@ -645,7 +658,7 @@ else:
         )
 
 
-# ─── Providers endpoint (public — no auth required) ────────────────────────
+# â”€â”€â”€ Providers endpoint (public â€” no auth required) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @app.get("/providers/prices", tags=["Providers"], summary="Live GPU spot prices")
 async def provider_prices(gpu_type: str = "A100"):
@@ -707,7 +720,7 @@ async def readiness_check():
     # FIX B02: In demo mode, report as ready so load balancers don't block
     if _DEMO_MODE:
         readiness["ready"] = True
-        readiness["verdict"] = "🟡 Demo Mode — All Systems Operational"
+        readiness["verdict"] = "ðŸŸ¡ Demo Mode â€” All Systems Operational"
         readiness["demo_mode"] = True
 
     return {
@@ -722,7 +735,7 @@ async def readiness_check():
     }
 
 
-# ─── Entry point ──────────────────────────────────────────────────────────
+# â”€â”€â”€ Entry point â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 if __name__ == "__main__":
     import uvicorn
