@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate } from 'react-router-dom'
+﻿import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate } from 'react-router-dom'
 import { useState, useEffect, createContext, useContext } from 'react'
 import {
     LayoutDashboard, Target, Activity, Server, DollarSign,
@@ -13,7 +13,7 @@ import AuditLog from './pages/AuditLog.jsx'
 import OrQuantaAssistant from './components/OrQuantaAssistant.jsx'
 import { CommandPalette, ShortcutsModal, useCommandPalette } from './components/CommandPalette.jsx'
 
-/* ─── Auth Context ─────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Auth Context â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export const AuthContext = createContext(null)
 export const useAuth = () => useContext(AuthContext)
 
@@ -54,77 +54,117 @@ function AuthProvider({ children }) {
     )
 }
 
-/* ─── Login Page ───────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Login Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function LoginPage() {
     const { login } = useAuth()
+    const [mode, setMode] = useState('login')
+    const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
-
-    const handleSubmit = async (e) => {
+    const switchMode = (m) => { setMode(m); setError('') }
+    const handleLogin = async (e) => {
         e.preventDefault(); setError(''); setLoading(true)
         try { await login(email, password) }
-        catch (err) { setError(err.message || 'Login failed. Ensure the API is running on :8000') }
+        catch (err) { setError(err.message || 'Invalid email or password') }
         finally { setLoading(false) }
     }
-
+    const handleRegister = async (e) => {
+        e.preventDefault(); setError(''); setLoading(true)
+        try {
+            const res = await fetch('/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, name }),
+            })
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}))
+                throw new Error(err.detail || err.error || 'Registration failed')
+            }
+            await login(email, password)
+        } catch (err) { setError(err.message || 'Registration failed') }
+        finally { setLoading(false) }
+    }
     return (
         <div className="auth-page">
-            {/* Ambient glow orbs */}
-            <div style={{ position: 'absolute', top: '25%', left: '25%', width: '400px', height: '400px', background: 'rgba(82,113,245,0.08)', borderRadius: '50%', filter: 'blur(80px)', pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', bottom: '25%', right: '25%', width: '300px', height: '300px', background: 'rgba(139,92,246,0.06)', borderRadius: '50%', filter: 'blur(80px)', pointerEvents: 'none' }} />
-
-            <div style={{ width: '100%', maxWidth: '420px', padding: '0 16px', position: 'relative', zIndex: 1 }}>
+            <div style={{ position:'absolute',top:'20%',left:'20%',width:'500px',height:'500px',background:'rgba(82,113,245,0.07)',borderRadius:'50%',filter:'blur(100px)',pointerEvents:'none' }} />
+            <div style={{ position:'absolute',bottom:'20%',right:'20%',width:'350px',height:'350px',background:'rgba(139,92,246,0.06)',borderRadius:'50%',filter:'blur(80px)',pointerEvents:'none' }} />
+            <div style={{ width:'100%',maxWidth:'440px',padding:'0 16px',position:'relative',zIndex:1 }}>
                 <div className="auth-card fade-in">
-                    {/* Logo */}
                     <div className="auth-logo">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', marginBottom: '6px' }}>
-                            <div style={{ width: 44, height: 44, background: 'linear-gradient(135deg,#3a52eb,#7a9bfa)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ display:'flex',alignItems:'center',gap:'12px',justifyContent:'center',marginBottom:'6px' }}>
+                            <div style={{ width:44,height:44,background:'linear-gradient(135deg,#3a52eb,#7a9bfa)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center' }}>
                                 <Cpu size={22} color="#fff" />
                             </div>
-                            <div style={{ textAlign: 'left' }}>
+                            <div style={{ textAlign:'left' }}>
                                 <div className="logo-text">OrQuanta</div>
                                 <div className="logo-sub">Agentic GPU Cloud v1.0</div>
                             </div>
                         </div>
                     </div>
-
-                    <h2 className="auth-title">Welcome back</h2>
-                    <p className="auth-sub">Sign in to manage your GPU infrastructure</p>
-
+                    <div style={{ display:'flex',background:'rgba(255,255,255,0.04)',borderRadius:10,padding:4,marginBottom:24,border:'1px solid rgba(255,255,255,0.08)' }}>
+                        {[['login','Sign In'],['register','Create Account']].map(([m,label]) => (
+                            <button key={m} onClick={() => switchMode(m)} style={{
+                                flex:1,padding:'8px 0',borderRadius:7,border:'none',cursor:'pointer',
+                                fontSize:14,fontWeight:600,transition:'all 0.2s',
+                                background:mode===m?'linear-gradient(135deg,#3a52eb,#5a72fb)':'transparent',
+                                color:mode===m?'#fff':'var(--text-muted)',
+                                boxShadow:mode===m?'0 2px 12px rgba(58,82,235,0.4)':'none',
+                            }}>{label}</button>
+                        ))}
+                    </div>
+                    <h2 className="auth-title" style={{ marginBottom:4 }}>
+                        {mode==='login' ? 'Welcome back' : 'Start for free'}
+                    </h2>
+                    <p className="auth-sub" style={{ marginBottom:20 }}>
+                        {mode==='login' ? 'Sign in to manage your GPU infrastructure' : '14-day free trial · No credit card required'}
+                    </p>
                     {error && (
-                        <div className="alert alert-error" style={{ marginBottom: 16 }}>
-                            <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+                        <div className="alert alert-error" style={{ marginBottom:16 }}>
+                            <AlertTriangle size={15} style={{ flexShrink:0,marginTop:1 }} />
                             <span>{error}</span>
                         </div>
                     )}
-
-                    <form onSubmit={handleSubmit}>
-                        <div className="input-group" style={{ marginBottom: 14 }}>
+                    <form onSubmit={mode==='login' ? handleLogin : handleRegister}>
+                        {mode==='register' && (
+                            <div className="input-group" style={{ marginBottom:14 }}>
+                                <label className="input-label">Full Name</label>
+                                <input id="reg-name" type="text" value={name} onChange={e => setName(e.target.value)} required minLength={2} placeholder="Ada Lovelace" />
+                            </div>
+                        )}
+                        <div className="input-group" style={{ marginBottom:14 }}>
                             <label className="input-label">Email address</label>
-                            <input id="login-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="admin@orquanta.ai" />
+                            <input id="auth-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@company.ai" />
                         </div>
-                        <div className="input-group" style={{ marginBottom: 20 }}>
+                        <div className="input-group" style={{ marginBottom:mode==='register'?8:20 }}>
                             <label className="input-label">Password</label>
-                            <input id="login-password" type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••••••" />
+                            <input id="auth-password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} placeholder="Min. 8 characters" />
                         </div>
-                        <button id="login-submit" type="submit" className="btn btn-primary w-full btn-lg" disabled={loading} style={{ width: '100%' }}>
-                            {loading
-                                ? <><span className="spinner" style={{ width: 16, height: 16 }} /> Authenticating…</>
-                                : 'Sign In →'
-                            }
+                        {mode==='register' && (
+                            <p style={{ fontSize:12,color:'var(--text-muted)',marginBottom:18,lineHeight:1.5 }}>By signing up you agree to our Terms of Service.</p>
+                        )}
+                        <button id="auth-submit" type="submit" className="btn btn-primary w-full btn-lg" disabled={loading} style={{ width:'100%' }}>
+                            {loading ? <><span className="spinner" style={{ width:16,height:16 }} />{' '}{mode==='login'?'Signing in...':'Creating account...'}</> : mode==='login' ? 'Sign In →' : 'Create Free Account →'}
                         </button>
                     </form>
-
-
+                    <div style={{ marginTop:20,paddingTop:20,borderTop:'1px solid rgba(255,255,255,0.06)',textAlign:'center' }}>
+                        <p style={{ fontSize:13,color:'var(--text-muted)' }}>
+                            Want to explore first?{' '}<a href="/demo" style={{ color:'#7a9bfa',textDecoration:'none',fontWeight:600 }}>View live demo →</a>
+                        </p>
+                    </div>
+                </div>
+                <div style={{ display:'flex',justifyContent:'center',gap:20,marginTop:18,flexWrap:'wrap' }}>
+                    {['🔒 Secure JWT auth','⚡ Live in seconds','🌍 Free 14-day trial'].map(b => (
+                        <span key={b} style={{ fontSize:12,color:'var(--text-muted)' }}>{b}</span>
+                    ))}
                 </div>
             </div>
         </div>
     )
 }
 
-/* ─── Carbon Tracker (Coming Soon) ─────────────────────────────────────── */
+/* â”€â”€â”€ Carbon Tracker (Coming Soon) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function CarbonTrackerPage() {
     return (
         <div className="space-y-6 animate-fade-in">
@@ -135,7 +175,7 @@ function CarbonTrackerPage() {
             {/* Coming soon banner */}
             <div className="glass-card p-8 text-center relative overflow-hidden">
                 <div className="absolute inset-0 opacity-5" style={{ background: 'radial-gradient(ellipse at 50% 0%, #00FF88, transparent 70%)' }} />
-                <div style={{ fontSize: 56, marginBottom: 16 }}>🌿</div>
+                <div style={{ fontSize: 56, marginBottom: 16 }}>ðŸŒ¿</div>
                 <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', marginBottom: 12, color: 'white' }}>Carbon-Aware Scheduling</h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: 28, maxWidth: 480, margin: '0 auto 28px' }}>
                     OrQuanta will automatically detect real-time carbon intensity per region
@@ -143,15 +183,15 @@ function CarbonTrackerPage() {
                 </p>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 20px', border: '1px solid rgba(0,255,136,0.3)', borderRadius: 999, background: 'rgba(0,255,136,0.06)', color: '#00FF88', fontSize: 13 }}>
                     <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#00FF88', display: 'inline-block', animation: 'pulse 2s infinite' }} />
-                    In Development — Available in v1.1
+                    In Development â€” Available in v1.1
                 </div>
             </div>
             {/* Preview cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
-                    { icon: '⚡', title: 'Real-Time Carbon Intensity', desc: 'gCO₂eq/kWh tracked per region via ElectricityMaps API', color: '#00FF88' },
-                    { icon: '🗺️', title: 'Green Region Routing', desc: 'Automatic job migration to lowest-carbon providers', color: '#00D4FF' },
-                    { icon: '📊', title: 'Emissions Reporting', desc: 'Monthly carbon footprint reports & offset tracking', color: '#7B2FFF' },
+                    { icon: 'âš¡', title: 'Real-Time Carbon Intensity', desc: 'gCOâ‚‚eq/kWh tracked per region via ElectricityMaps API', color: '#00FF88' },
+                    { icon: 'ðŸ—ºï¸', title: 'Green Region Routing', desc: 'Automatic job migration to lowest-carbon providers', color: '#00D4FF' },
+                    { icon: 'ðŸ“Š', title: 'Emissions Reporting', desc: 'Monthly carbon footprint reports & offset tracking', color: '#7B2FFF' },
                 ].map(c => (
                     <div key={c.title} className="glass-card p-5" style={{ opacity: 0.75 }}>
                         <div className="text-3xl mb-3">{c.icon}</div>
@@ -165,7 +205,7 @@ function CarbonTrackerPage() {
     )
 }
 
-/* ─── Navigation Sidebar ────────────────────────────────────────────────── */
+/* â”€â”€â”€ Navigation Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard', exact: true },
     { to: '/goals', icon: Target, label: 'Submit Goal' },
@@ -255,7 +295,7 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
     )
 }
 
-/* ─── Protected Layout ──────────────────────────────────────────────────── */
+/* â”€â”€â”€ Protected Layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function AppLayout() {
     const [collapsed, setCollapsed] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
@@ -330,7 +370,7 @@ function AppLayout() {
     )
 }
 
-/* ─── Root App ──────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Root App â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export default function App() {
     return (
         <AuthProvider>
