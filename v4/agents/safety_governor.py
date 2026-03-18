@@ -12,6 +12,7 @@ Agent-level guardrails that wrap every agent action with:
 from __future__ import annotations
 
 import asyncio
+import hmac
 import json
 import logging
 import os
@@ -125,15 +126,21 @@ class SafetyGovernor:
         logger.critical(f"🛑 EMERGENCY STOP TRIGGERED: {reason}")
 
     def clear_emergency_stop(self, override_token: str) -> bool:
-        """Clear the emergency stop. Requires override token."""
-        expected = os.getenv("SAFETY_OVERRIDE_TOKEN", "orquanta-admin-override")
-        if override_token == expected:
-            self._emergency_stop = False
-            self._stop_reason = ""
-            logger.warning("Emergency stop cleared by admin override.")
-            return True
-        logger.error("Attempted emergency stop clear with invalid token.")
-        return False
+        """Clear the emergency stop. Requires override token from environment."""
+        expected = os.getenv("SAFETY_OVERRIDE_TOKEN")
+        if not expected:
+            logger.critical(
+                "SAFETY_OVERRIDE_TOKEN is not configured — emergency stop cannot be cleared via API. "
+                "Set this env var to a strong random secret in production."
+            )
+            return False
+        if not hmac.compare_digest(override_token, expected):
+            logger.error("Attempted emergency stop clear with invalid token.")
+            return False
+        self._emergency_stop = False
+        self._stop_reason = ""
+        logger.warning("Emergency stop cleared by admin override.")
+        return True
 
     @property
     def is_stopped(self) -> bool:

@@ -407,6 +407,7 @@ class DemoEngine:
             "running": sum(1 for j in jobs if j.phase == JobPhase.RUNNING),
             "complete": sum(1 for j in jobs if j.phase == JobPhase.COMPLETE),
             "failed": sum(1 for j in jobs if j.phase == JobPhase.FAILED),
+            "jobs_healed": sum(j.heal_count for j in jobs),
             "total_saved_usd": round(sum(j.saved_vs_aws for j in jobs), 2),
             "total_cost_usd": round(sum(j.cost_so_far for j in jobs), 2),
         }

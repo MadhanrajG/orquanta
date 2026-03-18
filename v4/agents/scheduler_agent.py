@@ -146,6 +146,9 @@ class SchedulerAgent:
         )
     """
 
+    # Max intent length accepted — prevents LLM prompt inflation / injection attacks
+    _MAX_INTENT_LEN = 500
+
     def __init__(self) -> None:
         self.llm = LLMReasoningEngine()
         self.memory = MemoryManager()
@@ -156,6 +159,7 @@ class SchedulerAgent:
         self._bins: dict[str, GPUBin] = {}    # instance_id → GPUBin
         self._all_jobs: dict[str, ScheduledJob] = {}
         self._running = False
+        self._lock = asyncio.Lock()           # Guards queue + bins mutations
         logger.info("SchedulerAgent initialised.")
 
     async def start(self) -> None:
@@ -191,9 +195,14 @@ class SchedulerAgent:
         Returns:
             dict with job_id, priority_score, estimated_start_seconds.
         """
+        # Sanitize free-text input before it reaches LLM prompt templates
+        intent = intent.strip()[: self._MAX_INTENT_LEN]
+        # Strip characters that could escape JSON template boundaries
+        intent = intent.replace('"', "'").replace("\\", "/").replace("$", "")
+
         job_id = f"job-{str(uuid4())[:8]}"
 
-        # Score priority using LLM
+        # Score priority using LLM (outside lock — I/O bound)
         priority = await self._score_priority(
             intent=intent,
             required_vram_gb=required_vram_gb,
@@ -213,16 +222,18 @@ class SchedulerAgent:
             max_runtime_minutes=max_runtime_minutes,
         )
 
-        self._all_jobs[job_id] = job
-        heapq.heappush(self._queue, job)
+        async with self._lock:
+            self._all_jobs[job_id] = job
+            heapq.heappush(self._queue, job)
 
-        logger.info(
-            f"[Scheduler] Job {job_id} queued (priority={priority:.2f}, "
-            f"vram={required_vram_gb}GB, gpu={gpu_type}@{provider})"
-        )
+            logger.info(
+                f"[Scheduler] Job {job_id} queued (priority={priority:.2f}, "
+                f"vram={required_vram_gb}GB, gpu={gpu_type}@{provider})"
+            )
 
-        # Try to place immediately via bin-packing
-        placed = self._try_bin_pack(job)
+            # Try to place immediately via bin-packing
+            placed = self._try_bin_pack(job)
+
         if placed:
             estimated_start = 5
         else:
@@ -442,21 +453,20 @@ class SchedulerAgent:
         """Main scheduling loop: process queue and provision instances."""
         while self._running:
             await asyncio.sleep(2)
-            while self._queue:
-                job = heapq.heappop(self._queue)
+            async with self._lock:
+                pending = []
+                while self._queue:
+                    job = heapq.heappop(self._queue)
+                    if job.status != "queued":
+                        continue
+                    if self._try_bin_pack(job):
+                        continue
+                    pending.append(job)
 
-                if job.status != "queued":
-                    continue
-
-                # Try bin-packing first (cheapest)
-                if self._try_bin_pack(job):
-                    continue
-
-                # Try preemption
+            # Preemption and provisioning outside lock (they are I/O-bound)
+            for job in pending:
                 if await self._check_preemption(job):
                     continue
-
-                # Provision new instance (most expensive)
                 await self._provision_and_place(job)
 
     # ------------------------------------------------------------------

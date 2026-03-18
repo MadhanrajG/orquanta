@@ -8,10 +8,12 @@ parsing, and fallback logic when primary LLM fails.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
 import time
+from collections import defaultdict, deque
 from enum import Enum
 from string import Template
 from typing import Any
@@ -242,17 +244,24 @@ MOCK_RESPONSES: dict[str, Any] = {
 
 class LLMReasoningEngine:
     """Unified LLM interface used by all OrQuanta agents.
-    
+
     Supports OpenAI GPT-4o, Anthropic Claude, and a deterministic mock
     mode (used in tests and when no API keys are configured).
-    
+
     All calls are logged with reasoning traces for the audit trail.
+    Rate-limited per agent_name: max 20 LLM calls per 60s window.
     """
+
+    # Per-agent sliding-window rate limit (calls per window)
+    _RATE_LIMIT_CALLS = int(os.getenv("LLM_RATE_LIMIT_CALLS", "20"))
+    _RATE_LIMIT_WINDOW = float(os.getenv("LLM_RATE_LIMIT_WINDOW_S", "60"))
 
     def __init__(self, config: LLMConfig | None = None) -> None:
         self.cfg = config or LLMConfig()
         self._openai_client: Any = None
         self._anthropic_client: Any = None
+        # Per-agent call timestamps for rate limiting
+        self._rate_buckets: defaultdict[str, deque] = defaultdict(deque)
         self._init_clients()
         logger.info(f"LLMReasoningEngine initialised with provider: {self.cfg.provider}")
 
@@ -309,6 +318,20 @@ class LLMReasoningEngine:
     # Public API
     # ------------------------------------------------------------------
 
+    def _check_rate_limit(self, agent_name: str) -> None:
+        """Sliding-window rate limit: raises if agent exceeds LLM_RATE_LIMIT_CALLS per window."""
+        bucket = self._rate_buckets[agent_name]
+        now = time.monotonic()
+        # Evict timestamps outside the window
+        while bucket and bucket[0] < now - self._RATE_LIMIT_WINDOW:
+            bucket.popleft()
+        if len(bucket) >= self._RATE_LIMIT_CALLS:
+            raise RuntimeError(
+                f"LLM rate limit hit for agent '{agent_name}': "
+                f"{self._RATE_LIMIT_CALLS} calls/{self._RATE_LIMIT_WINDOW}s exceeded."
+            )
+        bucket.append(now)
+
     async def reason(
         self,
         template_name: str,
@@ -316,31 +339,38 @@ class LLMReasoningEngine:
         agent_name: str = "unknown",
     ) -> dict[str, Any]:
         """Execute a reasoning call using the named prompt template.
-        
+
         Args:
             template_name: Key in PROMPT_TEMPLATES.
             variables: Dict of substitution variables for the template.
             agent_name: Calling agent name (for logging).
-            
+
         Returns:
             Parsed JSON dict from LLM response.
         """
+        # Enforce per-agent rate limit before touching the LLM
+        try:
+            self._check_rate_limit(agent_name)
+        except RuntimeError as exc:
+            logger.warning(f"[{agent_name}] {exc} — returning mock fallback.")
+            return MOCK_RESPONSES.get(template_name, {"error": "rate_limited"})
+
         prompt = self._render_template(template_name, variables)
-        
-        logger.info(f"[{agent_name}] Calling LLM ({self.cfg.provider}) with template '{template_name}'")
-        
+        logger.info(f"[{agent_name}] Calling LLM ({self.cfg.provider}) template='{template_name}'")
+
         for attempt in range(1, self.cfg.max_retries + 1):
             try:
                 raw = await self._call_llm(prompt)
                 parsed = self._parse_json_response(raw)
-                logger.info(f"[{agent_name}] LLM call succeeded on attempt {attempt}.")
+                logger.info(f"[{agent_name}] LLM succeeded on attempt {attempt}.")
                 return parsed
             except Exception as exc:
                 logger.warning(f"[{agent_name}] LLM attempt {attempt} failed: {exc}")
                 if attempt == self.cfg.max_retries:
-                    logger.error(f"[{agent_name}] All LLM retries exhausted. Using mock fallback.")
+                    logger.error(f"[{agent_name}] All retries exhausted. Using mock fallback.")
                     return MOCK_RESPONSES.get(template_name, {"error": "llm_unavailable"})
-                time.sleep(2 ** attempt)  # Exponential backoff
+                # Non-blocking exponential backoff — never block the event loop
+                await asyncio.sleep(2 ** attempt)
 
         return MOCK_RESPONSES.get(template_name, {"error": "llm_unavailable"})
 

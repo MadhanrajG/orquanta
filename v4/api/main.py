@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
+from .prometheus_metrics import PrometheusMiddleware, get_metrics_response
 
 from .routers import goals, jobs, agents, metrics, audit
 from .routers.admin import router as admin_router
@@ -106,9 +107,15 @@ async def lifespan(app: FastAPI):
     # Seed a default admin user for first-boot and promote to admin role
     try:
         admin_email = os.getenv("ADMIN_EMAIL", "admin@orquanta.ai")
-        admin_password = os.getenv("ADMIN_PASSWORD", "orquanta-admin-2024")
-        register_user(email=admin_email, password=admin_password, name="OrQuanta Admin")
-        logger.info(f"Admin user '{admin_email}' created.")
+        admin_password = os.getenv("ADMIN_PASSWORD")
+        if not admin_password:
+            logger.warning(
+                "ADMIN_PASSWORD not set — skipping default admin seed. "
+                "Set ADMIN_PASSWORD env var to create the initial admin account."
+            )
+        else:
+            register_user(email=admin_email, password=admin_password, name="OrQuanta Admin")
+            logger.info(f"Admin user '{admin_email}' created.")
     except ValueError:
         pass  # Already registered Ã¢â‚¬â€ that's fine
 
@@ -204,6 +211,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(SecurityHeadersMiddleware)
 
+# Prometheus metrics middleware (for Grafana Cloud)
+app.add_middleware(PrometheusMiddleware)
+
 
 # Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Global exception handler Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
@@ -228,7 +238,7 @@ _REGISTER_HTML = """
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Join OrQuanta Ã¢â‚¬â€ Free 14-Day Trial</title>
+  <title>Join OrQuanta  Free 14-Day Trial</title>
   <meta name="description" content="Create your free OrQuanta account. 14-day trial, no credit card required.">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
   <style>
@@ -339,7 +349,7 @@ _WELCOME_HTML = """
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to OrQuanta Ã¢â‚¬â€ You're In!</title>
+  <title>Welcome to OrQuanta  You're In!</title>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -409,7 +419,7 @@ _WELCOME_HTML = """
 <div class="hero">
   <div class="logo">OrQuanta</div>
   <div class="badge"><span class="badge-dot"></span> Account created successfully</div>
-  <h1>You're in.<br>Welcome aboard! Ã°Å¸Å¡â‚¬</h1>
+  <h1>You're in.<br>Welcome aboard! </h1>
   <p class="h1-sub">Your 14-day free trial starts now. Zero setup. Cancel anytime.</p>
   <div class="email-pill" id="user-email">Account active</div>
 </div>
@@ -417,8 +427,8 @@ _WELCOME_HTML = """
 <!-- JWT Token for devs -->
 <div class="token-section">
   <div class="token-toggle" onclick="toggleToken(this)">
-    <span>Ã°Å¸â€â€˜ Your API token is ready</span>
-    <span id="tok-arrow" style="transition:transform .2s">Ã¢â€“Â¾</span>
+    <span> Your API token is ready</span>
+    <span id="tok-arrow" style="transition:transform .2s"></span>
   </div>
   <div class="token-body" id="tok-body">
     <div class="token-val" id="tok-val">Loading your JWT token...</div>
@@ -431,35 +441,35 @@ _WELCOME_HTML = """
 <div class="cards">
 
   <a class="card c1" href="/app">
-    <div class="card-num">Step 1 Ã¢â‚¬â€ Recommended</div>
-    <div class="card-icon">Ã¢Å¡Â¡</div>
+    <div class="card-num">Step 1  Recommended</div>
+    <div class="card-icon"></div>
     <div class="card-title">Open Your Dashboard</div>
-    <div class="card-desc">Your personal mission control. Submit AI goals, monitor live agents, track costs, and view audit logs Ã¢â‚¬â€ all in one place.</div>
-    <div class="card-tag">Ã¢â€ â€” Open now</div>
+    <div class="card-desc">Your personal mission control. Submit AI goals, monitor live agents, track costs, and view audit logs  all in one place.</div>
+    <div class="card-tag"> Open now</div>
   </a>
 
   <a class="card c2" href="/demo#goal-input">
     <div class="card-num">Step 2</div>
-    <div class="card-icon">Ã°Å¸Â§Â </div>
+    <div class="card-icon"></div>
     <div class="card-title">Analyze Your First GPU Goal</div>
-    <div class="card-desc">Type your workload in plain English Ã¢â‚¬â€ "Fine-tune Llama 3 on my data, cost under $100" Ã¢â‚¬â€ and our AI gives you an instant cost breakdown across 5 cloud providers.</div>
-    <div class="card-tag">2 min Ã‚Â· No setup</div>
+    <div class="card-desc">Type your workload in plain English  "Fine-tune Llama 3 on my data, cost under $100"  and our AI gives you an instant cost breakdown across 5 cloud providers.</div>
+    <div class="card-tag">2 min  No setup</div>
   </a>
 
   <a class="card c3" href="/demo">
     <div class="card-num">Step 3</div>
-    <div class="card-icon">Ã°Å¸â€œÂ¡</div>
+    <div class="card-icon"></div>
     <div class="card-title">Watch Agents Work Live</div>
-    <div class="card-desc">See 5 specialized AI agents Ã¢â‚¬â€ Scheduler, Cost Optimizer, Healing, Forecast, Audit Ã¢â‚¬â€ orchestrating a real GPU job with live streaming logs and metrics.</div>
+    <div class="card-desc">See 5 specialized AI agents  Scheduler, Cost Optimizer, Healing, Forecast, Audit  orchestrating a real GPU job with live streaming logs and metrics.</div>
     <div class="card-tag">Live stream</div>
   </a>
 
 </div>
 
 <div class="foot">
-  Need help? <a href="mailto:orquanta.founder@gmail.com">orquanta.founder@gmail.com</a> &nbsp;Ã‚Â·&nbsp;
-  <a href="/demo">Back to Demo</a> &nbsp;Ã‚Â·&nbsp;
-  <a href="/app">Dashboard Ã¢â€ â€™</a>
+  Need help? <a href="mailto:orquanta.founder@gmail.com">orquanta.founder@gmail.com</a> &nbsp;&nbsp;
+  <a href="/demo">Back to Demo</a> &nbsp;&nbsp;
+  <a href="/app">Dashboard </a>
 </div>
 
 <script>
@@ -574,6 +584,12 @@ async def login(req: LoginRequest):
 
 
 # Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Health check Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+
+@app.get("/metrics", tags=["System"], summary="Prometheus metrics", include_in_schema=False)
+async def prometheus_metrics():
+    """Prometheus-format metrics for Grafana Cloud scraping."""
+    return get_metrics_response()
+
 
 @app.get("/health", tags=["System"], response_model=HealthResponse, summary="Health check")
 async def health():

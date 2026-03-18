@@ -41,7 +41,15 @@ from typing import Any
 
 logger = logging.getLogger("orquanta.audit")
 
-AUDIT_HMAC_KEY = os.getenv("AUDIT_HMAC_KEY", "orquanta-audit-hmac-key-change-in-prod")
+_raw_hmac_key = os.getenv("AUDIT_HMAC_KEY")
+if not _raw_hmac_key:
+    import secrets as _secrets
+    _raw_hmac_key = _secrets.token_hex(32)  # Secure random key per process — not persistent but safe
+    logging.getLogger("orquanta.audit").critical(
+        "AUDIT_HMAC_KEY is not set — audit HMAC integrity checks will NOT survive restarts. "
+        "Set AUDIT_HMAC_KEY to a strong persistent secret in production."
+    )
+AUDIT_HMAC_KEY: str = _raw_hmac_key
 RETENTION_DAYS = int(os.getenv("AUDIT_RETENTION_DAYS", "90"))
 MAX_IN_MEMORY_EVENTS = 10_000  # Ring buffer size before persistence
 

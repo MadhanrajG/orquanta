@@ -1,18 +1,18 @@
 """
-OrQuanta Agentic v1.0 â€” Public Demo Endpoint
+OrQuanta Agentic v1.0 Public Demo Endpoint
 =============================================
 
 Provides a read-only, shareable demo URL:
-  GET /demo â†’ serves an interactive pre-auth demo page
-  GET /demo/token â†’ returns a 1-hour read-only demo JWT
-  GET /demo/status â†’ returns current demo scenario state
+ GET /demo serves an interactive pre-auth demo page
+ GET /demo/token returns a 1-hour read-only demo JWT
+ GET /demo/status returns current demo scenario state
 
 This is the shareable link for cold outreach:
-  "See OrQuanta live: https://orquanta.ai/demo"
+ "See OrQuanta live: https://orquanta.ai/demo"
 
 Mount in v4/api/main.py:
-    from v4.demo.public_demo import demo_router
-    app.include_router(demo_router, prefix="/demo", tags=["Demo"])
+ from v4.demo.public_demo import demo_router
+ app.include_router(demo_router, prefix="/demo", tags=["Demo"])
 """
 from __future__ import annotations
 
@@ -32,514 +32,570 @@ demo_router = APIRouter()
 
 DEMO_SECRET = os.getenv("DEMO_SECRET", "orquanta-public-demo-2026")
 
-# â”€â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Routes 
 
 @demo_router.get("/token", summary="Get read-only demo access token")
 async def get_demo_token() -> JSONResponse:
-    """
-    Issues a 1-hour read-only demo token.
-    No auth required â€” this is the public entry point.
-    """
-    payload = {
-        "role": "demo_viewer",
-        "iat": int(time.time()),
-        "exp": int(time.time()) + 3600,
-        "scope": "read:dashboard read:metrics read:agents",
-    }
-    # Simple signed payload (not a full JWT â€” use python-jose for prod)
-    token_data = json.dumps(payload, separators=(",", ":"))
-    sig = hashlib.sha256(f"{DEMO_SECRET}:{token_data}".encode()).hexdigest()[:24]
-    token = f"demo_{sig}_{int(time.time())}"
-    return JSONResponse({
-        "token": token,
-        "type": "bearer",
-        "expires_in": 3600,
-        "scope": "read-only demo",
-        "dashboard_url": "/dashboard",
-        "ws_url": "/ws/agent-stream",
-    })
+ """
+ Issues a 1-hour read-only demo token.
+ No auth required this is the public entry point.
+ """
+ payload = {
+ "role": "demo_viewer",
+ "iat": int(time.time()),
+ "exp": int(time.time()) + 3600,
+ "scope": "read:dashboard read:metrics read:agents",
+ }
+ # Simple signed payload (not a full JWT use python-jose for prod)
+ token_data = json.dumps(payload, separators=(",", ":"))
+ sig = hashlib.sha256(f"{DEMO_SECRET}:{token_data}".encode()).hexdigest()[:24]
+ token = f"demo_{sig}_{int(time.time())}"
+ return JSONResponse({
+ "token": token,
+ "type": "bearer",
+ "expires_in": 3600,
+ "scope": "read-only demo",
+ "dashboard_url": "/dashboard",
+ "ws_url": "/ws/agent-stream",
+ })
 
 
 @demo_router.get("/status", summary="Current demo status and running scenarios")
 async def get_demo_status() -> JSONResponse:
-    """Returns current demo engine state."""
-    engine = get_demo_engine()
-    stats  = engine.get_stats() if engine.is_active() else {"demo_mode": False}
-    jobs   = [
-        {
-            "job_id": j.job_id,
-            "goal": j.goal[:60],
-            "phase": j.phase.value,
-            "progress_pct": j.progress_pct,
-            "cost_so_far": round(j.cost_so_far, 2),
-            "saved_vs_aws": round(j.saved_vs_aws, 2),
-            "gpu_util": round(j.gpu_util, 1),
-            "memory_pct": round(j.memory_pct, 1),
-            "healed": j.healed,
-        }
-        for j in engine.get_all_jobs()
-    ] if engine.is_active() else []
+ """Returns current demo engine state."""
+ engine = get_demo_engine()
+ stats = engine.get_stats() if engine.is_active() else {"demo_mode": False}
+ jobs = [
+ {
+ "job_id": j.job_id,
+ "goal": j.goal[:60],
+ "phase": j.phase.value,
+ "progress_pct": j.progress_pct,
+ "cost_so_far": round(j.cost_so_far, 2),
+ "saved_vs_aws": round(j.saved_vs_aws, 2),
+ "gpu_util": round(j.gpu_util, 1),
+ "memory_pct": round(j.memory_pct, 1),
+ "healed": j.healed,
+ }
+ for j in engine.get_all_jobs()
+ ] if engine.is_active() else []
 
-    return JSONResponse({
-        "status": "active" if (engine.is_active() if engine else False) else "inactive",
-        "platform": "OrQuanta Agentic v1.0",
-        "tagline": "Orchestrate. Optimize. Evolve.",
-        "scenarios_available": list(SCENARIOS.keys()),
-        "stats": stats,
-        "active_jobs": jobs,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    })
+ return JSONResponse({
+ "status": "active" if (engine.is_active() if engine else False) else "inactive",
+ "platform": "OrQuanta Agentic v1.0",
+ "tagline": "Orchestrate. Optimize. Evolve.",
+ "scenarios_available": list(SCENARIOS.keys()),
+ "stats": stats,
+ "active_jobs": jobs,
+ "timestamp": datetime.now(timezone.utc).isoformat(),
+ })
 
 
 @demo_router.get("", response_class=HTMLResponse, summary="Interactive public demo page")
 @demo_router.get("/", response_class=HTMLResponse)
 async def demo_page(request: Request) -> HTMLResponse:
-    """
-    Serves the interactive demo page.
-    This is the page that cold-outreach links lead to.
-    """
-    return HTMLResponse(content=_build_demo_page(), status_code=200)
+ """
+ Serves the interactive demo page.
+ This is the page that cold-outreach links lead to.
+ """
+ return HTMLResponse(content=_build_demo_page(), status_code=200)
 
 
-# â”€â”€â”€ Page Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Page Builder 
 
 def _build_demo_page() -> str:
-    """Generate the public demo HTML page."""
-    return """<!DOCTYPE html>
+ """Generate the public demo HTML page."""
+ return """<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OrQuanta Live Demo â€” See Agentic AI Manage GPU Cloud</title>
-    <meta name="description" content="See OrQuanta in action: 5 AI agents autonomously orchestrating GPU cloud workloads, cutting costs 47%, healing failures in 8.3 seconds." />
-    <meta property="og:title" content="OrQuanta â€” Live Demo" />
-    <meta property="og:description" content="Watch AI agents manage GPU cloud in real time" />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <style>
-        :root {
-            --bg: #0A0B14; --surface: #0F1624; --border: rgba(0,212,255,0.1);
-            --primary: #00D4FF; --secondary: #7B2FFF;
-            --green: #00FF88; --amber: #FFB800; --red: #FF4444;
-            --text: #E8EAF6; --muted: #8892A4;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>OrQuanta Live Demo — Watch AI Agents Manage GPU Cloud</title>
+ <meta name="description" content="See OrQuanta in action: 5 AI agents autonomously orchestrating GPU cloud workloads, cutting costs 47%, healing failures in 8.3 seconds." />
+ <meta property="og:title" content="OrQuanta Live Demo" />
+ <meta property="og:description" content="Watch AI agents manage GPU cloud in real time" />
+ <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%2300D4FF'/><stop offset='1' stop-color='%237B2FFF'/></linearGradient></defs><rect width='32' height='32' rx='8' fill='url(%23g)'/><text x='16' y='22' text-anchor='middle' font-size='16' fill='white'>&#9889;</text></svg>" />
+ <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+ <style>
+ :root {
+ --bg: #0A0B14; --surface: #0F1624; --border: rgba(0,212,255,0.1);
+ --primary: #00D4FF; --secondary: #7B2FFF;
+ --green: #00FF88; --amber: #FFB800; --red: #FF4444;
+ --text: #E8EAF6; --muted: #8892A4;
+ }
+ * { box-sizing: border-box; margin: 0; padding: 0; }
+ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-        .hero { text-align: center; padding: 80px 24px 48px; position: relative; overflow: hidden; }
-        .hero::before { content:''; position:absolute; top:-200px; left:50%; transform:translateX(-50%);
-            width:600px; height:600px; border-radius:50%;
-            background:radial-gradient(circle, rgba(0,212,255,0.12),transparent 70%); pointer-events:none; }
+ .hero { text-align: center; padding: 80px 24px 48px; position: relative; overflow: hidden; }
+ .hero::before { content:''; position:absolute; top:-200px; left:50%; transform:translateX(-50%);
+ width:600px; height:600px; border-radius:50%;
+ background:radial-gradient(circle, rgba(0,212,255,0.12),transparent 70%); pointer-events:none; }
 
-        .live-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 16px;
-            border-radius:999px; border:1px solid rgba(0,212,255,0.4); background:rgba(0,212,255,0.08);
-            font-size:12px; font-weight:600; color:var(--primary); margin-bottom:24px; }
-        .dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
-        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
+ .live-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 16px;
+ border-radius:999px; border:1px solid rgba(0,212,255,0.4); background:rgba(0,212,255,0.08);
+ font-size:12px; font-weight:600; color:var(--primary); margin-bottom:24px; }
+ .dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+ @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
 
-        h1 { font-family:'Space Grotesk',sans-serif; font-size:clamp(32px,5vw,64px); font-weight:700;
-             line-height:1.1; letter-spacing:-1px; margin-bottom:16px; }
-        .grad { background:linear-gradient(135deg,#fff 20%,#00D4FF 60%,#7B2FFF);
-                -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-        .sub { color:var(--muted); font-size:18px; max-width:560px; margin:0 auto 40px; line-height:1.6; }
+ h1 { font-family:'Space Grotesk',sans-serif; font-size:clamp(32px,5vw,64px); font-weight:700;
+ line-height:1.1; letter-spacing:-1px; margin-bottom:16px; }
+ .grad { background:linear-gradient(135deg,#fff 20%,#00D4FF 60%,#7B2FFF);
+ -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+ .sub { color:var(--muted); font-size:18px; max-width:560px; margin:0 auto 40px; line-height:1.6; }
 
-        .cta-row { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:16px; }
-        .btn-primary { padding:13px 28px; border-radius:10px; font-size:15px; font-weight:700;
-            background:linear-gradient(135deg,#00D4FF,#7B2FFF); color:white; border:none; cursor:pointer;
-            text-decoration:none; box-shadow:0 0 40px rgba(0,212,255,0.25); transition:all .25s; }
-        .btn-primary:hover { transform:translateY(-2px); box-shadow:0 0 60px rgba(0,212,255,0.4); }
-        .btn-outline { padding:13px 28px; border-radius:10px; font-size:15px; font-weight:600;
-            background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.12);
-            cursor:pointer; text-decoration:none; transition:all .25s; }
-        .btn-outline:hover { border-color:var(--primary); color:var(--primary); }
-        .trial-note { color:var(--muted); font-size:13px; }
+ .cta-row { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:16px; }
+ .btn-primary { padding:13px 28px; border-radius:10px; font-size:15px; font-weight:700;
+ background:linear-gradient(135deg,#00D4FF,#7B2FFF); color:white; border:none; cursor:pointer;
+ text-decoration:none; box-shadow:0 0 40px rgba(0,212,255,0.25); transition:all .25s; }
+ .btn-primary:hover { transform:translateY(-2px); box-shadow:0 0 60px rgba(0,212,255,0.4); }
+ .btn-outline { padding:13px 28px; border-radius:10px; font-size:15px; font-weight:600;
+ background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.12);
+ cursor:pointer; text-decoration:none; transition:all .25s; }
+ .btn-outline:hover { border-color:var(--primary); color:var(--primary); }
+ .trial-note { color:var(--muted); font-size:13px; }
 
-        /* â”€â”€ Demo Console â”€â”€ */
-        .console-wrap { max-width:800px; margin:0 auto 64px; padding:0 24px; }
-        .console { background:var(--surface); border:1px solid var(--border); border-radius:16px;
-            overflow:hidden; box-shadow:0 40px 80px rgba(0,0,0,.5),0 0 60px rgba(0,212,255,.08); }
-        .console-bar { display:flex; align-items:center; gap:8px; padding:12px 16px;
-            background:#0A0B14; border-bottom:1px solid var(--border); }
-        .dot-r { width:12px; height:12px; border-radius:50%; background:#FF4444; }
-        .dot-a { width:12px; height:12px; border-radius:50%; background:#FFB800; }
-        .dot-g { width:12px; height:12px; border-radius:50%; background:#00FF88; }
-        .console-title { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted); margin-left:auto; }
-        .console-body { padding:20px; font-family:'JetBrains Mono',monospace; font-size:13px;
-            line-height:1.75; min-height:280px; max-height:380px; overflow-y:auto; }
-        .l-dim { color:var(--muted); }
-        .l-cyan { color:var(--primary); }
-        .l-green { color:var(--green); }
-        .l-amber { color:var(--amber); }
-        .l-purple { color:#A78BFA; }
-        .l-red { color:var(--red); }
-        .blink { display:inline-block; width:8px; height:13px; background:var(--primary); animation:blink 1s infinite; vertical-align:middle; }
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+ /* Demo Console */
+ .console-wrap { max-width:800px; margin:0 auto 64px; padding:0 24px; }
+ .console { background:var(--surface); border:1px solid var(--border); border-radius:16px;
+ overflow:hidden; box-shadow:0 40px 80px rgba(0,0,0,.5),0 0 60px rgba(0,212,255,.08); }
+ .console-bar { display:flex; align-items:center; gap:8px; padding:12px 16px;
+ background:#0A0B14; border-bottom:1px solid var(--border); }
+ .dot-r { width:12px; height:12px; border-radius:50%; background:#FF4444; }
+ .dot-a { width:12px; height:12px; border-radius:50%; background:#FFB800; }
+ .dot-g { width:12px; height:12px; border-radius:50%; background:#00FF88; }
+ .console-title { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted); margin-left:auto; }
+ .console-body { padding:20px; font-family:'JetBrains Mono',monospace; font-size:13px;
+ line-height:1.75; min-height:280px; max-height:380px; overflow-y:auto; }
+ .console-body::-webkit-scrollbar { width:6px; }
+ .console-body::-webkit-scrollbar-track { background:transparent; }
+ .console-body::-webkit-scrollbar-thumb { background:rgba(0,212,255,0.2); border-radius:3px; }
+ .console-body::-webkit-scrollbar-thumb:hover { background:rgba(0,212,255,0.4); }
+ .l-dim { color:var(--muted); }
+ .l-cyan { color:var(--primary); }
+ .l-green { color:var(--green); }
+ .l-amber { color:var(--amber); }
+ .l-purple { color:#A78BFA; }
+ .l-red { color:var(--red); }
+ .blink { display:inline-block; width:8px; height:13px; background:var(--primary); animation:blink 1s infinite; vertical-align:middle; }
+ @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-        /* â”€â”€ Metrics strip â”€â”€ */
-        .metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-            gap:1px; background:var(--border); border-top:1px solid var(--border); }
-        .metric { background:var(--surface); padding:16px 20px; }
-        .metric-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
-        .metric-value { font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:700; color:var(--primary); }
-        .metric-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+ /* Metrics strip */
+ .metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+ gap:1px; background:var(--border); border-top:1px solid var(--border); }
+ .metric { background:var(--surface); padding:16px 20px; }
+ .metric-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+ .metric-value { font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:700; color:var(--primary); }
+ .metric-sub { font-size:11px; color:var(--muted); margin-top:2px; }
 
-        /* â”€â”€ Features strip â”€â”€ */
-        .features { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-            gap:16px; max-width:960px; margin:0 auto 64px; padding:0 24px; }
-        .feat { background:var(--surface); border:1px solid var(--border); border-radius:12px;
-            padding:24px; transition:transform .2s,box-shadow .2s; }
-        .feat:hover { transform:translateY(-3px); box-shadow:0 12px 30px rgba(0,212,255,.08); }
-        .feat-icon { font-size:28px; margin-bottom:12px; }
-        .feat-title { font-weight:700; font-size:16px; margin-bottom:6px; }
-        .feat-desc { color:var(--muted); font-size:14px; line-height:1.6; }
+ /* Features strip */
+ .features { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+ gap:16px; max-width:960px; margin:0 auto 64px; padding:0 24px; }
+ .feat { background:var(--surface); border:1px solid var(--border); border-radius:12px;
+ padding:24px; transition:transform .2s,box-shadow .2s; }
+ .feat:hover { transform:translateY(-3px); box-shadow:0 12px 30px rgba(0,212,255,.08); }
+ .feat-icon { font-size:28px; margin-bottom:12px; }
+ .feat-title { font-weight:700; font-size:16px; margin-bottom:6px; }
+ .feat-desc { color:var(--muted); font-size:14px; line-height:1.6; }
 
-        /* â”€â”€ CTA section â”€â”€ */
-        .cta-section { text-align:center; padding:64px 24px; border-top:1px solid var(--border); }
-        .cta-section h2 { font-family:'Space Grotesk',sans-serif; font-size:36px; font-weight:700; margin-bottom:12px; }
-        .cta-section p { color:var(--muted); margin-bottom:32px; font-size:17px; }
-    </style>
+ /* CTA section */
+ .cta-section { text-align:center; padding:64px 24px; border-top:1px solid var(--border); }
+ .cta-section h2 { font-family:'Space Grotesk',sans-serif; font-size:36px; font-weight:700; margin-bottom:12px; }
+ .cta-section p { color:var(--muted); margin-bottom:32px; font-size:17px; }
+ /* Top nav */
+ .topnav { position:sticky; top:0; z-index:100; display:flex; align-items:center; justify-content:space-between;
+  padding:12px 24px; background:rgba(10,11,20,0.85); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border); }
+ .topnav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--text); font-weight:700; font-size:15px; }
+ .topnav-logo span { font-family:'Space Grotesk',sans-serif; }
+ .topnav-logo .logo-dot { width:28px; height:28px; background:linear-gradient(135deg,#00D4FF,#7B2FFF);
+  border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:14px; }
+ .topnav-actions { display:flex; align-items:center; gap:10px; }
+ .topnav-link { font-size:13px; color:var(--muted); text-decoration:none; padding:6px 12px; border-radius:7px; transition:color .2s; }
+ .topnav-link:hover { color:var(--primary); }
+ .topnav-btn { font-size:13px; font-weight:700; color:white; text-decoration:none;
+  padding:7px 18px; border-radius:8px; background:linear-gradient(135deg,#00D4FF,#7B2FFF);
+  box-shadow:0 0 20px rgba(0,212,255,0.2); transition:box-shadow .2s; }
+ .topnav-btn:hover { box-shadow:0 0 32px rgba(0,212,255,0.4); }
+ @media(max-width:520px) { .topnav-link { display:none; } .topnav-logo span { display:none; } }
+ /* Footer */
+ .site-footer { text-align:center; padding:32px 24px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; }
+ .site-footer a { color:var(--muted); text-decoration:none; transition:color .15s; }
+ .site-footer a:hover { color:var(--primary); }
+ .site-footer .footer-links { display:flex; justify-content:center; gap:20px; flex-wrap:wrap; margin-bottom:12px; }
+ </style>
 </head>
 <body>
 
+<nav class="topnav">
+ <a href="/demo" class="topnav-logo">
+  <div class="logo-dot">&#9889;</div>
+  <span>OrQuanta</span>
+ </a>
+ <div class="topnav-actions">
+  <a href="#live-console" class="topnav-link" onclick="document.getElementById('live-console').scrollIntoView({behavior:'smooth'});return false;">Live Demo</a>
+  <a href="#features" class="topnav-link" onclick="document.getElementById('features-section').scrollIntoView({behavior:'smooth'});return false;">Features</a>
+  <a href="/app" class="topnav-btn">Start Free Trial &rarr;</a>
+ </div>
+</nav>
+
 <section class="hero">
-    <div class="live-badge">
-        <div class="dot"></div>
-        OrQuanta is live â€” Demo running now
-    </div>
-    <h1><span class="grad">The Agentic AI That Manages<br>Your GPU Cloud Autonomously</span></h1>
-    <p class="sub">Five specialized AI agents that schedule, optimize, heal and scale your GPU workloads
-        across AWS, GCP, Azure and Lambda Labs â€” in real time, automatically.</p>
-    <div class="cta-row">
-        <a href="/app" class="btn-primary" id="cta-main">Start Free â€” 14 Days &rarr;</a>
-        <a href="#live-console" class="btn-outline" onclick="document.getElementById('live-console').scrollIntoView({behavior:'smooth'});return false;">Watch Live &darr;</a>
-    </div>
-    <p class="trial-note">No credit card &bull; No setup &bull; Cancel anytime</p>
-    <div class="stats-strip" style="display:flex;justify-content:center;gap:32px;margin-top:32px;flex-wrap:wrap;">
-      <div style="text-align:center;"><div class="hero-stats-num" data-val="47" data-suf="%" style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:#00D4FF;">47%</div><div style="color:#8892A4;font-size:12px;">avg cost reduction</div></div>
-      <div style="text-align:center;"><div class="hero-stats-num" data-val="8.3" data-suf="s" style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:#00FF88;">8.3s</div><div style="color:#8892A4;font-size:12px;">avg self-heal time</div></div>
-      <div style="text-align:center;"><div style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:#A78BFA;">&lt;30s</div><div style="color:#8892A4;font-size:12px;">to running GPU job</div></div>
-      <div style="text-align:center;"><div id="stat-5" style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:#FFB800;">5</div><div style="color:#8892A4;font-size:12px;">AI agents running</div></div>
-    </div>
+ <div class="live-badge">
+ <div class="dot"></div>
+ 5 AI agents live &bull; Platform active
+ </div>
+ <h1><span class="grad">The Agentic AI That Manages<br>Your GPU Cloud Autonomously</span></h1>
+ <p class="sub">Five specialized AI agents that schedule, optimize, heal and scale your GPU workloads
+ across AWS, GCP, Azure and Lambda Labs in real time, automatically.</p>
+ <div class="cta-row">
+ <a href="/app" class="btn-primary" id="cta-main">Start Free Trial &rarr;</a>
+ <a href="#live-console" class="btn-outline" onclick="document.getElementById('live-console').scrollIntoView({behavior:'smooth'});return false;">Watch Live &darr;</a>
+ </div>
+ <p class="trial-note">No credit card &bull; No setup &bull; Cancel anytime</p>
+ <div class="stats-strip" style="display:flex;justify-content:center;gap:32px;margin-top:32px;flex-wrap:wrap;">
+ <div style="text-align:center;"><div class="hero-stats-num" data-val="47" data-suf="%" style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:#00D4FF;">47%</div><div style="color:#8892A4;font-size:12px;">avg cost reduction</div></div>
+ <div style="text-align:center;"><div class="hero-stats-num" data-val="8.3" data-suf="s" style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:#00FF88;">8.3s</div><div style="color:#8892A4;font-size:12px;">avg self-heal time</div></div>
+ <div style="text-align:center;"><div class="hero-stats-num" data-val="30" data-suf="s" data-pre="&lt;" style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:#A78BFA;">&lt;30s</div><div style="color:#8892A4;font-size:12px;">to running GPU job</div></div>
+ <div style="text-align:center;"><div class="hero-stats-num" data-val="5" data-suf="" style="font-family:'Space Grotesk',sans-serif;font-size:1.5rem;font-weight:700;color:#FFB800;">5</div><div style="color:#8892A4;font-size:12px;">AI agents running</div></div>
+ </div>
 </section>
 
 <!-- Agent Console -->
 <div class="console-wrap" id="live-console">
-    <div class="console">
-        <div class="console-bar">
-            <div class="dot-r"></div><div class="dot-a"></div><div class="dot-g"></div>
-            <span class="console-title">orquanta-agent-stream â€” demo</span>
-        </div>
-        <div class="console-body" id="console-output">
-            <div class="l-dim">Connecting to OrQuanta agent stream...</div>
-        </div>
-        <div class="metrics" id="metrics-strip">
-            <div class="metric">
-                <div class="metric-label">GPU Utilization</div>
-                <div class="metric-value" id="m-util">â€”</div>
-                <div class="metric-sub">A100 80GB Â· Lambda Labs</div>
-            </div>
-            <div class="metric">
-                <div class="metric-label">VRAM Used</div>
-                <div class="metric-value" id="m-vram">â€”</div>
-                <div class="metric-sub" id="m-vram-sub">of 80 GB</div>
-            </div>
-            <div class="metric">
-                <div class="metric-label">Cost So Far</div>
-                <div class="metric-value" id="m-cost" style="color:var(--primary)">â€”</div>
-                <div class="metric-sub" id="m-saved" style="color:var(--green)">â€”</div>
-            </div>
-            <div class="metric">
-                <div class="metric-label">Job Progress</div>
-                <div class="metric-value" id="m-pct">â€”</div>
-                <div class="metric-sub">Training loss: <span id="m-loss">â€”</span></div>
-            </div>
-        </div>
-    </div>
+ <div class="console">
+ <div class="console-bar">
+ <div class="dot-r"></div><div class="dot-a"></div><div class="dot-g"></div>
+ <span class="console-title">orquanta-agent-stream demo</span>
+ </div>
+ <div class="console-body" id="console-output">
+ <div class="l-dim">Connecting to OrQuanta agent stream...</div>
+ </div>
+ <div class="metrics" id="metrics-strip">
+ <div class="metric">
+ <div class="metric-label">GPU Utilization</div>
+ <div class="metric-value" id="m-util">—</div>
+ <div class="metric-sub">A100 80GB Lambda Labs</div>
+ </div>
+ <div class="metric">
+ <div class="metric-label">VRAM Used</div>
+ <div class="metric-value" id="m-vram">—</div>
+ <div class="metric-sub" id="m-vram-sub">of 80 GB</div>
+ </div>
+ <div class="metric">
+ <div class="metric-label">Cost So Far</div>
+ <div class="metric-value" id="m-cost" style="color:var(--primary)">$0.00</div>
+ <div class="metric-sub" id="m-saved" style="color:var(--green)">starting…</div>
+ </div>
+ <div class="metric">
+ <div class="metric-label">Job Progress</div>
+ <div class="metric-value" id="m-pct">—</div>
+ <div class="metric-sub">Training loss: <span id="m-loss">—</span></div>
+ </div>
+ </div>
+ </div>
 </div>
 
 <!-- Features -->
-<div class="features">
-    <div class="feat">
-        <div class="feat-icon">ðŸ§ </div>
-        <div class="feat-title">OrMind Orchestrator</div>
-        <div class="feat-desc">Natural language goals â†’ execution DAG in &lt;2 seconds. No config files.</div>
-    </div>
-    <div class="feat">
-        <div class="feat-icon">ðŸ’¸</div>
-        <div class="feat-title">Real-Time Cost Optimization</div>
-        <div class="feat-desc">60-second spot price polling across 4 providers. Automatically picks the cheapest GPU.</div>
-    </div>
-    <div class="feat">
-        <div class="feat-icon">ðŸ”§</div>
-        <div class="feat-title">1Hz Self-Healing</div>
-        <div class="feat-desc">Detects OOM before it crashes. Average recovery: 8.3 seconds. Zero human intervention required.</div>
-    </div>
-    <div class="feat">
-        <div class="feat-icon">ðŸ”’</div>
-        <div class="feat-title">Tamper-Proof Audit Trail</div>
-        <div class="feat-desc">Every agent decision signed with HMAC-SHA256. Legally admissible. GDPR-compliant.</div>
-    </div>
-    <div class="feat">
-        <div class="feat-icon">âš¡</div>
-        <div class="feat-title">&lt;30s Provisioning</div>
-        <div class="feat-desc">From natural language goal to running GPU job in under 30 seconds.</div>
-    </div>
-    <div class="feat">
-        <div class="feat-icon">ðŸ“Š</div>
-        <div class="feat-title">Full Observability</div>
-        <div class="feat-desc">Prometheus metrics + Grafana dashboard. 14 panels. 30-second refresh. Every metric you need.</div>
-    </div>
+<div class="features" id="features-section">
+ <div class="feat">
+  <div class="feat-icon" style="font-size:28px;margin-bottom:12px;">&#x1F9E0;</div>
+  <div class="feat-title">OrMind Orchestrator</div>
+  <div class="feat-desc">Natural language goals &rarr; execution DAG in &lt;2 seconds. No config files.</div>
+  </div>
+  <div class="feat">
+  <div class="feat-icon" style="font-size:28px;margin-bottom:12px;">&#x1F4B8;</div>
+  <div class="feat-title">Real-Time Cost Optimization</div>
+  <div class="feat-desc">60-second spot price polling across 4 providers. Automatically picks the cheapest GPU.</div>
+  </div>
+  <div class="feat">
+  <div class="feat-icon" style="font-size:28px;margin-bottom:12px;">&#x26A1;</div>
+  <div class="feat-title">1Hz Self-Healing</div>
+  <div class="feat-desc">Detects OOM before it crashes. Average recovery: 8.3 seconds. Zero human intervention required.</div>
+  </div>
+  <div class="feat">
+  <div class="feat-icon" style="font-size:28px;margin-bottom:12px;">&#x1F6E1;</div>
+  <div class="feat-title">Tamper-Proof Audit Trail</div>
+  <div class="feat-desc">Every agent decision signed with HMAC-SHA256. Legally admissible. GDPR-compliant.</div>
+  </div>
+  <div class="feat">
+  <div class="feat-icon" style="font-size:28px;margin-bottom:12px;">&#x23F1;</div>
+  <div class="feat-title">&lt;30s Provisioning</div>
+  <div class="feat-desc">From natural language goal to running GPU job in under 30 seconds.</div>
+  </div>
+  <div class="feat">
+  <div class="feat-icon" style="font-size:28px;margin-bottom:12px;">&#x1F4CA;</div>
+  <div class="feat-title">Full Observability</div>
+  <div class="feat-desc">Prometheus metrics + Grafana dashboard. 14 panels. 30-second refresh. Every metric you need.</div>
+  </div>
 </div>
 
 <!-- Goal Analyzer -->
 <section style="max-width:700px;margin:0 auto 64px;padding:0 24px;">
-    <h2 style="color:#00D4FF;font-family:'Space Grotesk',sans-serif;font-size:1.8rem;text-align:center;margin-bottom:12px;">
-        Try It Now â€” Free
-    </h2>
-    <p style="color:#8892A4;text-align:center;margin-bottom:32px;font-size:16px;">
-        Type a goal in plain English. OrQuanta agents will plan it instantly.
-    </p>
-    <div style="background:rgba(15,22,36,0.9);border:1px solid rgba(0,212,255,0.2);border-radius:16px;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
-        <textarea id="goal-input"
-            placeholder="Fine-tune Llama 3 8B on my dataset, keep cost under $80..."
-            style="width:100%;min-height:100px;background:rgba(0,0,0,0.3);border:1px solid rgba(0,212,255,0.2);border-radius:8px;color:#E8EAF6;font-size:1rem;padding:16px;font-family:'Inter',sans-serif;resize:vertical;box-sizing:border-box;outline:none;"></textarea>
-        <button onclick="analyzeGoal()"
-            id="analyze-btn"
-            style="margin-top:16px;width:100%;background:linear-gradient(135deg,#00D4FF,#7B2FFF);border:none;border-radius:8px;color:white;font-size:1.1rem;font-weight:600;padding:16px;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:opacity .2s;">
-            Analyze with AI Agents â†’
-        </button>
-        <div id="goal-result" style="display:none;margin-top:24px;padding:20px;background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.2);border-radius:8px;"></div>
-    </div>
+ <h2 style="color:#00D4FF;font-family:'Space Grotesk',sans-serif;font-size:1.8rem;text-align:center;margin-bottom:12px;">
+ Try It Now Free
+ </h2>
+ <p style="color:#8892A4;text-align:center;margin-bottom:32px;font-size:16px;">
+ Type a goal in plain English. OrQuanta agents will plan it instantly.
+ </p>
+ <div style="background:rgba(15,22,36,0.9);border:1px solid rgba(0,212,255,0.2);border-radius:16px;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+ <textarea id="goal-input"
+ placeholder="Fine-tune Llama 3 8B on my dataset, keep cost under $80..."
+ style="width:100%;min-height:100px;background:rgba(0,0,0,0.3);border:1px solid rgba(0,212,255,0.2);border-radius:8px;color:#E8EAF6;font-size:1rem;padding:16px;font-family:'Inter',sans-serif;resize:vertical;box-sizing:border-box;outline:none;"></textarea>
+ <button onclick="analyzeGoal()"
+ id="analyze-btn"
+ style="margin-top:16px;width:100%;background:linear-gradient(135deg,#00D4FF,#7B2FFF);border:none;border-radius:8px;color:white;font-size:1.1rem;font-weight:600;padding:16px;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:opacity .2s;">
+ Analyze with AI Agents 
+ </button>
+ <div id="goal-result" style="display:none;margin-top:24px;padding:20px;background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.2);border-radius:8px;"></div>
+ </div>
 </section>
 
 <!-- CTA -->
 <div class="cta-section">
-    <h2>Ready to stop wasting GPU budget?</h2>
-    <p>Start for free &mdash; 14-day trial, no credit card required.</p>
-    <div class="cta-row">
-        <a href="/app" class="btn-primary">Start Free Trial &rarr;</a>
-        <a href="mailto:orquanta.founder@gmail.com" class="btn-outline">Talk to Founder</a>
-    </div>
+ <h2>Ready to stop wasting GPU budget?</h2>
+ <p>Start for free &mdash; 14-day trial, no credit card required.</p>
+ <div class="cta-row">
+ <a href="/app" class="btn-primary">Start Free Trial &rarr;</a>
+ <a href="mailto:orquanta.founder@gmail.com" class="btn-outline">Talk to Founder</a>
+ </div>
 </div>
 
+<footer class="site-footer">
+ <div class="footer-links">
+ <a href="/app">Dashboard</a>
+ <a href="/demo">Live Demo</a>
+ <a href="mailto:orquanta.founder@gmail.com">Contact</a>
+ <a href="/docs" target="_blank" rel="noopener">API Docs</a>
+ </div>
+ <div>&copy; 2026 OrQuanta AI &mdash; Orchestrate. Optimize. Evolve.</div>
+</footer>
+
 <script>
-// â”€â”€ Hero stat count-up animation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Hero stat count-up animation 
 (function(){
-  function countUp(el, target, suffix, duration) {
-    var start = 0, step = target / (duration / 16);
-    var t = setInterval(function(){
-      start = Math.min(start + step, target);
-      el.textContent = (suffix === '%' ? Math.round(start) + '%' : start.toFixed(1) + suffix);
-      if (start >= target) clearInterval(t);
-    }, 16);
-  }
-  var observed = false;
-  var io = new IntersectionObserver(function(entries){
-    if (observed) return;
-    entries.forEach(function(e){
-      if (e.isIntersecting){
-        observed = true;
-        // Animate 47%, 8.3s â€” others are text so leave them
-        var statEls = document.querySelectorAll('.hero-stats-num');
-        statEls.forEach(function(el){
-          var val = parseFloat(el.dataset.val);
-          var suf = el.dataset.suf || '';
-          countUp(el, val, suf, 1400);
-        });
-      }
-    });
-  }, {threshold: 0.2});
-  document.addEventListener('DOMContentLoaded', function(){
-    var strip = document.querySelector('.stats-strip');
-    if (strip) io.observe(strip);
-  });
+ function countUp(el, target, suffix, pre, duration) {
+ var start = 0, step = target / (duration / 16);
+ var isInt = (suffix === '%' || suffix === '' || target === Math.round(target));
+ var t = setInterval(function(){
+ start = Math.min(start + step, target);
+ var val = isInt ? Math.round(start) : start.toFixed(1);
+ el.textContent = (pre || '') + val + suffix;
+ if (start >= target) clearInterval(t);
+ }, 16);
+ }
+ var observed = false;
+ var io = new IntersectionObserver(function(entries){
+ if (observed) return;
+ entries.forEach(function(e){
+ if (e.isIntersecting){
+ observed = true;
+ var statEls = document.querySelectorAll('.hero-stats-num');
+ statEls.forEach(function(el){
+ var val = parseFloat(el.dataset.val);
+ var suf = el.dataset.suf || '';
+ var pre = el.dataset.pre || '';
+ countUp(el, val, suf, pre, 1400);
+ });
+ }
+ });
+ }, {threshold: 0.2});
+ document.addEventListener('DOMContentLoaded', function(){
+ var strip = document.querySelector('.stats-strip');
+ if (strip) io.observe(strip);
+ });
 })();
 </script>
 
 <script>
-// â”€â”€ Live demo stream â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const output  = document.getElementById('console-output');
+// Live demo stream 
+const output = document.getElementById('console-output');
 const metrics = { util: 'm-util', vram: 'm-vram', cost: 'm-cost', pct: 'm-pct', loss: 'm-loss', saved: 'm-saved' };
 
 function addLine(cls, text) {
-    const d = document.createElement('div');
-    d.className = cls;
-    d.textContent = text;
-    output.appendChild(d);
-    output.scrollTop = output.scrollHeight;
-    // Keep last 40 lines
-    while (output.children.length > 40) output.removeChild(output.firstChild);
+ const d = document.createElement('div');
+ d.className = cls;
+ d.textContent = text;
+ output.appendChild(d);
+ output.scrollTop = output.scrollHeight;
+ // Keep last 40 lines
+ while (output.children.length > 40) output.removeChild(output.firstChild);
 }
 
 function setMetric(id, value) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value;
+ const el = document.getElementById(id);
+ if (el) el.textContent = value;
 }
 
 // Start WS (for real metrics) AND always start simulation for narrative logs
 var simStarted = false;
 function startStream() {
-    // Always start the narrative sim after 1.5s â€” WS supplements with live stats
-    setTimeout(function() {
-        if (!simStarted) { simStarted = true; startSimulated(); }
-    }, 1500);
+ // Always start the narrative sim after 1.5s WS supplements with live stats
+ setTimeout(function() {
+ if (!simStarted) { simStarted = true; startSimulated(); }
+ }, 1500);
 
-    // Also try WS for live platform metrics
-    try {
-        const ws = new WebSocket(`ws://${location.host}/ws/agent-stream`);
-        ws.onmessage = (e) => {
-            try { handleEvent(JSON.parse(e.data)); } catch {}
-        };
-        ws.onerror = () => {};
-    } catch {}
+ // Also try WS for live platform metrics
+ try {
+  const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const ws = new WebSocket(`${wsProto}//${location.host}/ws/agent-stream`);
+ ws.onmessage = (e) => {
+ try { handleEvent(JSON.parse(e.data)); } catch {}
+ };
+ ws.onerror = () => {};
+ } catch {}
 }
 
 function handleEvent(ev) {
-    const type = ev.type;
-    const data = ev.data || ev;  // messages_tick sends data at top level in some cases
-    if (type === 'connected') {
-        // Server confirmed connection â€” sim logs will narrate the agent story
-        addLine('l-cyan', 'ðŸŒ OrQuanta platform: agents online, monitoring active');
-    } else if (type === 'metrics_tick') {
-        // Real live platform data â€” update the metric boxes
-        const d = ev.data || {};
-        if (d.active_jobs !== undefined)
-            setMetric('m-util', d.active_jobs + ' jobs');
-        if (d.daily_spend_usd !== undefined)
-            setMetric('m-cost', '$' + Number(d.daily_spend_usd).toFixed(2));
-        if (d.active_instances !== undefined)
-            setMetric('m-pct', d.active_instances + ' GPUs');
-        if (d.queued_jobs !== undefined)
-            setMetric('m-vram', d.queued_jobs + ' queued');
-    } else if (type === 'agent_thought') {
-        addLine('l-cyan', `${data.icon || 'ðŸ¤–'} ${data.agent}: ${data.message}`);
-    } else if (type === 'job_progress') {
-        setMetric('m-util', data.gpu_util ? data.gpu_util + '%' : 'â€”');
-        setMetric('m-vram', data.memory_pct ? data.memory_pct + '%' : 'â€”');
-        setMetric('m-pct',  data.progress_pct ? data.progress_pct + '%' : 'â€”');
-        setMetric('m-loss', data.loss || 'â€”');
-        if (data.phase === 'running') {
-            addLine('l-dim', `âŸ¶ Progress: ${data.progress_pct}% | Loss: ${data.loss} | VRAM: ${data.memory_pct}%`);
-        }
-    } else if (type === 'cost_update') {
-        setMetric('m-cost', '$' + (data.cost_usd || 0).toFixed(2));
-        setMetric('m-saved', `saved $${(data.saved_usd || 0).toFixed(2)} vs AWS`);
-    } else if (type === 'healing_event') {
-        addLine('l-amber', `ðŸ”§ HEALING: ${data.message}`);
-    } else if (type === 'job_complete') {
-        addLine('l-green', `âœ… COMPLETE: cost $${data.cost_usd} | saved $${data.saved_usd}`);
-    } else if (type === 'heartbeat') {
-        addLine('l-dim', `â™¡ heartbeat â€” ${data.clients || 1} client(s) connected`);
-    }
+ const type = ev.type;
+ const data = ev.data || ev; // messages_tick sends data at top level in some cases
+ if (type === 'connected') {
+ // Server confirmed connection sim logs will narrate the agent story
+ addLine('l-cyan', ' OrQuanta platform: agents online, monitoring active');
+ } else if (type === 'metrics_tick') {
+ // Real live platform data update the metric boxes
+ const d = ev.data || {};
+ if (d.active_jobs !== undefined)
+ setMetric('m-util', d.active_jobs + ' jobs');
+ if (d.daily_spend_usd !== undefined)
+ setMetric('m-cost', '$' + Number(d.daily_spend_usd).toFixed(2));
+ if (d.active_instances !== undefined)
+ setMetric('m-pct', d.active_instances + ' GPUs');
+ if (d.queued_jobs !== undefined)
+ setMetric('m-vram', d.queued_jobs + ' queued');
+ } else if (type === 'agent_thought') {
+ addLine('l-cyan', `${data.icon || '-'} ${data.agent}: ${data.message}`);
+ } else if (type === 'job_progress') {
+ setMetric('m-util', data.gpu_util ? data.gpu_util + '%' : '');
+ setMetric('m-vram', data.memory_pct ? data.memory_pct + '%' : '');
+ setMetric('m-pct', data.progress_pct ? data.progress_pct + '%' : '');
+ setMetric('m-loss', data.loss || '');
+ if (data.phase === 'running') {
+ addLine('l-dim', ` Progress: ${data.progress_pct}% | Loss: ${data.loss} | VRAM: ${data.memory_pct}%`);
+ }
+ } else if (type === 'cost_update') {
+ setMetric('m-cost', '$' + (data.cost_usd || 0).toFixed(2));
+ setMetric('m-saved', `saved $${(data.saved_usd || 0).toFixed(2)} vs AWS`);
+ } else if (type === 'healing_event') {
+ addLine('l-amber', ` HEALING: ${data.message}`);
+ } else if (type === 'job_complete') {
+ addLine('l-green', ` COMPLETE: cost $${data.cost_usd} | saved $${data.saved_usd}`);
+ } else if (type === 'heartbeat') {
+ addLine('l-dim', ` heartbeat ${data.clients || 1} client(s) connected`);
+ }
 }
 
-// â”€â”€ Simulated stream (fallback when WS not available) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Simulated stream (fallback when WS not available) 
 function startSimulated() {
-    addLine('l-dim', '[Demo] Simulating OrQuanta agent stream...');
-    const events = [
-        [1200, () => addLine('l-cyan', 'ðŸ§  OrMind: Goal parsed. Fine-tune Mistral 7B. Budget $50.')],
-        [2400, () => addLine('l-cyan', 'ðŸ’¸ Cost Optimizer: Lambda Labs A100 @ $1.99/hr (vs AWS $4.10) âœ“')],
-        [3200, () => { addLine('l-purple', 'âš¡ Scheduler: Provisioning us-tx-3... ETA 18s'); }],
-        [5000, () => { addLine('l-green', 'âœ“ GPU ready in 18s. Job started.'); setMetric('m-util','0%'); setMetric('m-pct','0%'); }],
-        [6500, () => { setMetric('m-util','62%'); setMetric('m-vram','41%'); setMetric('m-pct','5%'); setMetric('m-loss','3.42'); setMetric('m-cost','$0.03'); setMetric('m-saved','saved $0.07 vs AWS'); addLine('l-dim','âŸ¶ Progress: 5% | Loss: 3.42 | VRAM: 41%'); }],
-        [9500, () => { setMetric('m-util','81%'); setMetric('m-vram','54%'); setMetric('m-pct','18%'); setMetric('m-loss','2.11'); setMetric('m-cost','$0.09'); setMetric('m-saved','saved $0.21 vs AWS'); addLine('l-dim','âŸ¶ Progress: 18% | Loss: 2.11'); }],
-        [13000,() => { setMetric('m-util','88%'); setMetric('m-vram','67%'); setMetric('m-pct','35%'); setMetric('m-loss','1.34'); setMetric('m-cost','$0.17'); setMetric('m-saved','saved $0.40 vs AWS'); }],
-        [16000,() => { addLine('l-amber','ðŸ”§ ALERT: VRAM at 94.1% â€” OOM imminent'); }],
-        [17500,() => { addLine('l-amber','ðŸ”§ HealingAgent: Prescaling memory config... 8.3s response'); }],
-        [19000,() => { addLine('l-green','âœ… HEALED: VRAM 94% â†’ 68%. Job continues. No data lost.'); setMetric('m-vram','68%'); }],
-        [23000,() => { setMetric('m-util','85%'); setMetric('m-pct','65%'); setMetric('m-loss','0.87'); setMetric('m-cost','$0.29'); setMetric('m-saved','saved $0.68 vs AWS'); addLine('l-dim','âŸ¶ Progress: 65% | Loss: 0.87'); }],
-        [29000,() => { setMetric('m-pct','90%'); setMetric('m-loss','0.54'); setMetric('m-cost','$0.38'); addLine('l-dim','âŸ¶ Progress: 90%..'); }],
-        [33000,() => { addLine('l-green','âœ… JOB COMPLETE â€” Cost: $0.42 | Saved: $0.98 | Artifacts â†’ S3'); setMetric('m-pct','100%'); setMetric('m-loss','0.43'); setMetric('m-cost','$0.42'); setMetric('m-saved','saved $0.98 vs AWS'); addLine('l-cyan', 'ðŸ”’ AuditAgent: Decision log signed. HMAC: 5f3a9c71...'); }],
-        [36000,() => { addLine('l-dim', '[Waiting for next demo job...]'); setTimeout(startSimulated, 4000); }],
-    ];
-    events.forEach(([delay, fn]) => setTimeout(fn, delay));
+ addLine('l-dim', '[Demo] Simulating OrQuanta agent stream...');
+ const events = [
+ [1200, () => addLine('l-cyan', ' OrMind: Goal parsed. Fine-tune LLaMA 3 8B on support dataset. Budget $50.')],
+ [2400, () => addLine('l-cyan', ' Cost Optimizer: Lambda Labs A100 @ $1.99/hr (vs AWS $4.10) \u2713')],
+ [3200, () => { addLine('l-purple', ' Scheduler: Provisioning us-tx-3... ETA 18s'); }],
+ [5000, () => { addLine('l-green', ' GPU ready in 18s. Job started.'); setMetric('m-util','0%'); setMetric('m-pct','0%'); }],
+ [6500, () => { setMetric('m-util','62%'); setMetric('m-vram','41%'); setMetric('m-pct','5%'); setMetric('m-loss','3.42'); setMetric('m-cost','$0.03'); setMetric('m-saved','saved $0.07 vs AWS'); addLine('l-dim',' Progress: 5% | Loss: 3.42 | VRAM: 41%'); }],
+ [9500, () => { setMetric('m-util','81%'); setMetric('m-vram','54%'); setMetric('m-pct','18%'); setMetric('m-loss','2.11'); setMetric('m-cost','$0.09'); setMetric('m-saved','saved $0.21 vs AWS'); addLine('l-dim',' Progress: 18% | Loss: 2.11'); }],
+ [13000,() => { setMetric('m-util','88%'); setMetric('m-vram','67%'); setMetric('m-pct','35%'); setMetric('m-loss','1.34'); setMetric('m-cost','$0.17'); setMetric('m-saved','saved $0.40 vs AWS'); }],
+ [16000,() => { addLine('l-amber',' ALERT: VRAM at 94.1% OOM imminent'); }],
+ [17500,() => { addLine('l-amber',' HealingAgent: Prescaling memory config... 8.3s response'); }],
+ [19000,() => { addLine('l-green',' HEALED: VRAM 94% 68%. Job continues. No data lost.'); setMetric('m-vram','68%'); }],
+ [23000,() => { setMetric('m-util','85%'); setMetric('m-pct','65%'); setMetric('m-loss','0.87'); setMetric('m-cost','$0.29'); setMetric('m-saved','saved $0.68 vs AWS'); addLine('l-dim',' Progress: 65% | Loss: 0.87'); }],
+ [29000,() => { setMetric('m-pct','90%'); setMetric('m-loss','0.54'); setMetric('m-cost','$0.38'); addLine('l-dim',' Progress: 90%..'); }],
+ [33000,() => { addLine('l-green',' JOB COMPLETE Cost: $0.42 | Saved: $0.98 | Artifacts S3'); setMetric('m-pct','100%'); setMetric('m-loss','0.43'); setMetric('m-cost','$0.42'); setMetric('m-saved','saved $0.98 vs AWS'); addLine('l-cyan', ' AuditAgent: Decision log signed. HMAC: 5f3a9c71...'); }],
+ [36000,() => { addLine('l-dim', '[Waiting for next demo job...]'); setTimeout(startSimulated, 4000); }],
+ ];
+ events.forEach(([delay, fn]) => setTimeout(fn, delay));
 }
 
 
-// â”€â”€ Goal Analyzer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Goal Analyzer 
 const GPU_MAP = {
-    'llama':   {gpu:'A100 80GB', provider:'Lambda Labs us-tx-3', cost:'$1.99/hr', time:'4.2 hrs', total:'$8.36', savings:'$9.50 vs AWS'},
-    'stable':  {gpu:'A100 40GB', provider:'GCP us-central1',    cost:'$0.88/hr', time:'2.1 hrs', total:'$1.85', savings:'$2.10 vs AWS'},
-    'whisper': {gpu:'T4',        provider:'Lambda Labs us-east', cost:'$0.60/hr', time:'1.5 hrs', total:'$0.90', savings:'$1.00 vs AWS'},
-    'train':   {gpu:'A100 80GB', provider:'Lambda Labs us-tx-3', cost:'$1.99/hr', time:'3.8 hrs', total:'$7.56', savings:'$8.61 vs AWS'},
-    'fine':    {gpu:'A100 80GB', provider:'Lambda Labs us-tx-3', cost:'$1.99/hr', time:'4.5 hrs', total:'$8.96', savings:'$10.20 vs AWS'},
-    'diffusion':{gpu:'A100 40GB',provider:'GCP us-central1',    cost:'$0.88/hr', time:'2.5 hrs', total:'$2.20', savings:'$2.50 vs AWS'},
-    'gpt':     {gpu:'A100 80GB', provider:'CoreWeave us-east-1', cost:'$2.21/hr', time:'5.0 hrs', total:'$11.05',savings:'$9.55 vs AWS'},
-    'bert':    {gpu:'A10G',      provider:'Lambda Labs us-tx-3', cost:'$0.76/hr', time:'1.2 hrs', total:'$0.91', savings:'$1.05 vs AWS'},
+ 'llama': {gpu:'A100 80GB', provider:'Lambda Labs us-tx-3', cost:'$1.99/hr', time:'4.2 hrs', total:'$8.36', savings:'$9.50 vs AWS'},
+ 'stable': {gpu:'A100 40GB', provider:'GCP us-central1', cost:'$0.88/hr', time:'2.1 hrs', total:'$1.85', savings:'$2.10 vs AWS'},
+ 'whisper': {gpu:'T4', provider:'Lambda Labs us-east', cost:'$0.60/hr', time:'1.5 hrs', total:'$0.90', savings:'$1.00 vs AWS'},
+ 'train': {gpu:'A100 80GB', provider:'Lambda Labs us-tx-3', cost:'$1.99/hr', time:'3.8 hrs', total:'$7.56', savings:'$8.61 vs AWS'},
+ 'fine': {gpu:'A100 80GB', provider:'Lambda Labs us-tx-3', cost:'$1.99/hr', time:'4.5 hrs', total:'$8.96', savings:'$10.20 vs AWS'},
+ 'diffusion':{gpu:'A100 40GB',provider:'GCP us-central1', cost:'$0.88/hr', time:'2.5 hrs', total:'$2.20', savings:'$2.50 vs AWS'},
+ 'gpt': {gpu:'A100 80GB', provider:'CoreWeave us-east-1', cost:'$2.21/hr', time:'5.0 hrs', total:'$11.05',savings:'$9.55 vs AWS'},
+ 'bert': {gpu:'A10G', provider:'Lambda Labs us-tx-3', cost:'$0.76/hr', time:'1.2 hrs', total:'$0.91', savings:'$1.05 vs AWS'},
 };
 const DEFAULT_REC = {gpu:'A100 40GB', provider:'GCP us-central1', cost:'$0.88/hr', time:'3.0 hrs', total:'$2.64', savings:'$3.00 vs AWS'};
 
 async function analyzeGoal() {
-    var goalEl = document.getElementById('goal-input');
-    var btn    = document.getElementById('analyze-btn');
-    var result = document.getElementById('goal-result');
-    var goal   = goalEl.value.trim();
-    if (!goal) {
-        goalEl.focus();
-        goalEl.style.borderColor = '#FF4444';
-        setTimeout(function(){ goalEl.style.borderColor = 'rgba(0,212,255,0.2)'; }, 1500);
-        return;
-    }
-    btn.textContent = 'AI Agents thinking...';
-    btn.disabled = true;
-    result.style.display = 'block';
-    result.innerHTML = '<div style="color:#8892A4;font-family:monospace;font-size:13px;">'
-        + '&rarr; OrMind: Parsing goal...<br>'
-        + '&rarr; Cost Optimizer: Checking 5 providers...<br>'
-        + '&rarr; Scheduler: Calculating ETA...</div>';
+ var goalEl = document.getElementById('goal-input');
+ var btn = document.getElementById('analyze-btn');
+ var result = document.getElementById('goal-result');
+ var goal = goalEl.value.trim();
+ if (!goal) {
+ goalEl.focus();
+ goalEl.style.borderColor = '#FF4444';
+ setTimeout(function(){ goalEl.style.borderColor = 'rgba(0,212,255,0.2)'; }, 1500);
+ return;
+ }
+ btn.textContent = 'AI Agents thinking...';
+ btn.disabled = true;
+ result.style.display = 'block';
+ result.innerHTML = '<div style="color:#8892A4;font-family:monospace;font-size:13px;">'
+ + '&rarr; OrMind: Parsing goal...<br>'
+ + '&rarr; Cost Optimizer: Checking 5 providers...<br>'
+ + '&rarr; Scheduler: Calculating ETA...</div>';
 
-    // FIX-7: fetch real platform status in parallel with the simulated delay
-    var [, statusData] = await Promise.all([
-        new Promise(function(r){ setTimeout(r, 2000); }),
-        fetch('/demo/status').then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; }),
-    ]);
+ try {
+ var [, statusData] = await Promise.all([
+ new Promise(function(r){ setTimeout(r, 2000); }),
+ fetch('/demo/status').then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; }),
+ ]);
 
-    var rec = DEFAULT_REC;
-    var gl = goal.toLowerCase();
-    var keys = Object.keys(GPU_MAP);
-    for (var i = 0; i < keys.length; i++) {
-        if (gl.indexOf(keys[i]) !== -1) { rec = GPU_MAP[keys[i]]; break; }
-    }
+ var rec = DEFAULT_REC;
+ var gl = goal.toLowerCase();
+ var keys = Object.keys(GPU_MAP);
+ for (var i = 0; i < keys.length; i++) {
+ if (gl.indexOf(keys[i]) !== -1) { rec = GPU_MAP[keys[i]]; break; }
+ }
 
-    function mkCard(label, value, color, sub) {
-        return '<div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;">'
-            + '<div style="color:#8892A4;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">' + label + '</div>'
-            + '<div style="color:' + color + ';font-weight:700;">' + value + '</div>'
-            + (sub ? '<div style="color:#8892A4;font-size:11px;">' + sub + '</div>' : '')
-            + '</div>';
-    }
+ function mkCard(label, value, color, sub) {
+ return '<div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;">'
+ + '<div style="color:#8892A4;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">' + label + '</div>'
+ + '<div style="color:' + color + ';font-weight:700;">' + value + '</div>'
+ + (sub ? '<div style="color:#8892A4;font-size:11px;">' + sub + '</div>' : '')
+ + '</div>';
+ }
 
-    // Build live platform stats banner if status was fetched
-    var liveBanner = '';
-    if (statusData && statusData.stats) {
-        var st = statusData.stats;
-        var jobCount = (statusData.active_jobs || []).length;
-        liveBanner = '<div style="background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.15);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#8892A4;display:flex;gap:16px;flex-wrap:wrap;">'
-            + '<span style="color:#00D4FF;font-weight:600;">\u26a1 Live Platform</span>'
-            + (jobCount ? '<span>' + jobCount + ' active jobs</span>' : '')
-            + (st.total_saved_usd !== undefined ? '<span style="color:#00FF88;">$' + (st.total_saved_usd || 0).toFixed(2) + ' saved today</span>' : '')
-            + (st.jobs_healed !== undefined ? '<span>' + (st.jobs_healed || 0) + ' auto-healed</span>' : '')
-            + '</div>';
-    }
+ // Build live platform stats banner — only count jobs that are actively running
+ var liveBanner = '';
+ if (statusData && statusData.stats) {
+ var st = statusData.stats;
+ var activeJobs = (statusData.active_jobs || []).filter(function(j){ return j.phase !== 'complete' && j.phase !== 'failed'; });
+ var jobCount = activeJobs.length;
+ liveBanner = '<div style="background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.15);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#8892A4;display:flex;gap:16px;flex-wrap:wrap;">'
+ + '<span style="color:#00D4FF;font-weight:600;">\u26a1 Live Platform</span>'
+ + (jobCount ? '<span>' + jobCount + ' running now</span>' : '<span>Platform active</span>')
+ + (st.total_saved_usd !== undefined ? '<span style="color:#00FF88;">$' + (st.total_saved_usd || 0).toFixed(2) + ' saved today</span>' : '')
+ + (st.jobs_healed ? '<span>' + st.jobs_healed + ' auto-healed</span>' : '')
+ + '</div>';
+ }
 
-    result.innerHTML =
-        '<div style="color:#00FF88;font-weight:600;margin-bottom:16px;font-size:1.05rem;">&#10003; OrMind Agent Analysis Complete</div>'
-        + liveBanner
-        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">'
-        +   mkCard('RECOMMENDED GPU',   rec.gpu,      '#00D4FF', null)
-        +   mkCard('CHEAPEST PROVIDER', rec.provider, '#00D4FF', null)
-        +   mkCard('ESTIMATED COST',    rec.total,    '#00FF88', 'saved ' + rec.savings)
-        +   mkCard('EST. DURATION',     rec.time,     '#E8EAF6', rec.cost)
-        + '</div>'
-        + '<div style="background:rgba(123,47,255,0.08);border:1px solid rgba(123,47,255,0.25);border-radius:8px;padding:12px;color:#8892A4;font-size:13px;margin-bottom:16px;">'
-        + 'AI Agent <strong style="color:#E8EAF6;">OrMind reasoning:</strong> '
-        + 'Selected ' + rec.provider + ' after real-time price comparison across 5 providers (AWS, GCP, Azure, Lambda, CoreWeave). '
-        + 'Self-Healing agent monitors every 1 second and auto-recovers OOM failures. Audit log signed with HMAC-SHA256.'
-        + '</div>'
-        + '<a href="/app" style="display:block;text-align:center;background:linear-gradient(135deg,#00D4FF,#7B2FFF);color:white;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:1rem;box-shadow:0 0 30px rgba(0,212,255,0.2);">'
-        + 'Run This Job Free &mdash; 14 Day Trial &rarr;</a>';
+ result.innerHTML =
+ '<div style="color:#00FF88;font-weight:600;margin-bottom:16px;font-size:1.05rem;">&#10003; OrMind Agent Analysis Complete</div>'
+ + liveBanner
+ + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">'
+ + mkCard('RECOMMENDED GPU', rec.gpu, '#00D4FF', null)
+ + mkCard('CHEAPEST PROVIDER', rec.provider, '#00D4FF', null)
+ + mkCard('ESTIMATED COST', rec.total, '#00FF88', 'saved ' + rec.savings)
+ + mkCard('EST. DURATION', rec.time, '#E8EAF6', rec.cost)
+ + '</div>'
+ + '<div style="background:rgba(123,47,255,0.08);border:1px solid rgba(123,47,255,0.25);border-radius:8px;padding:12px;color:#8892A4;font-size:13px;margin-bottom:16px;">'
+ + 'AI Agent <strong style="color:#E8EAF6;">OrMind reasoning:</strong> '
+ + 'Selected ' + rec.provider + ' after real-time price comparison across 5 providers (AWS, GCP, Azure, Lambda, CoreWeave). '
+ + 'Self-Healing agent monitors every 1 second and auto-recovers OOM failures. Audit log signed with HMAC-SHA256.'
+ + '</div>'
+ + '<a href="/app" style="display:block;text-align:center;background:linear-gradient(135deg,#00D4FF,#7B2FFF);color:white;padding:14px;border-radius:8px;text-decoration:none;font-weight:700;font-size:1rem;box-shadow:0 0 30px rgba(0,212,255,0.2);">'
+ + 'Run This Job Free &mdash; 14 Day Trial &rarr;</a>';
 
-    btn.textContent = 'Analyze with AI Agents ->';
-    btn.disabled = false;
+ } catch (e) {
+ result.innerHTML = '<div style="color:#FF4444;font-size:13px;">Analysis failed — please try again.</div>';
+ } finally {
+ btn.textContent = 'Analyze with AI Agents \u2192';
+ btn.disabled = false;
+ }
 }
 
 startStream();

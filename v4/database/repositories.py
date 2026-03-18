@@ -15,11 +15,13 @@ from sqlalchemy import select, update, func, and_, or_, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import (
-    Organization, User, APIKey, Goal, Instance, Job, AuditLog,
-    CostRecord, SpotPriceHistory,
+    Organization, User, Goal, Job, AuditLog, CostRecord,
 )
 
 logger = logging.getLogger("orquanta.database.repositories")
+
+# Hard cap on every paginated query — prevents unbounded DB scans
+_MAX_QUERY_LIMIT = 500
 
 
 # ─── Organization Repository ──────────────────────────────────────────────────
@@ -164,6 +166,7 @@ class GoalRepo:
         self, user_id: str | None, organization_id: str,
         limit: int = 50, offset: int = 0,
     ) -> tuple[list[Goal], int]:
+        limit = min(limit, _MAX_QUERY_LIMIT)
         q = select(Goal).where(Goal.organization_id == organization_id)
         if user_id:
             q = q.where(Goal.user_id == user_id)
@@ -246,6 +249,7 @@ class JobRepo:
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[list[Job], int]:
+        limit = min(limit, _MAX_QUERY_LIMIT)
         q = select(Job).where(Job.organization_id == organization_id)
         if status:
             q = q.where(Job.status == status)
@@ -317,6 +321,7 @@ class AuditRepo:
         limit: int = 100,
         offset: int = 0,
     ) -> tuple[list[AuditLog], int]:
+        limit = min(limit, _MAX_QUERY_LIMIT)
         q = select(AuditLog).where(AuditLog.organization_id == organization_id)
         if agent:
             q = q.where(AuditLog.agent_name == agent)

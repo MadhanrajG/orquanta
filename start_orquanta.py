@@ -111,8 +111,13 @@ def setup_env(demo: bool) -> dict:
     env = os.environ.copy()
     env["PYTHONPATH"] = str(ROOT)
     if demo:
-        env["DEMO_MODE"]   = "true"
-        env["LOG_LEVEL"]   = "INFO"
+        env["DEMO_MODE"]          = "true"
+        env["ORQUANTA_DEMO_MODE"] = "true"   # startup_validator checks this key
+        env["LOG_LEVEL"]          = "INFO"
+        # Provide safe demo defaults so the validator doesn't abort
+        env.setdefault("JWT_SECRET",      "demo-jwt-secret-change-in-production-256bit")
+        env.setdefault("ADMIN_EMAIL",     "admin@orquanta.ai")
+        env.setdefault("ADMIN_PASSWORD",  "orquanta-admin-2024")
     else:
         env["DEMO_MODE"]   = "false"
         env.setdefault("LOG_LEVEL", "INFO")

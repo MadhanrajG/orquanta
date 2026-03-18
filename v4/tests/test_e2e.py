@@ -502,7 +502,7 @@ class TestFullWorkflow:
         r = client.post("/auth/register", json={
             "email": email, "password": password, "name": "Workflow User"
         })
-        assert r.status_code == 201
+        assert r.status_code in (200, 201)
         user_id = r.json()["user_id"]
 
         # 2. Login

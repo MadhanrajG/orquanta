@@ -1,0 +1,160 @@
+{
+  "title": "OrQuanta Platform Overview",
+  "uid": "orquanta-v1",
+  "version": 1,
+  "schemaVersion": 38,
+  "refresh": "30s",
+  "time": { "from": "now-24h", "to": "now" },
+  "tags": ["orquanta", "gpu", "production"],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Active GPU Jobs",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "targets": [{
+        "expr": "orquanta_active_jobs",
+        "legendFormat": "Active Jobs"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 5, "color": "yellow" },
+              { "value": 20, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Total Cost Accrued (USD)",
+      "type": "stat",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "targets": [{
+        "expr": "orquanta_cost_accrued_usd_total",
+        "legendFormat": "Total Cost $"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 1000, "color": "yellow" },
+              { "value": 5000, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "HTTP Request Rate",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 7 },
+      "targets": [{
+        "expr": "rate(orquanta_http_requests_total[5m])",
+        "legendFormat": "{{method}} {{path}} {{status_code}}"
+      }],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps" }
+      }
+    },
+    {
+      "id": 4,
+      "title": "API Latency P95",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 7 },
+      "targets": [{
+        "expr": "histogram_quantile(0.95, rate(orquanta_http_request_duration_seconds_bucket[5m]))",
+        "legendFormat": "p95 {{path}}"
+      }],
+      "fieldConfig": {
+        "defaults": { "unit": "s" }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Jobs Submitted (Rate)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 11, "w": 8, "h": 7 },
+      "targets": [{
+        "expr": "rate(orquanta_jobs_submitted_total[5m])",
+        "legendFormat": "{{gpu_type}} on {{provider}}"
+      }],
+      "fieldConfig": {
+        "defaults": { "unit": "ops" }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Job Completion Rate",
+      "type": "timeseries",
+      "gridPos": { "x": 8, "y": 11, "w": 8, "h": 7 },
+      "targets": [{
+        "expr": "rate(orquanta_jobs_completed_total[5m])",
+        "legendFormat": "{{status}} {{provider}}"
+      }]
+    },
+    {
+      "id": 7,
+      "title": "Active WebSocket Connections",
+      "type": "stat",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "targets": [{
+        "expr": "orquanta_ws_connections_active",
+        "legendFormat": "WS Connections"
+      }]
+    },
+    {
+      "id": 8,
+      "title": "Provider API Latency",
+      "type": "heatmap",
+      "gridPos": { "x": 0, "y": 18, "w": 12, "h": 8 },
+      "targets": [{
+        "expr": "sum(rate(orquanta_provider_api_latency_seconds_bucket[5m])) by (le, provider)",
+        "legendFormat": "{{provider}}"
+      }]
+    },
+    {
+      "id": 9,
+      "title": "Agent Actions Rate",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 18, "w": 12, "h": 8 },
+      "targets": [{
+        "expr": "rate(orquanta_agent_actions_total[5m])",
+        "legendFormat": "{{agent_name}} — {{action_type}}"
+      }]
+    },
+    {
+      "id": 10,
+      "title": "HTTP Error Rate (4xx/5xx)",
+      "type": "timeseries",
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 4 },
+      "targets": [{
+        "expr": "rate(orquanta_http_requests_total{status_code=~\"4..|5..\"}[5m])",
+        "legendFormat": "{{status_code}} {{path}}"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "red", "mode": "fixed" }
+        }
+      }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "provider",
+        "type": "query",
+        "query": "label_values(orquanta_jobs_submitted_total, provider)",
+        "label": "Provider"
+      }
+    ]
+  }
+}

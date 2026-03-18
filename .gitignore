@@ -11,6 +11,9 @@ build/
 venv/
 env/
 .env
+.env.local
+.env.production
+.env.railway
 !.env.example
 
 # Node / React
@@ -34,18 +37,24 @@ Thumbs.db
 logs/
 tmp/
 
-# Database files (local dev)
+# Database files (local dev — NEVER commit database files)
 *.db
 *.sqlite
 *.sqlite3
 orquanta_quickstart.db
+orquanta_local.db
+orquanta_test.db
+orquanta.db
 
 # Credentials (never commit)
 *.pem
 *.key
 *.crt
 *.pfx
+*.secrets
+*.secret
 LAUNCH_CERTIFICATE.json
+credentials.json
 
 # Python compiled
 *.pyc

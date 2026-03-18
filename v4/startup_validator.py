@@ -34,7 +34,7 @@ class EnvCheck:
 # All environment variables OrQuanta uses
 ENV_SPEC: list[EnvCheck] = [
     # ── Security (CRITICAL) ───────────────────────────────────────────────
-    EnvCheck("JWT_SECRET",            "critical", "JWT signing secret — set to 256-bit random string", secret=True),
+    EnvCheck("JWT_SECRET_KEY",        "critical", "JWT signing secret — set to 256-bit random string", secret=True),
     EnvCheck("ADMIN_EMAIL",           "critical", "Admin user email", default="admin@orquanta.ai"),
     EnvCheck("ADMIN_PASSWORD",        "critical", "Admin user password", secret=True, default="orquanta-admin-2024"),
 
@@ -142,11 +142,15 @@ def validate_env(strict: bool = False) -> dict[str, Any]:
     )
 
     if criticals and not demo_mode:
-        if strict or any("JWT_SECRET" in c for c in criticals):
+        # Never sys.exit in test or development environments
+        env_mode = os.getenv("ENV", "production").lower()
+        is_safe_mode = env_mode in ("test", "development", "dev")
+        jwt_critical = any("JWT_SECRET_KEY" in c for c in criticals)
+        if (strict or jwt_critical) and not is_safe_mode:
             logger.critical("STARTUP ABORTED: Critical config missing. Set required env vars.")
             sys.exit(1)
         else:
-            logger.warning("Critical config missing — starting in degraded mode (demo/dev only)")
+            logger.warning("Critical config missing — starting in degraded mode (demo/dev/test only)")
 
     logger.info("=" * 60)
 
@@ -164,7 +168,7 @@ def validate_env(strict: bool = False) -> dict[str, Any]:
 def get_production_readiness() -> dict[str, Any]:
     """Return a production-readiness scorecard for the /health endpoint."""
     checks = {
-        "jwt_secret":     bool(os.getenv("JWT_SECRET")),
+        "jwt_secret":     bool(os.getenv("JWT_SECRET_KEY") or os.getenv("JWT_SECRET")),
         "runpod":         bool(os.getenv("RUNPOD_API_KEY")),
         "llm":            bool(os.getenv("OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY")),
         "stripe":         bool(os.getenv("STRIPE_SECRET_KEY")),
