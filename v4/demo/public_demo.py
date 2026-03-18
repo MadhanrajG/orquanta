@@ -193,7 +193,8 @@ def _build_demo_page() -> str:
  .feat { background:var(--surface); border:1px solid var(--border); border-radius:12px;
  padding:24px; transition:transform .2s,box-shadow .2s; }
  .feat:hover { transform:translateY(-3px); box-shadow:0 12px 30px rgba(0,212,255,.08); }
- .feat-icon { font-size:28px; margin-bottom:12px; }
+ .feat-icon { margin-bottom:14px; line-height:1; }
+ .feat-icon svg { display:block; }
  .feat-title { font-weight:700; font-size:16px; margin-bottom:6px; }
  .feat-desc { color:var(--muted); font-size:14px; line-height:1.6; }
 
@@ -297,32 +298,32 @@ def _build_demo_page() -> str:
 <!-- Features -->
 <div class="features" id="features-section">
  <div class="feat">
-  <div class="feat-icon" style="font-size:28px;margin-bottom:12px;">&#x1F9E0;</div>
+  <div class="feat-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00D4FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><line x1="12" y1="7" x2="5.5" y2="17.2"/><line x1="12" y1="7" x2="18.5" y2="17.2"/><line x1="6.5" y1="19" x2="17.5" y2="19"/><circle cx="12" cy="13" r="1.5" fill="#00D4FF"/></svg></div>
   <div class="feat-title">OrMind Orchestrator</div>
   <div class="feat-desc">Natural language goals &rarr; execution DAG in &lt;2 seconds. No config files.</div>
   </div>
   <div class="feat">
-  <div class="feat-icon" style="font-size:28px;margin-bottom:12px;">&#x1F4B8;</div>
+  <div class="feat-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00FF88" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg></div>
   <div class="feat-title">Real-Time Cost Optimization</div>
   <div class="feat-desc">60-second spot price polling across 4 providers. Automatically picks the cheapest GPU.</div>
   </div>
   <div class="feat">
-  <div class="feat-icon" style="font-size:28px;margin-bottom:12px;">&#x26A1;</div>
+  <div class="feat-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFB800" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 12 6 12 9 5 12 19 15 12 18 12 21 12"/></svg></div>
   <div class="feat-title">1Hz Self-Healing</div>
   <div class="feat-desc">Detects OOM before it crashes. Average recovery: 8.3 seconds. Zero human intervention required.</div>
   </div>
   <div class="feat">
-  <div class="feat-icon" style="font-size:28px;margin-bottom:12px;">&#x1F6E1;</div>
+  <div class="feat-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></div>
   <div class="feat-title">Tamper-Proof Audit Trail</div>
   <div class="feat-desc">Every agent decision signed with HMAC-SHA256. Legally admissible. GDPR-compliant.</div>
   </div>
   <div class="feat">
-  <div class="feat-icon" style="font-size:28px;margin-bottom:12px;">&#x23F1;</div>
+  <div class="feat-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00D4FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
   <div class="feat-title">&lt;30s Provisioning</div>
   <div class="feat-desc">From natural language goal to running GPU job in under 30 seconds.</div>
   </div>
   <div class="feat">
-  <div class="feat-icon" style="font-size:28px;margin-bottom:12px;">&#x1F4CA;</div>
+  <div class="feat-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00FF88" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
   <div class="feat-title">Full Observability</div>
   <div class="feat-desc">Prometheus metrics + Grafana dashboard. 14 panels. 30-second refresh. Every metric you need.</div>
   </div>

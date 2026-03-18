@@ -1,9 +1,9 @@
 import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate } from 'react-router-dom'
 import { useState, useEffect, createContext, useContext, Component } from 'react'
 import {
-    LayoutDashboard, Target, Activity, Server, DollarSign,
+    LayoutDashboard, Target, Server, DollarSign,
     ScrollText, Cpu, Zap, LogOut, Menu, X, AlertTriangle, Leaf, Gift, BarChart2,
-    Settings, HelpCircle, Loader2, CreditCard
+    Settings, HelpCircle, Loader2, CreditCard, Globe
 } from 'lucide-react'
 import Dashboard from './pages/Dashboard.jsx'
 import GoalSubmit from './pages/GoalSubmit.jsx'
@@ -31,7 +31,7 @@ class ErrorBoundary extends Component {
     render() {
         if (this.state.hasError) return (
             <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050608', color: '#e2e8f0', flexDirection: 'column', gap: 16, padding: 24 }}>
-                <div style={{ fontSize: 40 }}>⚠️</div>
+                <AlertTriangle size={40} color="#f59e0b" />
                 <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', color: 'white' }}>Something went wrong</h2>
                 <p style={{ color: '#94a3b8', fontSize: 14, maxWidth: 400, textAlign: 'center' }}>
                     An unexpected error occurred. Please refresh the page or contact support.
@@ -248,7 +248,7 @@ function CarbonTrackerPage() {
             </div>
             <div className="glass-card p-8 text-center relative overflow-hidden">
                 <div className="absolute inset-0 opacity-5" style={{ background: 'radial-gradient(ellipse at 50% 0%, #00FF88, transparent 70%)' }} />
-                <div style={{ fontSize: 56, marginBottom: 16 }}>🌱</div>
+                <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}><Leaf size={52} color="#00FF88" /></div>
                 <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', marginBottom: 12, color: 'white' }}>Carbon-Aware Scheduling</h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: 28, maxWidth: 480, margin: '0 auto 28px' }}>
                     OrQuanta will automatically detect real-time carbon intensity per region
@@ -261,12 +261,12 @@ function CarbonTrackerPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
-                    { icon: '⚡', title: 'Real-Time Carbon Intensity', desc: 'gCO2/kWh tracked per region via ElectricityMaps API', color: '#00FF88' },
-                    { icon: '🌍', title: 'Green Region Routing', desc: 'Automatic job migration to lowest-carbon providers', color: '#00D4FF' },
-                    { icon: '📊', title: 'Emissions Reporting', desc: 'Monthly carbon footprint reports & offset tracking', color: '#7B2FFF' },
+                    { icon: Zap, title: 'Real-Time Carbon Intensity', desc: 'gCO2/kWh tracked per region via ElectricityMaps API', color: '#00FF88' },
+                    { icon: Globe, title: 'Green Region Routing', desc: 'Automatic job migration to lowest-carbon providers', color: '#00D4FF' },
+                    { icon: BarChart2, title: 'Emissions Reporting', desc: 'Monthly carbon footprint reports & offset tracking', color: '#7B2FFF' },
                 ].map(c => (
                     <div key={c.title} className="glass-card p-5" style={{ opacity: 0.75 }}>
-                        <div className="text-3xl mb-3">{c.icon}</div>
+                        <div style={{ marginBottom: 12 }}><c.icon size={28} color={c.color} /></div>
                         <h3 className="font-semibold text-white text-sm mb-1.5">{c.title}</h3>
                         <p className="text-xs text-slate-500 leading-relaxed">{c.desc}</p>
                         <div className="mt-3 h-0.5 rounded-full" style={{ background: `${c.color}30` }} />

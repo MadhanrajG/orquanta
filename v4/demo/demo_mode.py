@@ -196,7 +196,7 @@ class DemoEngine:
             # ── Phase 1: Orchestrator plans ──────────────────────────────────
             await self._emit(DemoEvent("agent_thought", {
                 "agent": "orquanta_orchestrator",
-                "icon": "🧠",
+                "icon": "[ORQ]",
                 "message": f"Goal parsed: '{job.goal[:60]}' | Building execution DAG...",
                 "confidence": 0.91,
             }))
@@ -204,7 +204,7 @@ class DemoEngine:
 
             await self._emit(DemoEvent("agent_thought", {
                 "agent": "cost_optimizer",
-                "icon": "💸",
+                "icon": "[COST]",
                 "message": f"Lambda Labs {job.gpu_type}: ${job.cost_per_hr:.2f}/hr | AWS equiv: ${job.cost_per_hr + savings_rate:.2f}/hr | Saving ${savings_rate:.2f}/hr",
                 "confidence": 0.95,
                 "provider_selected": "lambda",
@@ -220,7 +220,7 @@ class DemoEngine:
             }))
             await self._emit(DemoEvent("agent_thought", {
                 "agent": "scheduler",
-                "icon": "⚡",
+                "icon": "[SCHED]",
                 "message": "Instance launching... ETA 18 seconds.",
             }))
             for i in range(3):
@@ -240,7 +240,7 @@ class DemoEngine:
             }))
             await self._emit(DemoEvent("agent_thought", {
                 "agent": "healing_agent",
-                "icon": "🔧",
+                "icon": "[HEAL]",
                 "message": "Monitoring enabled. 1Hz telemetry active.",
             }))
 
@@ -307,7 +307,7 @@ class DemoEngine:
 
             await self._emit(DemoEvent("agent_thought", {
                 "agent": "audit_agent",
-                "icon": "🔒",
+                "icon": "[AUDIT]",
                 "message": f"Job {job.job_id} logged. HMAC-signed. {total_cost:.2f} USD spent, {total_saved:.2f} saved.",
             }))
             await asyncio.sleep(0.5)
@@ -343,13 +343,13 @@ class DemoEngine:
             "message": f"ALERT: VRAM at {job.memory_pct:.1f}% — OOM imminent in ~8 seconds",
             "severity": "warning",
             "agent": "healing_agent",
-            "icon": "🔧",
+            "icon": "[HEAL]",
         }))
         await asyncio.sleep(1.0)
 
         await self._emit(DemoEvent("agent_thought", {
             "agent": "healing_agent",
-            "icon": "🔧",
+            "icon": "[HEAL]",
             "message": f"Diagnosing: memory pressure at {job.memory_pct:.1f}%. Prescaling memory config...",
             "confidence": 0.88,
         }))
@@ -368,7 +368,7 @@ class DemoEngine:
             "severity": "resolved",
             "response_time_ms": 8300,
             "agent": "healing_agent",
-            "icon": "✅",
+            "icon": "[OK]",
         }))
         logger.info(f"[Demo] Job {job.job_id} HEALED — memory prescaled")
 
