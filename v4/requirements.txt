@@ -11,6 +11,8 @@ starlette==0.41.3
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.1.3
+authlib==1.3.2                      # Google + GitHub OAuth
+itsdangerous==2.2.0                 # SessionMiddleware signing
 
 # ─── Database ─────────────────────────────────────────────────────────────────
 sqlalchemy[asyncio]==2.0.36
@@ -30,6 +32,12 @@ websockets==14.1
 # ─── LLM Providers ───────────────────────────────────────────────────────────
 openai==1.58.1
 anthropic==0.40.0
+
+# ─── TurboQuant — KV-cache compression (Google ICLR 2026, arXiv:2504.19874) ──
+# 3.76x VRAM reduction (4-bit), ~97% cosine similarity vs FP16 baseline.
+# Optional — only needed when TURBOQUANT_ENABLED=true and running local LLM
+# inference via vLLM 0.18+. Requires: torch>=2.6, transformers>=4.57
+turboquant-vllm>=1.3.0               # pip install turboquant-vllm[vllm]
 
 # ─── Vector Memory ───────────────────────────────────────────────────────────
 chromadb==0.5.23

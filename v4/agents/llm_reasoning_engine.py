@@ -31,6 +31,89 @@ class LLMProvider(str, Enum):
     ANTHROPIC = "anthropic"
     MOCK = "mock"  # Used in tests / when no API key is set
     AUTO = "auto"  # Auto-detect best available provider
+    NIM = "nim"    # NVIDIA Inference Microservices (Nemotron / Llama via NVIDIA API)
+
+# ---------------------------------------------------------------------------
+# TurboQuant — KV-cache compression (Google ICLR 2026, arXiv:2504.19874)
+# PyPI: turboquant-vllm>=1.3.0  |  pip install turboquant-vllm[vllm]
+# ---------------------------------------------------------------------------
+# Benchmarked compression vs FP16 baseline (Molmo2-4B, RTX 4090, 11K tokens):
+#   TQ4 incremental: 3.76x compression, ~97% cosine similarity, 1.78x overhead
+#   TQ3:             1.94x compression, ~95% cosine similarity, 2.35x overhead
+#
+# Two integration paths:
+#   1. vLLM serve (recommended for OrQuanta GPU jobs):
+#        vllm serve <model> --attention-backend CUSTOM
+#      The turboquant-vllm plugin auto-registers via vLLM's entry-point system.
+#
+#   2. HuggingFace Transformers (used for OrQuanta's own internal LLM calls):
+#        from turboquant_vllm import CompressedDynamicCache
+#        compressed = CompressedDynamicCache(cache, head_dim=128, bits=4)
+#      Pass `cache` (not the wrapper) to model.generate().
+#
+# Requires: torch>=2.6, transformers>=4.57, vllm>=0.18 (for vLLM path)
+# ---------------------------------------------------------------------------
+TURBOQUANT_ENABLED: bool = os.getenv("TURBOQUANT_ENABLED", "false").lower() == "true"
+
+_turboquant_available: bool = False
+if TURBOQUANT_ENABLED:
+    import importlib.util
+    _turboquant_available = importlib.util.find_spec("turboquant_vllm") is not None
+    if _turboquant_available:
+        logger.info(
+            "TurboQuant active (turboquant-vllm %s). "
+            "KV-cache compression: 3.76x at 4-bit, ~97%% cosine similarity. "
+            "vLLM jobs: pass --attention-backend CUSTOM. "
+            "HF jobs: use CompressedDynamicCache wrapper.",
+            importlib.metadata.version("turboquant-vllm") if importlib.util.find_spec("importlib.metadata") else ">=1.3.0",
+        )
+    else:
+        logger.error(
+            "TURBOQUANT_ENABLED=true but 'turboquant-vllm' is not installed. "
+            "Run: pip install turboquant-vllm[vllm]  — falling back to standard inference."
+        )
+
+
+def get_turboquant_vllm_serve_flag() -> str:
+    """
+    Returns the CLI flag to append when launching a vLLM serve process with
+    TurboQuant KV-cache compression enabled.
+
+    Usage (OrQuanta scheduler, when provisioning an LLM inference job):
+        cmd = f"vllm serve {model} {get_turboquant_vllm_serve_flag()}"
+        subprocess.Popen(cmd.split())
+
+    The 'turboquant-vllm' package registers the TQ4 attention backend
+    automatically via vLLM's plugin entry-point system — no code changes needed.
+    Returns empty string when TurboQuant is unavailable (falls back silently).
+    """
+    if not _turboquant_available:
+        return ""
+    return "--attention-backend CUSTOM"
+
+
+def make_compressed_dynamic_cache(cache: Any, head_dim: int = 128, bits: int = 4) -> Any:
+    """
+    Wrap a HuggingFace DynamicCache with TurboQuant compression.
+
+    Use this when OrQuanta's own agent calls run a local HuggingFace model
+    (not via vLLM serve). Pass the original `cache` object to model.generate(),
+    not the compressed wrapper — compression happens on every cache.update().
+
+    Args:
+        cache:    A transformers.DynamicCache instance.
+        head_dim: Attention head dimension (default 128 for most 7B–70B models).
+        bits:     Quantisation bit-width. 4 (3.76x, ~97% similarity) recommended;
+                  use 3 for maximum compression (1.94x, ~95% similarity).
+
+    Returns:
+        CompressedDynamicCache wrapper, or the original cache if TQ unavailable.
+    """
+    if not _turboquant_available:
+        return cache
+    from turboquant_vllm import CompressedDynamicCache  # type: ignore
+    return CompressedDynamicCache(cache, head_dim=head_dim, bits=bits)
+
 
 
 class LLMConfig(BaseModel):
@@ -173,6 +256,25 @@ Reply ONLY with JSON:
   "reasoning": "<chain-of-thought>"
 }
 """,
+
+    "action_explain": """
+You are an AI explainability assistant for OrQuanta, an autonomous GPU cloud platform.
+A user wants to understand WHY the AI agent made a specific decision.
+
+User Goal: "$goal"
+Agent Action: $action
+Total Cost Incurred: $$cost_usd
+Reasoning Steps:
+$reasoning_steps
+
+Explain in 2-3 clear sentences:
+1. What the agent did and why
+2. What cost/performance benefit was achieved
+3. Any notable trade-offs considered
+
+Write for a non-technical business user. Be reassuring and specific.
+Do NOT use jargon. Do NOT include JSON.
+""",
 }
 
 
@@ -260,6 +362,7 @@ class LLMReasoningEngine:
         self.cfg = config or LLMConfig()
         self._openai_client: Any = None
         self._anthropic_client: Any = None
+        self._nim_client: Any = None  # NIMClient singleton (lazy)
         # Per-agent call timestamps for rate limiting
         self._rate_buckets: defaultdict[str, deque] = defaultdict(deque)
         self._init_clients()
@@ -314,6 +417,16 @@ class LLMReasoningEngine:
             logger.warning("Anthropic requested but not available. Falling back.")
             self.cfg.provider = LLMProvider.OPENAI if self._openai_client else LLMProvider.MOCK
 
+        # Try NIM
+        try:
+            from core.nim_client import get_nim_client
+            nim = get_nim_client()
+            if nim.is_available:
+                self._nim_client = nim
+                logger.info("NIM client available — will be used for reason_with_nim() calls.")
+        except Exception:
+            pass  # NIM is optional
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
@@ -331,6 +444,47 @@ class LLMReasoningEngine:
                 f"{self._RATE_LIMIT_CALLS} calls/{self._RATE_LIMIT_WINDOW}s exceeded."
             )
         bucket.append(now)
+
+    async def reason_with_nim(
+        self,
+        template_name: str,
+        variables: dict[str, Any],
+        agent_name: str = "unknown",
+    ) -> str:
+        """
+        Call NIM for natural-language (non-JSON) reasoning.
+        Used for the /api/v1/explain endpoint and rich narrative outputs.
+
+        Falls back to standard `reason()` → mock if NIM unavailable.
+
+        Returns:
+            Plain text string (not JSON).
+        """
+        if self._nim_client and self._nim_client.is_available:
+            prompt_tmpl = PROMPT_TEMPLATES.get(template_name, "")
+            if prompt_tmpl:
+                from string import Template
+                str_vars = {
+                    k: json.dumps(v, indent=2) if isinstance(v, (dict, list)) else str(v)
+                    for k, v in variables.items()
+                }
+                prompt = Template(prompt_tmpl).safe_substitute(str_vars)
+                try:
+                    result = await self._nim_client.chat(
+                        user=prompt,
+                        system="You are an expert AI assistant for OrQuanta GPU Cloud Platform.",
+                    )
+                    logger.info(f"[{agent_name}] reason_with_nim succeeded via NIM.")
+                    return result
+                except Exception as exc:
+                    logger.warning(f"[{agent_name}] NIM call failed: {exc} — falling back.")
+
+        # Fallback: use standard reason() and convert to string
+        try:
+            result_dict = await self.reason(template_name, variables, agent_name)
+            return json.dumps(result_dict, indent=2)
+        except Exception:
+            return PROMPT_TEMPLATES.get(template_name, "Explanation unavailable.")[:200]
 
     async def reason(
         self,
