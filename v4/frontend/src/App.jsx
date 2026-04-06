@@ -3,10 +3,11 @@ import { useState, useEffect, createContext, useContext, Component } from 'react
 import {
     LayoutDashboard, Target, Server, DollarSign,
     ScrollText, Cpu, Zap, LogOut, Menu, X, AlertTriangle, Leaf, Gift, BarChart2,
-    Settings, HelpCircle, Loader2, CreditCard, Globe
+    Settings, HelpCircle, Loader2, CreditCard, Globe, Brain, Wand2
 } from 'lucide-react'
 import Dashboard from './pages/Dashboard.jsx'
 import GoalSubmit from './pages/GoalSubmit.jsx'
+import VeroControl from "./pages/VeroControl.jsx"
 import AgentMonitor from './pages/AgentMonitor.jsx'
 import JobManager from './pages/JobManager.jsx'
 import CostAnalytics from './pages/CostAnalytics.jsx'
@@ -15,6 +16,9 @@ import FreeTier from './pages/FreeTier.jsx'
 import LivePricing from './pages/LivePricing.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
 import BillingPage from './pages/BillingPage.jsx'
+import NemoClawPage from './pages/NemoClawPage.jsx'
+import UIXAgentPage from './pages/UIXAgentPage.jsx'
+import HelpPage from './pages/HelpPage.jsx'
 import OrQuantaAssistant from './components/OrQuantaAssistant.jsx'
 import { CommandPalette, ShortcutsModal, useCommandPalette } from './components/CommandPalette.jsx'
 
@@ -76,6 +80,19 @@ function AuthProvider({ children }) {
         try { return JSON.parse(localStorage.getItem('orquanta_user')) } catch { return null }
     })
 
+    // OAuth redirect token capture — handles ?token=xxx from /auth/google or /auth/github
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        const oauthToken = params.get('token')
+        const oauthError = params.get('error')
+        if (oauthToken) {
+            localStorage.setItem('orquanta_token', oauthToken)
+            setToken(oauthToken)
+            window.history.replaceState({}, '', '/app')
+        }
+        if (oauthError) console.warn('OAuth error:', oauthError)
+    }, [])
+
     // Proactively evict token when it expires during the session
     useEffect(() => {
         if (!token) return
@@ -102,7 +119,13 @@ function AuthProvider({ children }) {
         }
         const data = await res.json()
         setToken(data.access_token)
-        const u = { email }
+        // Decode JWT to get role without a library
+        let role = 'member'
+        try {
+            const payload = JSON.parse(atob(data.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+            role = payload.role || 'member'
+        } catch { /* ignore */ }
+        const u = { email, role }
         setUser(u)
         localStorage.setItem('orquanta_token', data.access_token)
         localStorage.setItem('orquanta_user', JSON.stringify(u))
@@ -164,9 +187,20 @@ function LoginPage() {
             <div style={{ width: '100%', maxWidth: '440px', padding: '0 16px', position: 'relative', zIndex: 1 }}>
                 <div className="auth-card fade-in">
                     <div className="auth-logo">
+                        {/* Value Proposition — GPU expert hero message */}
+                        <div className="login-value-strip">
+                            <div className="login-headline">$0.013 / hr</div>
+                            <div className="login-subline">GPU Cloud · Orchestrated by 5 AI Agents · 67% Below AWS</div>
+                            <div className="login-pills">
+                                <span className="login-pill">⚡ Auto-Routing</span>
+                                <span className="login-pill">🧠 NemoClaw AI</span>
+                                <span className="login-pill">💰 Cost Watcher</span>
+                                <span className="login-pill">🔒 Audit Trail</span>
+                            </div>
+                        </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', marginBottom: '6px' }}>
-                            <div style={{ width: 44, height: 44, background: 'linear-gradient(135deg,#3a52eb,#7a9bfa)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Cpu size={22} color="#fff" />
+                            <div style={{ width: 40, height: 40, background: 'linear-gradient(135deg,rgba(0,212,255,0.15),rgba(123,47,255,0.15))', border: '1px solid rgba(0,212,255,0.3)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Cpu size={20} color="#00D4FF" />
                             </div>
                             <div style={{ textAlign: 'left' }}>
                                 <div className="logo-text">OrQuanta</div>
@@ -222,9 +256,54 @@ function LoginPage() {
                             }
                         </button>
                     </form>
-                    <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
+
+                    {/* OAuth divider */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0 16px' }}>
+                        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+                        <span style={{ color: '#64748b', fontSize: 13 }}>or continue with</span>
+                        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+                    </div>
+
+                    {/* Google OAuth */}
+                    <a href="/auth/google" id="btn-google-oauth" style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                        width: '100%', padding: '12px 16px', background: 'white',
+                        border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10,
+                        color: '#1a1a1a', fontWeight: 600, fontSize: 14,
+                        textDecoration: 'none', cursor: 'pointer', marginBottom: 10,
+                    }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Continue with Google
+                    </a>
+
+                    {/* GitHub OAuth */}
+                    <a href="/auth/github" id="btn-github-oauth" style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                        width: '100%', padding: '12px 16px', background: '#24292e',
+                        border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10,
+                        color: 'white', fontWeight: 600, fontSize: 14,
+                        textDecoration: 'none', cursor: 'pointer', marginBottom: 16,
+                    }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+                        </svg>
+                        Continue with GitHub
+                    </a>
+
+                    <div style={{ marginTop: 4, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
                         <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                            Want to explore first?{' '}<a href="/demo" style={{ color: '#7a9bfa', textDecoration: 'none', fontWeight: 600 }}>View live demo</a>
+                            Want to explore first?{' '}
+                            <button
+                                onClick={() => switchMode('register')}
+                                style={{ color: '#7a9bfa', background: 'none', border: 'none', fontWeight: 600, fontSize: 13, cursor: 'pointer', padding: 0, textDecoration: 'underline', textUnderlineOffset: 2 }}
+                            >
+                                Start free trial
+                            </button>
                         </p>
                     </div>
                 </div>
@@ -278,23 +357,55 @@ function CarbonTrackerPage() {
 }
 
 /* ── Navigation Sidebar ── */
-const navItems = [
-    { to: '/', icon: LayoutDashboard, label: 'Dashboard', exact: true },
-    { to: '/goals', icon: Target, label: 'Submit Goal' },
-    { to: '/agents', icon: Zap, label: 'Agent Monitor' },
-    { to: '/jobs', icon: Server, label: 'Job Manager' },
-    { to: '/costs', icon: DollarSign, label: 'Cost Analytics' },
-    { to: '/pricing', icon: BarChart2, label: 'Live Pricing' },
-    { to: '/audit', icon: ScrollText, label: 'Audit Log' },
-    { to: '/carbon', icon: Leaf, label: 'Carbon Tracker' },
-    { to: '/billing', icon: CreditCard, label: 'Billing & Plans' },
-    { to: '/free', icon: Gift, label: 'Free GPU' },
-    { to: '/settings', icon: Settings, label: 'Settings' },
+const VeroIcon = () => <span style={{ fontSize: 17, lineHeight: 1 }}>👑</span>
+
+/* ── Grouped nav structure ── */
+const NAV_GROUPS = [
+  {
+    label: 'Compute',
+    items: [
+      { to: '/',         icon: LayoutDashboard, label: 'Dashboard',     exact: true },
+      { to: '/goals',    icon: Target,          label: 'Submit Goal' },
+      { to: '/agents',   icon: Zap,             label: 'Agent Monitor',  badge: { text: 'LIVE', cls: 'nav-badge-cyan' }, dot: true },
+      { to: '/jobs',     icon: Server,          label: 'Job Manager' },
+    ]
+  },
+  {
+    label: 'Finance',
+    items: [
+      { to: '/costs',    icon: DollarSign,       label: 'Cost Analytics' },
+      { to: '/pricing',  icon: BarChart2,        label: 'Live Pricing',  badge: { text: 'LIVE', cls: 'nav-badge-cyan' } },
+      { to: '/billing',  icon: CreditCard,       label: 'Billing & Plans' },
+      { to: '/free',     icon: Gift,             label: 'Free GPU',       badge: { text: 'FREE', cls: 'nav-badge-green' } },
+    ]
+  },
+  {
+    label: 'Intelligence',
+    items: [
+      { to: '/nemoclaw', icon: Brain,            label: 'NemoClaw',       badge: { text: 'AI', cls: 'nav-badge-violet' } },
+      { to: '/vero',     icon: VeroIcon,         label: 'Vero',           badge: { text: 'META', cls: 'nav-badge-violet' } },
+      { to: '/uix',      icon: Wand2,            label: 'UIXAgent' },
+    ]
+  },
+  {
+    label: 'Compliance',
+    items: [
+      { to: '/audit',    icon: ScrollText,       label: 'Audit Log' },
+      { to: '/carbon',   icon: Leaf,             label: 'Carbon Tracker' },
+    ]
+  },
+  {
+    label: 'Account',
+    items: [
+      { to: '/settings', icon: Settings,         label: 'Settings' },
+      { to: '/help',     icon: HelpCircle,       label: 'Help Center' },
+    ]
+  },
 ]
 
 function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
     const { logout, user } = useAuth()
-    const w = collapsed ? 64 : 220
+    const w = collapsed ? 64 : 228
 
     return (
         <>
@@ -318,54 +429,92 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
                     overflow: 'hidden',
                 }}
             >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '18px 14px 14px', borderBottom: '1px solid var(--border)', minHeight: 64 }}>
-                    <div style={{ width: 32, height: 32, minWidth: 32, background: 'linear-gradient(135deg,#3a52eb,#7a9bfa)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Cpu size={16} color="#fff" />
+                {/* Logo */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '18px 14px 12px', borderBottom: '1px solid var(--border)', minHeight: 64 }}>
+                    <div style={{
+                        width: 32, height: 32, minWidth: 32,
+                        background: 'linear-gradient(135deg,#00D4FF20,#7B2FFF20)',
+                        border: '1px solid rgba(0,212,255,0.3)',
+                        borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                    }}>
+                        <Cpu size={16} color="#00D4FF" />
                     </div>
-                    {!collapsed && <span style={{ fontWeight: 800, fontSize: 14, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>OrQuanta v1.0</span>}
-                    <button onClick={onToggle} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
-                        {collapsed ? <Menu size={16} /> : <X size={16} />}
+                    {!collapsed && (
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 800, fontSize: 13.5, color: 'var(--text-primary)', whiteSpace: 'nowrap', letterSpacing: '-0.02em' }}>OrQuanta</div>
+                            <div style={{ fontSize: 9.5, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 1 }}>GPU Cloud · AI-Powered</div>
+                        </div>
+                    )}
+                    <button onClick={onToggle} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexShrink: 0, padding: 3, borderRadius: 6 }}>
+                        {collapsed ? <Menu size={15} /> : <X size={15} />}
                     </button>
                 </div>
 
-                <nav style={{ flex: 1, padding: '10px 8px' }}>
-                    {!collapsed && <div className="nav-label">Platform</div>}
-                    {navItems.map(({ to, icon: Icon, label, exact }) => (
-                        <NavLink
-                            key={to} to={to} end={exact}
-                            onClick={onMobileClose}
-                            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-                            title={collapsed ? label : undefined}
-                        >
-                            <Icon size={17} style={{ minWidth: 17 }} />
-                            {!collapsed && <span>{label}</span>}
-                        </NavLink>
+                {/* Session savings widget */}
+                {!collapsed && (
+                    <div className="sidebar-savings" style={{ marginTop: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontSize: 13 }}>💰</span>
+                            <div>
+                                <div className="sidebar-savings-amount">$127.40 saved</div>
+                                <div className="sidebar-savings-label">this month · 67% below AWS</div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Grouped Navigation */}
+                <nav style={{ flex: 1, padding: '4px 8px', overflowY: 'auto', overflowX: 'hidden' }}>
+                    {NAV_GROUPS.map((group) => (
+                        <div key={group.label}>
+                            {!collapsed && (
+                                <div className="nav-section-label">{group.label}</div>
+                            )}
+                            {group.items.map(({ to, icon: Icon, label, exact, badge, dot }) => (
+                                <NavLink
+                                    key={to} to={to} end={exact}
+                                    onClick={onMobileClose}
+                                    className={({ isActive }) => `nav-link orq-nav-link${isActive ? ' active' : ''}`}
+                                    title={collapsed ? label : undefined}
+                                    style={{ gap: 9, padding: '8px 10px', borderRadius: 8, marginBottom: 1 }}
+                                >
+                                    {typeof Icon === 'function' && Icon.toString().includes('span') ? (
+                                        <Icon />
+                                    ) : (
+                                        <Icon size={16} style={{ minWidth: 16, flexShrink: 0 }} />
+                                    )}
+                                    {!collapsed && (
+                                        <>
+                                            <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
+                                            {dot && <span className="live-dot" />}
+                                            {badge && <span className={`nav-badge ${badge.cls}`}>{badge.text}</span>}
+                                        </>
+                                    )}
+                                </NavLink>
+                            ))}
+                        </div>
                     ))}
                 </nav>
 
-                <div style={{ padding: '6px 10px', borderTop: '1px solid var(--border)' }}>
-                    <a href="/docs" target="_blank" rel="noopener noreferrer"
-                        title="API Documentation"
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 8px', borderRadius: 8, color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, transition: 'background 0.15s' }}
-                        onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                        onMouseOut={e => e.currentTarget.style.background = 'none'}>
-                        <HelpCircle size={15} style={{ minWidth: 15 }} />
-                        {!collapsed && <span style={{ whiteSpace: 'nowrap', fontSize: 12 }}>Help &amp; API Docs</span>}
-                    </a>
-                </div>
-
+                {/* User footer */}
                 <div style={{ padding: '10px 10px 14px', borderTop: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
-                        <div className="user-avatar" style={{ flexShrink: 0 }}>
+                        <div className="user-avatar" style={{ flexShrink: 0, width: 30, height: 30, fontSize: 11 }}>
                             {user?.email?.[0]?.toUpperCase() || 'A'}
                         </div>
                         {!collapsed && (
-                            <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {user?.email || 'Admin'}
-                            </span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {user?.email?.split('@')[0] || 'Admin'}
+                                </div>
+                                <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{user?.role === 'admin' ? '⚡ Admin · Active' : 'Member · Active'}</div>
+                            </div>
                         )}
-                        <button onClick={logout} title="Logout" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
-                            <LogOut size={14} />
+                        <button onClick={logout} title="Logout" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexShrink: 0, padding: 4, borderRadius: 6, transition: 'color 0.2s' }}
+                            onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
+                            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                        >
+                            <LogOut size={13} />
                         </button>
                     </div>
                 </div>
@@ -373,6 +522,7 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
         </>
     )
 }
+
 
 /* ── Protected App Layout ── */
 function AppLayout() {
@@ -440,6 +590,10 @@ function AppLayout() {
                         <Route path="/free" element={<FreeTier />} />
                         <Route path="/pricing" element={<LivePricing />} />
                         <Route path="/settings" element={<ProfilePage />} />
+                        <Route path="/vero" element={<VeroControl />} />
+                        <Route path="/nemoclaw" element={<NemoClawPage />} />
+                        <Route path="/uix" element={<UIXAgentPage />} />
+                        <Route path="/help" element={<HelpPage />} />
                         <Route path="*" element={<Navigate to="/" />} />
                     </Routes>
                 </ErrorBoundary>

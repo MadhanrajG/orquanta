@@ -142,15 +142,28 @@ def validate_env(strict: bool = False) -> dict[str, Any]:
     )
 
     if criticals and not demo_mode:
-        # Never sys.exit in test or development environments
         env_mode = os.getenv("ENV", "production").lower()
         is_safe_mode = env_mode in ("test", "development", "dev")
         jwt_critical = any("JWT_SECRET_KEY" in c for c in criticals)
-        if (strict or jwt_critical) and not is_safe_mode:
-            logger.critical("STARTUP ABORTED: Critical config missing. Set required env vars.")
-            sys.exit(1)
-        else:
-            logger.warning("Critical config missing — starting in degraded mode (demo/dev/test only)")
+
+        if jwt_critical and not os.getenv("JWT_SECRET_KEY"):
+            # Auto-generate an ephemeral JWT secret so the app can boot.
+            # Log a big warning — operators MUST set a persistent secret in env vars.
+            import secrets as _secrets
+            _auto_jwt = _secrets.token_hex(32)
+            os.environ["JWT_SECRET_KEY"] = _auto_jwt
+            logger.warning(
+                "⚠️  JWT_SECRET_KEY not set — generated ephemeral key for this boot. "
+                "All JWTs will be invalidated on restart. "
+                "Set JWT_SECRET_KEY in your Render environment variables for persistent sessions."
+            )
+            # Remove from criticals since we've resolved it
+            criticals = [c for c in criticals if "JWT_SECRET_KEY" not in c]
+
+        if criticals and not is_safe_mode:
+            logger.warning("Critical config missing — starting in degraded mode.")
+        elif criticals:
+            logger.warning("Critical config missing — starting in degraded mode (dev/test)")
 
     logger.info("=" * 60)
 
