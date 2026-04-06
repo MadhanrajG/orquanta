@@ -25,7 +25,8 @@ class RegisterRequest(BaseModel):
         import re
         v = str(v).strip().lower()
         # Block SQL and script injection in the email field
-        if re.search(r"[<>'\"\\;--]", v):
+        # Hyphen must be at end of character class to avoid regex range errors
+        if re.search(r"[<>'\"\\;-]|--", v):
             raise ValueError("Invalid characters in email address")
         return v
 

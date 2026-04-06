@@ -268,14 +268,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
         response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
-        # CSP: skip on pure JSON/metrics endpoints (no HTML, no XSS risk)
-        # Apply to all HTML-serving and app routes
+        # Apply per-route CSP — demo page needs unsafe-inline for its inline scripts
         path = request.url.path
-        if path in ("/metrics", "/health", "/ready"):
-            # These are JSON/text endpoints — no CSP needed, skip to avoid
-            # interfering with monitoring tools that parse raw responses
-            pass
-        elif path.startswith("/demo"):
+        if path.startswith("/demo"):
             response.headers["Content-Security-Policy"] = self._CSP_DEMO
         else:
             response.headers["Content-Security-Policy"] = self._CSP_APP
