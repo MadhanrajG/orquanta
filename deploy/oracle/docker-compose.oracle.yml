@@ -1,0 +1,213 @@
+version: '3.8'
+
+# =============================================================================
+# OrQuanta — Oracle Cloud VM.Standard.A1.Flex (24GB RAM / 4 vCPU ARM64)
+# Layout:
+#   api      → FastAPI backend         (8GB RAM)
+#   postgres → Persistent DB           (2GB RAM)
+#   ollama   → Local LLM inference     (12GB RAM, Gemma/Mistral)
+#   nginx    → Reverse proxy + TLS     (256MB RAM)
+#   grafana  → Metrics dashboard       (512MB RAM)
+#   loki     → Log aggregation         (512MB RAM)
+# Total budget: ~23GB of 24GB available
+# =============================================================================
+
+x-restart-policy: &restart-policy
+  restart: unless-stopped
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "50m"
+    max-file: "5"
+
+services:
+
+  # ── Backend API (FastAPI + all 5 agents) ────────────────────────────────────
+  api:
+    <<: *restart-policy
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        - TARGETPLATFORM=linux/arm64
+    image: orquanta-api:latest
+    container_name: orquanta-api
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - WORKERS=4                      # 4 Uvicorn workers (1 per vCPU)
+      - TURBOQUANT_ENABLED=true
+      - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      - api_data:/app/data             # SQLite DB + uploads
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          cpus: '3'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging: *default-logging
+
+  # ── PostgreSQL (persistent, replaces SQLite for production) ─────────────────
+  postgres:
+    <<: *restart-policy
+    image: postgres:16-bullseye          # bullseye = ARM64 compatible
+    container_name: orquanta-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-orquanta}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-orquanta}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-orquanta}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *default-logging
+
+  # ── Ollama — Local LLM Inference Sidecar ─────────────────────────────────────
+  # The 24GB Oracle tier's "killer feature" — run Gemma 2B/7B locally for free.
+  # Agents use this instead of paying for GPT-4 API calls.
+  ollama:
+    <<: *restart-policy
+    image: ollama/ollama:latest
+    container_name: orquanta-ollama
+    ports:
+      - "11434:11434"                  # internal only (don't expose if no auth)
+    volumes:
+      - ollama_data:/root/.ollama      # persists downloaded models
+    environment:
+      - OLLAMA_NUM_PARALLEL=2          # 2 concurrent inference requests
+      - OLLAMA_MAX_LOADED_MODELS=1     # keep 1 model hot at a time
+    deploy:
+      resources:
+        limits:
+          memory: 12G                  # Gemma 7B needs ~8GB, leaves headroom
+          cpus: '2'
+    # Pull Gemma 2B on first start (lightweight, fast, good for agent reasoning)
+    entrypoint: >
+      sh -c "ollama serve &
+             sleep 5 &&
+             ollama pull gemma2:2b &&
+             wait"
+    logging: *default-logging
+
+  # ── Nginx — Reverse Proxy + TLS termination ───────────────────────────────────
+  nginx:
+    <<: *restart-policy
+    image: nginx:alpine
+    container_name: orquanta-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - certbot_www:/var/www/certbot:ro
+      - certbot_conf:/etc/letsencrypt:ro
+    depends_on:
+      - api
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+    logging: *default-logging
+
+  # ── Certbot — Auto-renews Let's Encrypt TLS certificates ─────────────────────
+  certbot:
+    image: certbot/certbot:latest
+    container_name: orquanta-certbot
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_conf:/etc/letsencrypt
+    # Renew every 12h — Let's Encrypt certs expire every 90 days
+    entrypoint: >
+      sh -c "trap exit TERM;
+             while :; do
+               certbot renew --webroot -w /var/www/certbot --quiet;
+               sleep 12h & wait $${!};
+             done"
+    logging: *default-logging
+
+  # ── Grafana — Metrics Dashboard ───────────────────────────────────────────────
+  grafana:
+    <<: *restart-policy
+    image: grafana/grafana:latest
+    container_name: orquanta-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_SECRET:-orquanta-grafana}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - api
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+    logging: *default-logging
+
+# =============================================================================
+# Volumes — all persistent, survive container restarts
+# =============================================================================
+volumes:
+  api_data:
+    driver: local
+  postgres_data:
+    driver: local
+  ollama_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/orquanta/models    # maps to block storage if attached
+  grafana_data:
+    driver: local
+  certbot_www:
+    driver: local
+  certbot_conf:
+    driver: local
+
+# =============================================================================
+# Networks — isolated bridge; nginx is the only public-facing container
+# =============================================================================
+networks:
+  default:
+    name: orquanta-net
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
