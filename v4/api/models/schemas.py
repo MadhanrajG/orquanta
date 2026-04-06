@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 # ---------------------------------------------------------------------------
@@ -14,14 +14,31 @@ from pydantic import BaseModel, EmailStr, Field
 # ---------------------------------------------------------------------------
 
 class RegisterRequest(BaseModel):
-    email: str = Field(..., description="User email address")
-    password: str = Field(..., min_length=8, description="Password (min 8 chars)")
-    name: str = Field("", description="Display name")
+    email: str = Field(..., max_length=254, description="User email address")
+    password: str = Field(..., min_length=8, max_length=128, description="Password (min 8 chars)")
+    name: str = Field("", max_length=120, description="Display name")
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalise_email(cls, v: str) -> str:
+        """Lowercase and strip whitespace; block obviously injected values."""
+        import re
+        v = str(v).strip().lower()
+        # Block SQL and script injection in the email field
+        if re.search(r"[<>'\"\\;--]", v):
+            raise ValueError("Invalid characters in email address")
+        return v
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def sanitize_name(cls, v: str) -> str:
+        import re
+        return re.sub(r"<[^>]*>", "", str(v)).strip()
 
 
 class LoginRequest(BaseModel):
-    email: str
-    password: str
+    email: str = Field(..., max_length=254)
+    password: str = Field(..., max_length=128)
 
 
 class TokenResponse(BaseModel):
@@ -52,6 +69,15 @@ class GoalSubmitRequest(BaseModel):
     )
     budget_usd: Optional[float] = Field(None, ge=0.0, description="Optional budget cap in USD")
     priority: Optional[float] = Field(0.5, ge=0.0, le=1.0, description="Priority 0.0-1.0")
+
+    @field_validator("raw_text", mode="before")
+    @classmethod
+    def sanitize_raw_text(cls, v: str) -> str:
+        """Strip HTML/script tags to prevent XSS reflection via goal text."""
+        import re
+        v = re.sub(r"<[^>]*>", "", str(v))   # strip HTML tags
+        v = v.replace("&", "&amp;").replace('"', "&quot;")
+        return v.strip()
 
 
 class TaskStatus(BaseModel):
@@ -95,6 +121,15 @@ class JobCreateRequest(BaseModel):
     max_runtime_minutes: int = Field(120, ge=1, le=10080)
     max_cost_usd: float = Field(500.0, ge=0.0)
     priority: float = Field(0.5, ge=0.0, le=1.0)
+
+    @field_validator("intent", mode="before")
+    @classmethod
+    def sanitize_intent(cls, v: str) -> str:
+        """Strip HTML tags and dangerous characters to prevent XSS reflection."""
+        import re
+        v = re.sub(r"<[^>]*>", "", str(v))          # strip HTML tags
+        v = v.replace("&", "&amp;").replace('"', "&quot;")
+        return v.strip()
 
 
 class JobResponse(BaseModel):

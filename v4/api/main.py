@@ -9,10 +9,12 @@ from __future__ import annotations
 
 import logging
 import os
+import time
+from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -26,8 +28,11 @@ from .routers.webhooks import router as webhooks_router
 from .routers.schedules import router as schedules_router, get_cron_scheduler
 from .routers.pricing import router as pricing_router
 from .routers.free_tier import router as free_tier_router
+from .routers.vero import router as vero_router
+from .routers.nemoclaw import router as nemoclaw_router
+from .routers.uix import router as uix_router
 from .websocket.agent_stream import router as ws_router
-from .middleware.auth import authenticate_user, create_access_token, register_user
+from .middleware.auth import authenticate_user, create_access_token, register_user, get_current_user
 from .models.schemas import (
     HealthResponse, LoginRequest, RegisterRequest, TokenResponse
 )
@@ -92,6 +97,35 @@ async def lifespan(app: FastAPI):
 
     forecast_agent = ForecastAgent()
     await forecast_agent.start()
+
+    # Start Vero -- Superior Intelligence Meta-Agent (boots last, monitors all)
+    try:
+        from ..agents.vero_agent import get_vero
+        vero = get_vero()
+        await vero.start(orchestrator=orchestrator)
+        logger.info('VERO ONLINE -- Superior agent oversight active. Monitoring 5 agents.')
+    except Exception as exc:
+        logger.warning(f'[Vero] Failed to start (non-fatal): {exc}')
+
+    # Start NemoClaw — OpenClaw-inspired multi-agent cognitive layer
+    try:
+        from ..agents.nemoclaw_engine import get_nemoclaw
+        nemoclaw = get_nemoclaw()
+        _vero_ref = vero if 'vero' in dir() else None
+        await nemoclaw.start(vero=_vero_ref, orchestrator=orchestrator)
+        logger.info('🧬 NEMOCLAW ONLINE — ContextGraph ready, CostWatcher active, PredictivePrefetch started.')
+    except Exception as exc:
+        logger.warning(f'[NemoClaw] Failed to start (non-fatal): {exc}')
+
+    # Pre-warm Live Pricing cache — so /pricing shows data on first page load
+    try:
+        from .routers.pricing import _refresh_cache
+        import asyncio as _asyncio
+        _asyncio.ensure_future(_refresh_cache())
+        logger.info('[Pricing] Cache pre-warm scheduled.')
+    except Exception as exc:
+        logger.warning(f'[Pricing] Pre-warm failed (non-fatal): {exc}')
+
 
     # Ã¢â€â‚¬Ã¢â€â‚¬ Init production job pipeline Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
     from ..execution.pipeline import get_pipeline
@@ -199,20 +233,71 @@ app.add_middleware(
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add production-grade security headers to every response."""
 
+    # Strict CSP for API and app routes
+    _CSP_APP = (
+        "default-src 'self'; "
+        "script-src 'self'; "
+        "style-src 'self' 'unsafe-inline' fonts.googleapis.com; "
+        "font-src 'self' fonts.gstatic.com; "
+        "img-src 'self' data: blob:; "
+        "connect-src 'self' wss: https:; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self';"
+    )
+    # Demo page uses server-rendered inline scripts — allow unsafe-inline for /demo only
+    _CSP_DEMO = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline' fonts.googleapis.com; "
+        "font-src 'self' fonts.gstatic.com; "
+        "img-src 'self' data: blob:; "
+        "connect-src 'self' wss: https:; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self';"
+    )
+
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
+        # Only add security headers to non-binary, non-stream responses
+        # Always set transport-security and clickjacking protection
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
         response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
+        # CSP: skip on pure JSON/metrics endpoints (no HTML, no XSS risk)
+        # Apply to all HTML-serving and app routes
+        path = request.url.path
+        if path in ("/metrics", "/health", "/ready"):
+            # These are JSON/text endpoints — no CSP needed, skip to avoid
+            # interfering with monitoring tools that parse raw responses
+            pass
+        elif path.startswith("/demo"):
+            response.headers["Content-Security-Policy"] = self._CSP_DEMO
+        else:
+            response.headers["Content-Security-Policy"] = self._CSP_APP
         return response
 
-app.add_middleware(SecurityHeadersMiddleware)
+# ─── Middleware registration order (CRITICAL) ───────────────────────────────
+# Starlette applies add_middleware() in REVERSE order:
+#   last registered = outermost wrapper = first to execute on every request
+#
+# Desired execution order (outermost → innermost):
+#   1. SecurityHeadersMiddleware   ← adds CSP/HSTS/XSS headers to ALL responses
+#   2. PrometheusMiddleware        ← records metrics (inner, skips /health)
+#   3. CORSMiddleware              ← already added above
+#   4. Route handlers
+#
+# Registration order must therefore be OPPOSITE:
 
-# Prometheus metrics middleware (for Grafana Cloud)
+# Register FIRST → runs INNERMOST (after security headers are already set)
 app.add_middleware(PrometheusMiddleware)
+
+# Register LAST → runs OUTERMOST (executes before anything else, wraps all responses)
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 # Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Global exception handler Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
@@ -570,17 +655,143 @@ async def register(req: RegisterRequest):
         return JSONResponse(status_code=400, content={"error": str(e)})
 
 
+# Per-IP sliding-window rate limiter for /auth/login
+# Tracks FAILED attempts only — successful logins don't count toward the limit.
+# Limits: 5 failures/60s triggers soft block; 10 failures/300s triggers hard block.
+_login_failures: defaultdict[str, deque] = defaultdict(deque)
+_LOGIN_SOFT_LIMIT = 5    # failures before 429 (60-second window)
+_LOGIN_HARD_LIMIT = 10   # failures before extended block (300-second window)
+_LOGIN_SOFT_WINDOW = 60.0
+_LOGIN_HARD_WINDOW = 300.0
+
+
+def _login_rate_check(ip: str) -> tuple[bool, int]:
+    """Returns (allowed, retry_after_seconds). Checks only failed-attempt history."""
+    now = time.monotonic()
+    bucket = _login_failures[ip]
+
+    # Purge hard-window entries older than 5 minutes
+    while bucket and bucket[0] < now - _LOGIN_HARD_WINDOW:
+        bucket.popleft()
+
+    recent_count = len(bucket)  # failures in last 5 min
+    soft_count = sum(1 for t in bucket if t > now - _LOGIN_SOFT_WINDOW)  # in last 60s
+
+    if recent_count >= _LOGIN_HARD_LIMIT:
+        return False, 300  # 5-minute block
+    if soft_count >= _LOGIN_SOFT_LIMIT:
+        return False, 60   # 1-minute block
+    return True, 0
+
+
+def _record_login_failure(ip: str) -> None:
+    """Record a failed login attempt for this IP."""
+    _login_failures[ip].append(time.monotonic())
+
+
+def _clear_login_failures(ip: str) -> None:
+    """Clear failure history on successful login (reset the count)."""
+    _login_failures[ip].clear()
+
+
 @app.post("/auth/login", tags=["Auth"], response_model=TokenResponse, summary="Login")
-async def login(req: LoginRequest):
+async def login(req: LoginRequest, request: Request):
     """Authenticate and receive a JWT access token."""
+    ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+          or (request.client.host if request.client else "unknown"))
+
+    allowed, retry_after = _login_rate_check(ip)
+    if not allowed:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "error": f"Too many failed login attempts. Try again in {retry_after} seconds.",
+                "retry_after": retry_after,
+            },
+            headers={"Retry-After": str(retry_after), "X-RateLimit-Limit": "5"},
+        )
+
     user = authenticate_user(req.email, req.password)
     if not user:
+        _record_login_failure(ip)   # only count failures toward the limit
         return JSONResponse(
             status_code=status.HTTP_401_UNAUTHORIZED,
             content={"error": "Invalid email or password."},
         )
+
+    _clear_login_failures(ip)       # successful login → reset failure counter
     token = create_access_token(user["id"], user["email"], user["role"])
     return TokenResponse(access_token=token, expires_in=86400)
+
+
+# ─── Change Password endpoint (used by Settings → Security tab) ───────────
+
+from pydantic import BaseModel as _BaseModel
+
+class _ChangePasswordRequest(_BaseModel):
+    current_password: str
+    new_password: str
+
+@app.post("/api/v1/auth/change-password", tags=["Auth"], summary="Change user password")
+async def change_password(
+    req: _ChangePasswordRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Validate current password and update to new password."""
+    from .middleware.auth import _get_db, hash_password, authenticate_user as _auth
+    # Verify current password
+    user = _auth(current_user["email"], req.current_password)
+    if not user:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"error": "Current password is incorrect."},
+        )
+    if len(req.new_password) < 8:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "New password must be at least 8 characters."},
+        )
+    import secrets as _sec
+    new_salt = _sec.token_hex(8)
+    new_hash = hash_password(req.new_password, new_salt)
+    conn = _get_db()
+    try:
+        conn.execute(
+            "UPDATE users SET hashed_pw = ?, salt = ? WHERE email = ?",
+            (new_hash, new_salt, current_user["email"].lower()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    logger.info(f"Password changed for user: {current_user['email']}")
+    return {"success": True, "message": "Password updated successfully."}
+
+
+# ─── Update user profile (used by Settings → Profile tab) ────────────────
+
+class _ProfileUpdateRequest(_BaseModel):
+    full_name: str = ""
+    email: str = ""
+
+@app.patch("/api/v1/auth/profile", tags=["Auth"], summary="Update user profile")
+async def update_profile(
+    req: _ProfileUpdateRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Update the authenticated user's display name."""
+    from .middleware.auth import _get_db
+    conn = _get_db()
+    try:
+        conn.execute(
+            "UPDATE users SET name = ? WHERE email = ?",
+            (req.full_name, current_user["email"].lower()),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return {"success": True, "full_name": req.full_name}
+
+
 
 
 # Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Health check Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
@@ -641,6 +852,9 @@ app.include_router(webhooks_router)  # /api/v1/webhooks Ã¢â‚¬â€ outbo
 app.include_router(schedules_router) # /api/v1/schedules Ã¢â‚¬â€ cron-based recurring GPU jobs
 app.include_router(free_tier_router)
 app.include_router(pricing_router)  # /api/v1/pricing -- live GPU prices from Lambda/RunPod/Vast.ai # /api/v1/free Ã¢â‚¬â€ Colab/Kaggle/Lambda free GPU tier
+app.include_router(vero_router)     # /api/v1/vero -- Vero meta-agent
+app.include_router(nemoclaw_router) # /api/v1/nemoclaw -- NemoClaw cognitive layer
+app.include_router(uix_router)      # /api/v1/uix -- UIXAgent autonomous UI/UX diagnostics
 app.include_router(ws_router)
 
 # Demo router Ã¢â‚¬â€ always included; active only when DEMO_MODE=true
