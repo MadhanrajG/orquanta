@@ -84,7 +84,7 @@ def _get_current_user(request: Request) -> dict:
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Not authenticated")
-    return {"user_id": "admin", "email": "admin@orquanta.ai"}
+    return {"user_id": "admin", "email": "admin@orquanta.com"}
 
 
 CurrentUser = Annotated[dict, Depends(_get_current_user)]

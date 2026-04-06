@@ -10,7 +10,7 @@
 |-------|---------|
 | **Product Name** | OrQuanta |
 | **Tagline** (60 chars max) | `AI agents that manage your GPU cloud autonomously` |
-| **Website** | `https://orquanta.ai` |
+| **Website** | `https://orquanta.com` |
 | **Maker** | [Your name] |
 | **Category** | Developer Tools / Artificial Intelligence |
 | **Topics** | Machine Learning, Cloud Infrastructure, DevOps, AI Agents |
@@ -127,7 +127,7 @@ GDPR-compliant. SOC2-ready.
 → Stripe billing ready
 
 **Try it:**
-14-day free trial at orquanta.ai — no credit card, no setup, 
+14-day free trial at orquanta.com — no credit card, no setup, 
 instant access.
 
 I'd love feedback from ML engineers who've felt this pain. 
@@ -164,7 +164,7 @@ Our median response time is 8.3 seconds — which means some
 jobs that would have crashed are completing successfully.
 
 If you're an ML engineer dealing with this pain, I'd love 
-to talk. Either grab a free trial at orquanta.ai or email 
+to talk. Either grab a free trial at orquanta.com or email 
 me directly: [EMAIL] — I read every email personally.
 
 Happy to answer any technical questions about the agent 
@@ -198,7 +198,7 @@ Quick proof of credibility: 80/80 tests passing, 10/10
 production launch gates, real AWS/GCP/Azure/Lambda Labs 
 integrations. Not vapourware.
 
-Here's a quick demo: orquanta.ai/demo
+Here's a quick demo: orquanta.com/demo
 
 Happy to jump on a 10-minute call if you want a live walkthrough.
 
@@ -210,7 +210,7 @@ Thanks,
 ```
 Hey [HUNTER] — would you be interested in hunting OrQuanta? 
 Agentic AI for GPU cloud management (47% cost savings, 
-8s self-healing). Demo: orquanta.ai/demo 
+8s self-healing). Demo: orquanta.com/demo 
 Targeting [DATE]. Thank you!
 ```
 
@@ -271,7 +271,7 @@ We just launched @OrQuantaAI on @ProductHunt 🚀
 → Natural language → running job in 30s
 → 47% average cost savings
 
-Free trial: orquanta.ai
+Free trial: orquanta.com
 PH: [link]
 ```
 

@@ -117,8 +117,8 @@ SAFETY_RATE_LIMIT_PER_MINUTE=60
 SLACK_WEBHOOK_URL=
 SENDGRID_API_KEY=
 PAGERDUTY_ROUTING_KEY=
-ALERT_EMAIL_FROM=alerts@orquanta.ai
-ALERT_EMAIL_TO=ops@orquanta.ai
+ALERT_EMAIL_FROM=alerts@orquanta.com
+ALERT_EMAIL_TO=ops@orquanta.com
 
 # ── Frontend ───────────────────────────────────────────────────
 VITE_API_BASE_URL=http://localhost:8000
@@ -415,7 +415,7 @@ def print_summary(use_docker: bool = True):
 
     print(f"""
   {C.BOLD}Default credentials:{C.R}
-    Email:    admin@orquanta.ai
+    Email:    admin@orquanta.com
     Password: orquanta-admin-2024
 
   {C.DIM}All 80 tests: python -m pytest v4/tests/ -v{C.R}

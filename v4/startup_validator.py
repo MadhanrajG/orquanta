@@ -35,7 +35,7 @@ class EnvCheck:
 ENV_SPEC: list[EnvCheck] = [
     # ── Security (CRITICAL) ───────────────────────────────────────────────
     EnvCheck("JWT_SECRET_KEY",        "critical", "JWT signing secret — set to 256-bit random string", secret=True),
-    EnvCheck("ADMIN_EMAIL",           "critical", "Admin user email", default="admin@orquanta.ai"),
+    EnvCheck("ADMIN_EMAIL",           "critical", "Admin user email", default="admin@orquanta.com"),
     EnvCheck("ADMIN_PASSWORD",        "critical", "Admin user password", secret=True, default="orquanta-admin-2024"),
 
     # ── GPU Providers (WARNING — at least one needed for real jobs) ───────

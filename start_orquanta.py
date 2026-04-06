@@ -116,7 +116,7 @@ def setup_env(demo: bool) -> dict:
         env["LOG_LEVEL"]          = "INFO"
         # Provide safe demo defaults so the validator doesn't abort
         env.setdefault("JWT_SECRET",      "demo-jwt-secret-change-in-production-256bit")
-        env.setdefault("ADMIN_EMAIL",     "admin@orquanta.ai")
+        env.setdefault("ADMIN_EMAIL",     "admin@orquanta.com")
         env.setdefault("ADMIN_PASSWORD",  "orquanta-admin-2024")
     else:
         env["DEMO_MODE"]   = "false"

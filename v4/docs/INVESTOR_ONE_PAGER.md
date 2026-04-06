@@ -202,5 +202,5 @@ Revenue = Base Subscription + Usage Fee
 
 ---
 
-*OrQuanta AI, Inc. | orquanta.ai | hello@orquanta.ai*  
+*OrQuanta AI, Inc. | orquanta.com | hello@orquanta.com*  
 *"The infrastructure of the future doesn't just run your code — it thinks, learns, and adapts."*

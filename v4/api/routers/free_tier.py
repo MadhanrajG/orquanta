@@ -62,7 +62,7 @@ class KaggleSubmitRequest(BaseModel):
 def _current_user(request: Request) -> dict:
     auth = request.headers.get("Authorization", "")
     if auth.startswith("Bearer "):
-        return {"user_id": "demo", "email": "demo@orquanta.ai"}
+        return {"user_id": "demo", "email": "demo@orquanta.com"}
     # Free tier allows unauthenticated notebook generation
     return {"user_id": "anon", "email": ""}
 

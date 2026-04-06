@@ -39,7 +39,7 @@ async def init_db():
     logger.info("✅ Tables created (or already exist)")
 
     # Seed admin user
-    admin_email = os.getenv("ADMIN_EMAIL", "admin@orquanta.ai")
+    admin_email = os.getenv("ADMIN_EMAIL", "admin@orquanta.com")
     admin_password = os.getenv("ADMIN_PASSWORD", "")
 
     if not admin_password:

@@ -8,7 +8,7 @@ Provides a read-only, shareable demo URL:
  GET /demo/status returns current demo scenario state
 
 This is the shareable link for cold outreach:
- "See OrQuanta live: https://orquanta.ai/demo"
+ "See OrQuanta live: https://orquanta.com/demo"
 
 Mount in v4/api/main.py:
  from v4.demo.public_demo import demo_router

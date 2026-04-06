@@ -398,7 +398,7 @@ async def get_provider_health():
     """Which providers are live, degraded, or using cached fallback data."""
     return JSONResponse({
         "providers": {
-            "lambda":  {"name": "Lambda Labs",  "status": _provider_health.get("lambda",  "unknown"), "api_key_set": bool(os.getenv("LAMBDA_LABS_API_KEY"))},
+            "lambda":  {"name": "Lambda Labs",  "status": _provider_health.get("lambda",  "fallback"), "api_key_set": bool(os.getenv("LAMBDA_LABS_API_KEY"))},
             "runpod":  {"name": "RunPod",        "status": _provider_health.get("runpod",  "unknown"), "api_key_set": True,  "note": "Public GraphQL, no key needed"},
             "vastai":  {"name": "Vast.ai",       "status": _provider_health.get("vastai",  "unknown"), "api_key_set": True,  "note": "Public API, no key needed"},
             "aws":     {"name": "AWS (reference)","status": "fallback",                                 "api_key_set": False, "note": "On-demand prices for comparison only"},
@@ -406,3 +406,31 @@ async def get_provider_health():
         "cache_ttl_sec": _CACHE_TTL,
         "last_refresh":  datetime.fromtimestamp(_cache_ts, tz=timezone.utc).isoformat() if _cache_ts else None,
     })
+
+
+@router.get("/live")
+@router.get("/live/")
+async def get_pricing_live(
+    gpu_type:  str | None = Query(None),
+    max_price: float | None = Query(None),
+    min_vram:  int | None   = Query(None),
+    provider:  str | None   = Query(None),
+    limit:     int           = Query(50, le=200),
+):
+    """Alias for GET /api/v1/pricing — ensures /pricing/live always returns data."""
+    return await get_pricing(
+        gpu_type=gpu_type, max_price=max_price,
+        min_vram=min_vram, provider=provider, limit=limit,
+    )
+
+
+@router.get("/status")
+async def get_pricing_status():
+    """Quick health check — how many listings are cached right now."""
+    listings = await _get_listings()
+    return {
+        "cached_listings": len(listings),
+        "cache_age_sec": round(time.time() - _cache_ts, 1),
+        "status": "ok" if listings else "empty",
+        "providers": list({l["provider"] for l in listings}),
+    }

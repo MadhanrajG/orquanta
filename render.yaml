@@ -6,6 +6,9 @@ services:
     plan: free
     region: singapore  # Closest to India
     healthCheckPath: /health
+    domains:
+      - orquanta.com
+      - www.orquanta.com
     envVars:
       - key: PORT
         value: 8000
@@ -15,16 +18,28 @@ services:
         value: auto
       - key: TURBOQUANT_ENABLED
         value: false
+      - key: APP_URL
+        value: https://orquanta.com
+      - key: CORS_ORIGINS
+        value: https://orquanta.com,https://www.orquanta.com
+      - key: ADMIN_EMAIL
+        value: admin@orquanta.com
       - key: DATABASE_URL
         fromDatabase:
           name: orquanta-db
           property: connectionString
       - key: SECRET_KEY
         generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        sync: false   # Set manually in Render dashboard
+      - key: AUDIT_HMAC_KEY
+        sync: false   # Set manually in Render dashboard
       - key: OPENAI_API_KEY
-        sync: false   # You enter this manually in Render dashboard
+        sync: false   # Optional — enables real LLM reasoning
       - key: ANTHROPIC_API_KEY
-        sync: false   # You enter this manually in Render dashboard
+        sync: false   # Optional — enables Claude reasoning
 
 databases:
   - name: orquanta-db

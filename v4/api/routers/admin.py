@@ -350,6 +350,114 @@ async def emergency_stop(
     }
 
 
+# ─── Safety Governor Admin API ───────────────────────────────────────────────
+
+
+class GovernorStopRequest(BaseModel):
+    action: str            # "trigger" | "clear"
+    reason: str = ""
+    override_token: str = ""  # Required for "clear"
+
+
+@router.get("/safety/status")
+async def safety_governor_status(
+    admin: dict = Depends(require_admin),
+) -> dict[str, Any]:
+    """
+    Live SafetyGovernor stats: spend, budget remaining, stop state, audit count.
+    Also includes PolicyRails config summary.
+    """
+    from ....agents.safety_governor import get_governor
+    gov = get_governor()
+    stats = gov.get_stats()
+
+    # Include PolicyRails policy summary
+    try:
+        from guardrails import get_rails
+        policy_summary = get_rails().get_policy_summary()
+    except Exception:
+        policy_summary = {"status": "unavailable"}
+
+    return {
+        "governor": stats,
+        "policy": policy_summary,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@router.post("/safety/governor-stop")
+async def safety_governor_stop(
+    body: GovernorStopRequest,
+    admin: dict = Depends(require_admin),
+) -> dict[str, Any]:
+    """
+    Trigger or clear the SafetyGovernor emergency stop.
+
+    - action="trigger" → halts all agent actions immediately
+    - action="clear"   → resume (requires SAFETY_OVERRIDE_TOKEN in override_token field)
+    """
+    from ....agents.safety_governor import get_governor
+    gov = get_governor()
+
+    if body.action == "trigger":
+        if not body.reason:
+            raise HTTPException(status_code=400, detail="reason is required to trigger emergency stop")
+        gov.trigger_emergency_stop(body.reason)
+        logger.critical(
+            f"[SAFETY ADMIN] Emergency stop TRIGGERED by {admin.get('email')} — {body.reason}"
+        )
+        return {
+            "status": "emergency_stop_active",
+            "reason": body.reason,
+            "triggered_by": admin.get("email"),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+    elif body.action == "clear":
+        success = gov.clear_emergency_stop(body.override_token)
+        if not success:
+            raise HTTPException(
+                status_code=403,
+                detail="Invalid override_token. Set SAFETY_OVERRIDE_TOKEN env var and use that value."
+            )
+        logger.warning(
+            f"[SAFETY ADMIN] Emergency stop CLEARED by {admin.get('email')}"
+        )
+        return {
+            "status": "emergency_stop_cleared",
+            "cleared_by": admin.get("email"),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+    else:
+        raise HTTPException(status_code=400, detail="action must be 'trigger' or 'clear'")
+
+
+@router.get("/safety/agent-audit")
+async def safety_agent_audit(
+    agent: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+    admin: dict = Depends(require_admin),
+) -> dict[str, Any]:
+    """
+    Paginated SafetyGovernor audit log for all agent actions.
+    Filter by agent name with ?agent=<name>.
+    """
+    from ....agents.safety_governor import get_governor
+    gov = get_governor()
+    entries = gov.get_audit_log(agent_filter=agent, limit=limit, offset=offset)
+    spend = gov.get_spend_summary()
+
+    return {
+        "entries": entries,
+        "total_returned": len(entries),
+        "agent_filter": agent,
+        "spend_summary": spend,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
+
 # ─── Platform-wide audit ──────────────────────────────────────────────────────
 
 @router.get("/audit")

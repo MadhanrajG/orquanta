@@ -23,7 +23,7 @@ import httpx
 logger = logging.getLogger("orquanta.notifications.discord")
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "")
-APP_URL = os.getenv("APP_URL", "https://orquanta-production.up.railway.app")
+APP_URL = os.getenv("APP_URL", "https://orquanta.com")
 
 
 # ─── Embed colour constants ────────────────────────────────────────────────────

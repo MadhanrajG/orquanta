@@ -377,4 +377,4 @@ The 47% cost reduction and 97.3% job success rate observed in production are not
 ---
 
 *OrQuanta Agentic v1.0 | Open Source under MIT License | [github.com/orquanta/agentic](https://github.com/orquanta)*  
-*Contact: research@orquanta.ai*
+*Contact: research@orquanta.com*

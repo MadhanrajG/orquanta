@@ -28,7 +28,7 @@ BRAND_COLOR = "#6366f1"
 BRAND_ACCENT = "#06b6d4"
 BG_COLOR = "#0f1117"
 SURFACE_COLOR = "#161822"
-APP_URL = os.getenv("APP_URL", "https://app.orquanta.ai")
+APP_URL = os.getenv("APP_URL", "https://orquanta.com")
 UNSUBSCRIBE_BASE = os.getenv("UNSUBSCRIBE_URL", f"{APP_URL}/unsubscribe")
 
 

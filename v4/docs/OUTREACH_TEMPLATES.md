@@ -36,7 +36,7 @@ Worth a 15-minute call to see if there's waste worth recovering?
 
 [YOUR NAME]
 Founder, OrQuanta
-orquanta.ai
+orquanta.com
 ```
 
 ---
@@ -68,7 +68,7 @@ selection, Z-score anomaly detection).
 15 minutes? I can show you the live agent stream.
 
 [YOUR NAME]
-orquanta.ai | [EMAIL]
+orquanta.com | [EMAIL]
 ```
 
 ---
@@ -98,7 +98,7 @@ No prep needed on your end. Just 15 minutes.
 Interested?
 
 [YOUR NAME]
-Founder, OrQuanta | orquanta.ai
+Founder, OrQuanta | orquanta.com
 ```
 
 **Follow-up (3 days later if no reply):**
@@ -153,7 +153,7 @@ Open to a 15-min demo? We can show it on a real model fine-tune.
 Hey [NAME] — saw your tweet about GPU costs. Building 
 OrQuanta: 5 AI agents that autonomously cut GPU bills 47% 
 (spot arbitrage + self-healing). 14-day trial live. Worth 
-15 mins? orquanta.ai
+15 mins? orquanta.com
 ```
 *(237 chars)*
 
@@ -271,7 +271,7 @@ CloudWatch at 2 AM.
 - 80/80 unit tests, 10/10 production launch gates
 - Full research paper in the repo (submitted NeurIPS Systems Workshop)
 
-**Try it free:** 14-day trial at orquanta.ai  
+**Try it free:** 14-day trial at orquanta.com  
 **GitHub:** [link]
 
 I'd love feedback from ML engineers who've dealt with GPU 

@@ -99,7 +99,7 @@ CLEAN: Zero BomaX references remaining in codebase ✓
 
 ```
 commit 88d50d9 (HEAD -> master)
-Author: Madhanraj Gunasekar <madhanraj@orquanta.ai>
+Author: Madhanraj Gunasekar <madhanraj@orquanta.com>
 Date:   Sat Feb 21 2026
 
     feat: OrQuanta Agentic v1.0 — Initial Release

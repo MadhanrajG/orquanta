@@ -36,7 +36,7 @@ The CLI is not just a wrapper; it uses the AI endpoints to guide the user:
 pip install typer rich
 
 # 2. Login
-python orquanta_cli.py login --email admin@orquanta.ai --password admin
+python orquanta_cli.py login --email admin@orquanta.com --password admin
 
 # 3. Launch with AI
 python orquanta_cli.py launch --description "Heavy inference workload"

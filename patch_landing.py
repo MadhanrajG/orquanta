@@ -172,7 +172,7 @@ def patch_meta(html: str) -> str:
     if 'twitter:card' not in html:
         html = html.replace(
             '<meta name="theme-color"',
-            '<meta name="twitter:card" content="summary_large_image" />\n    <meta name="twitter:site" content="@OrQuantaAI" />\n    <meta property="og:type" content="website" />\n    <meta property="og:url" content="https://orquanta.ai" />\n    <meta name="theme-color"'
+            '<meta name="twitter:card" content="summary_large_image" />\n    <meta name="twitter:site" content="@OrQuantaAI" />\n    <meta property="og:type" content="website" />\n    <meta property="og:url" content="https://orquanta.com" />\n    <meta name="theme-color"'
         )
         print("  [OK] twitter/og extras")
     return html

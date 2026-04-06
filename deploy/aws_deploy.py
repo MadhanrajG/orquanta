@@ -6,7 +6,7 @@ Creates the complete AWS infrastructure:
   → ALB → CloudFront → Route53 → ACM SSL Certificate
 
 Usage:
-  python deploy/aws_deploy.py --domain api.orquanta.ai --env production
+  python deploy/aws_deploy.py --domain api.orquanta.com --env production
   python deploy/aws_deploy.py --env staging --skip-ssl
   python deploy/aws_deploy.py --destroy --env staging   # Tear down
 
@@ -91,7 +91,7 @@ class DeployOutput:
     ecr_api_uri: str
     alb_dns: str
     cloudfront_domain: str
-    admin_email: str = "admin@orquanta.ai"
+    admin_email: str = "admin@orquanta.com"
     admin_password: str = field(default_factory=lambda: f"OrQuanta-Admin-{''.join(__import__('secrets').token_urlsafe(8).split())}")
     deployed_at: str = field(default_factory=lambda: __import__("datetime").datetime.utcnow().isoformat())
 

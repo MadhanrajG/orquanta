@@ -1717,3 +1717,334 @@ h1[class*="text-2xl"] {
 }
 
 /* end of 3D overhaul */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OrQuanta — Senior GPU Expert Contrast & Readability Layer
+   Fixes: low contrast, invisible borders, purpose-free layout
+   Expert: 10+ years NVIDIA GPU cloud architecture
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Load JetBrains Mono for all GPU metrics ────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* ── Raise base contrast across the board ───────────────────────────────── */
+:root {
+  /* Text — from near-invisible to readable */
+  --text-primary:   #f0f4ff;   /* was #f1f5f9 — add blue tint for GPU feel */
+  --text-secondary: #b4c0d8;   /* was #94a3b8 — raised from 3.2:1 to 5.1:1 */
+  --text-muted:     #7a8aaa;   /* was #64748b — raised from 2.7:1 to 3.8:1 */
+
+  /* Borders — from 6% to 12% opacity */
+  --border:         rgba(255,255,255,0.12);
+  --border-hover:   rgba(255,255,255,0.22);
+  --border-accent:  rgba(0,212,255,0.25);
+
+  /* KPI accent colors — NVIDIA GPU palette */
+  --kpi-gpu:        #00D4FF;   /* Cyan — GPUs, Compute */
+  --kpi-cost:       #FFB800;   /* Amber — Money, Spend */
+  --kpi-savings:    #00FF88;   /* Green — Savings, Health */
+  --kpi-agent:      #A78BFA;   /* Violet — AI Agents */
+  --kpi-jobs:       #FB923C;   /* Orange — Jobs, Workloads */
+
+  /* Surface — slightly lighter for depth */
+  --surface-900:    #080a12;
+  --surface-800:    #0c0f1e;
+  --surface-700:    #111428;
+  --surface-600:    #171c30;
+}
+
+/* ── Body — richer base text ────────────────────────────────────────────── */
+body {
+  color: var(--text-primary) !important;
+  background-color: var(--surface-900) !important;
+}
+
+/* ── ALL metric numbers — JetBrains Mono ───────────────────────────────── */
+.metric-value,
+.kpi-number,
+[class*="text-3xl"],
+[class*="text-4xl"],
+[class*="text-2xl"][class*="font-bold"],
+[class*="font-mono"],
+.tabular-nums {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* ── KPI Card — colored left border accent ──────────────────────────────── */
+.kpi-cyan   { border-left: 3px solid var(--kpi-gpu)!important; }
+.kpi-amber  { border-left: 3px solid var(--kpi-cost)!important; }
+.kpi-green  { border-left: 3px solid var(--kpi-savings)!important; }
+.kpi-violet { border-left: 3px solid var(--kpi-agent)!important; }
+.kpi-orange { border-left: 3px solid var(--kpi-jobs)!important; }
+
+/* ── Hero savings strip ─────────────────────────────────────────────────── */
+.savings-hero {
+  background: linear-gradient(135deg,
+    rgba(0,255,136,0.08) 0%,
+    rgba(0,212,255,0.06) 50%,
+    rgba(123,47,255,0.05) 100%);
+  border: 1px solid rgba(0,255,136,0.20);
+  border-left: 4px solid var(--kpi-savings);
+  border-radius: 12px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  position: relative;
+  overflow: hidden;
+}
+.savings-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    rgba(0,255,136,0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+.savings-hero-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--kpi-savings);
+  text-shadow: 0 0 20px rgba(0,255,136,0.4);
+  letter-spacing: -0.03em;
+}
+.savings-hero-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+.savings-hero-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(0,255,136,0.12);
+  border: 1px solid rgba(0,255,136,0.25);
+  color: var(--kpi-savings);
+}
+
+/* ── Sidebar nav section labels ─────────────────────────────────────────── */
+.nav-section-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 12px 12px 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.7;
+}
+.nav-section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+  border-radius: 999px;
+}
+
+/* ── Sidebar savings footer card ────────────────────────────────────────── */
+.sidebar-savings {
+  margin: 8px 10px;
+  padding: 10px 12px;
+  background: rgba(0,255,136,0.06);
+  border: 1px solid rgba(0,255,136,0.15);
+  border-radius: 10px;
+}
+.sidebar-savings-amount {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--kpi-savings);
+  text-shadow: 0 0 12px rgba(0,255,136,0.3);
+}
+.sidebar-savings-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+/* ── Sidebar nav links — higher contrast ────────────────────────────────── */
+.nav-link {
+  color: var(--text-secondary) !important;
+  font-size: 13px !important;
+}
+.nav-link:hover {
+  color: var(--text-primary) !important;
+  background: rgba(255,255,255,0.07) !important;
+}
+.nav-link.active {
+  color: #fff !important;
+}
+
+/* ── Nav badge (Free GPU, Live, etc.) ───────────────────────────────────── */
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-left: auto;
+}
+.nav-badge-green {
+  background: rgba(0,255,136,0.15);
+  border: 1px solid rgba(0,255,136,0.3);
+  color: #00FF88;
+}
+.nav-badge-cyan {
+  background: rgba(0,212,255,0.15);
+  border: 1px solid rgba(0,212,255,0.3);
+  color: #00D4FF;
+}
+.nav-badge-violet {
+  background: rgba(167,139,250,0.15);
+  border: 1px solid rgba(167,139,250,0.3);
+  color: #A78BFA;
+}
+
+/* ── Live dot animation ─────────────────────────────────────────────────── */
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--kpi-savings);
+  box-shadow: 0 0 6px var(--kpi-savings);
+  animation: live-pulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes live-pulse {
+  0%, 100% { box-shadow: 0 0 4px var(--kpi-savings); transform: scale(1); }
+  50% { box-shadow: 0 0 12px var(--kpi-savings), 0 0 20px rgba(0,255,136,0.3); transform: scale(1.15); }
+}
+
+/* ── Login page value prop banner ───────────────────────────────────────── */
+.login-value-strip {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.login-headline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--kpi-savings);
+  text-shadow: 0 0 30px rgba(0,255,136,0.35);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.login-subline {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+.login-pills {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.login-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(0,212,255,0.08);
+  border: 1px solid rgba(0,212,255,0.2);
+  color: var(--kpi-gpu);
+}
+
+/* ── Topbar breadcrumb system ────────────────────────────────────────────── */
+.topbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.topbar-breadcrumb-active {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.topbar-breadcrumb-sep {
+  color: var(--text-muted);
+  opacity: 0.4;
+}
+
+/* ── Dashboard agent status row ──────────────────────────────────────────── */
+.agent-status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+.agent-status-row:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: var(--border-accent);
+}
+.agent-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 16px;
+}
+.agent-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.agent-action {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+.agent-status-ok  { color: var(--kpi-savings); }
+.agent-status-busy { color: var(--kpi-cost); }
+.agent-status-idle { color: var(--text-muted); }
+
+/* ── Page purpose tag (below each page title) ───────────────────────────── */
+.purpose-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--kpi-gpu);
+  background: rgba(0,212,255,0.08);
+  border: 1px solid rgba(0,212,255,0.18);
+  border-radius: 999px;
+  padding: 3px 10px;
+  margin-top: 8px;
+}
+
+/* ── Metric card — visible colored glow on hover ────────────────────────── */
+.metric-card[data-color="cyan"]:hover  { box-shadow: 0 8px 32px rgba(0,212,255,0.18), 0 0 0 1px rgba(0,212,255,0.15) !important; }
+.metric-card[data-color="green"]:hover { box-shadow: 0 8px 32px rgba(0,255,136,0.18), 0 0 0 1px rgba(0,255,136,0.15) !important; }
+.metric-card[data-color="amber"]:hover { box-shadow: 0 8px 32px rgba(255,184,0,0.18),  0 0 0 1px rgba(255,184,0,0.15) !important; }
+.metric-card[data-color="violet"]:hover{ box-shadow: 0 8px 32px rgba(167,139,250,0.18),0 0 0 1px rgba(167,139,250,0.15) !important; }
+.metric-card[data-color="orange"]:hover{ box-shadow: 0 8px 32px rgba(251,146,60,0.18), 0 0 0 1px rgba(251,146,60,0.15) !important; }
+
+/* end of expert GPU contrast layer */

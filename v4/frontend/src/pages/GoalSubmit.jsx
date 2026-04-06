@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from'react'
-import { Send, Mic, Loader, ChevronRight, Cpu, Zap, DollarSign, Clock, CheckCircle, AlertCircle } from'lucide-react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { Send, Mic, Loader, ChevronRight, Cpu, Zap, DollarSign, Clock, CheckCircle, AlertCircle, Sparkles } from 'lucide-react'
 import { useAuth } from'../App.jsx'
+
 import { useNavigate } from'react-router-dom'
 
 const API = import.meta.env.VITE_API_URL ||''
@@ -14,6 +15,62 @@ const PLACEHOLDERS = [
 'Generate 1M embeddings with text-embedding-3-large',
 'Run hyperparameter sweep - 32 trials, A10 GPUs',
 ]
+
+/* ─── AI Smart Suggestion Chips ──────────────────────────────────────────── */
+const AI_SUGGESTIONS = [
+ // Model family
+ { trigger: /llama|llm/i,        chips: ['Fine-tune LLaMA 3 8B on my dataset under $50', 'Benchmark LLaMA 3 70B on my eval set', 'Quantize LLaMA 3 to GGUF for local inference'] },
+ { trigger: /whisper|audio|transcript/i, chips: ['Transcribe 10 hours of audio with Whisper Large v3', 'Fine-tune Whisper on my custom voice dataset', 'Batch-transcribe 500 podcast files under $15'] },
+ { trigger: /stable.?diff|sdxl|image|diffus/i, chips: ['Generate 1000 product images with SDXL 1024px', 'Fine-tune SDXL on my brand style (LoRA)', 'Run img2img on 500 photos under $8'] },
+ { trigger: /embed|vector|rag/i, chips: ['Generate 1M text embeddings with ada-002', 'Build a RAG pipeline over my PDF corpus', 'Index 100k documents for semantic search under $5'] },
+ { trigger: /train|sweep|hyper/i, chips: ['Run 32-trial hyperparameter sweep on A10 GPUs', 'Distributed training on 8x H100s under $200', 'Cross-validate my model across 5 folds'] },
+ { trigger: /mistral|mixtral/i,  chips: ['Benchmark Mistral 7B on my test set', 'Fine-tune Mixtral 8x7B on custom instructions', 'GGUF quantize Mixtral for edge deployment'] },
+ { trigger: /gpt|openai/i,       chips: ['Batch inference 10k prompts with GPT-4o mini', 'Distill GPT-4 responses into a smaller local model'] },
+ // Budget-driven
+ { trigger: /\$5|cheap|budget|low.?cost/i, chips: ['Run inference on 1k samples — keep it under $5', 'Cheapest GPU for 2-hour PyTorch training job', 'Optimize my training to fit a $10 budget'] },
+ // Task-driven
+ { trigger: /classify|sentiment|nlp/i, chips: ['Fine-tune BERT for sentiment classification', 'Train a text classifier on my labelled dataset'] },
+ // Default suggestions (shown when goal is short but non-empty)
+ { trigger: /./i, chips: ['Describe your task in more detail...', 'Fine-tune a model on my custom dataset', 'Run a batch inference job cheaply'] },
+]
+
+function AISuggestionChips({ goal, onChipClick }) {
+ if (!goal || goal.length < 3) return null
+ const matched = AI_SUGGESTIONS.find(s => s.trigger.test(goal))
+ if (!matched) return null
+ const chips = matched.chips.filter(c => !goal.toLowerCase().includes(c.toLowerCase().slice(0, 12)))
+ if (!chips.length) return null
+ return (
+   <div className="mt-2 animate-fade-in">
+     <div className="flex items-center gap-1.5 mb-2">
+       <Sparkles size={11} style={{ color: '#A78BFA' }} />
+       <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600, letterSpacing: '0.05em' }}>AI SUGGESTIONS</span>
+     </div>
+     <div className="flex gap-2 flex-wrap">
+       {chips.slice(0, 3).map(chip => (
+         <button
+           key={chip}
+           onClick={() => onChipClick(chip)}
+           type="button"
+           className="text-xs px-3 py-1.5 rounded-full text-left transition-all hover:scale-105"
+           style={{
+             background: 'rgba(167,139,250,0.08)',
+             border: '1px solid rgba(167,139,250,0.2)',
+             color: '#c4b5fd',
+             cursor: 'pointer',
+             maxWidth: '100%',
+             whiteSpace: 'nowrap',
+             overflow: 'hidden',
+             textOverflow: 'ellipsis',
+           }}>
+           {chip.length > 55 ? chip.slice(0, 52) + '...' : chip}
+         </button>
+       ))}
+     </div>
+   </div>
+ )
+}
+
 
 /* ─── Agent execution steps ───────────────────────────────────────────── */
 const AGENTS = [
@@ -332,6 +389,9 @@ export default function GoalSubmit() {
  </div>
  </div>
  </form>
+
+  {/* AI suggestion chips */}
+  <AISuggestionChips goal={goal} onChipClick={chip => { setGoal(chip); textRef.current?.focus() }} />
 
  {/* Live cost estimate */}
  <CostPreview goal={goal} />

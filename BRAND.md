@@ -197,10 +197,10 @@ Maintain minimum clear space equal to the height of the letter "O" in the wordma
 
 | Platform | Handle/URL |
 |----------|-----------|
-| Website | `orquanta.ai` |
-| API | `api.orquanta.ai` |
-| Docs | `docs.orquanta.ai` |
-| Status | `status.orquanta.ai` |
+| Website | `orquanta.com` |
+| API | `api.orquanta.com` |
+| Docs | `docs.orquanta.com` |
+| Status | `status.orquanta.com` |
 | GitHub | `github.com/MadhanrajG/orquanta` |
 | Twitter/X | `@OrQuantaAI` |
 | LinkedIn | `/company/orquanta` |
@@ -218,4 +218,4 @@ OrQuanta was created by **Madhanraj Gunasekar**, Senior Engineer at HCL Technolo
 ---
 
 *OrQuanta Brand Guidelines v1.0 — February 2026*  
-*For questions: hello@orquanta.ai*
+*For questions: hello@orquanta.com*

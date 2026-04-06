@@ -60,7 +60,7 @@ export default function BillingPage() {
   const [message, setMessage] = useState('');
   const [billingHistory, setBillingHistory] = useState([]);
 
-  const getToken = () => localStorage.getItem('token') || '';
+  const getToken = () => localStorage.getItem('orquanta_token') || '';
 
   useEffect(() => {
     // Check URL params for success/cancel
@@ -99,7 +99,7 @@ export default function BillingPage() {
 
   async function handleSubscribe(planId) {
     if (planId === 'enterprise') {
-      window.location.href = 'mailto:sales@orquanta.ai?subject=Enterprise%20Inquiry';
+      window.location.href = 'mailto:sales@orquanta.com?subject=Enterprise%20Inquiry';
       return;
     }
 
@@ -127,7 +127,7 @@ export default function BillingPage() {
       } else if (r.status === 404 || r.status === 422) {
         setMessage(`🎉 Trial started! Connect Stripe in settings to enable billing. Plan: ${planId}`);
       } else {
-        setMessage('❌ Checkout unavailable. Please try again or contact support@orquanta.ai');
+        setMessage('❌ Checkout unavailable. Please try again or contact support@orquanta.com');
       }
     } catch (err) {
       setMessage('❌ Checkout failed. Please try again.');

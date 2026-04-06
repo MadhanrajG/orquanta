@@ -325,7 +325,7 @@ def cmd_config(args) -> int:
             masked = v[:8] + "..." if k == "api_key" and len(v) > 8 else v
             print(f"  {c(CYAN, k)}: {masked}")
         print()
-        print(c(DIM, "  Usage: orquanta config set api_key=oq_your_key base_url=https://api.orquanta.ai"))
+        print(c(DIM, "  Usage: orquanta config set api_key=oq_your_key base_url=https://api.orquanta.com"))
         return 0
 
     _save_config(config)
@@ -337,8 +337,8 @@ def cmd_version(args) -> int:
     print(f"  OrQuanta CLI {c(CYAN, 'v1.0.0')}")
     print(f"  SDK          {c(CYAN, 'v1.0.0')}")
     print(f"  Python       {c(CYAN, '.'.join(map(str, sys.version_info[:3])))}")
-    print(f"  Docs:        {c(DIM, 'https://docs.orquanta.ai')}")
-    print(f"  API Status:  {c(DIM, 'https://status.orquanta.ai')}")
+    print(f"  Docs:        {c(DIM, 'https://docs.orquanta.com')}")
+    print(f"  API Status:  {c(DIM, 'https://status.orquanta.com')}")
     return 0
 
 

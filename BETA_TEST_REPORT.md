@@ -1,5 +1,5 @@
 # OrQuanta Beta Test Report
-**Live URL Tested:** https://orquanta-production.up.railway.app  
+**Live URL Tested:** https://orquanta.com  
 **Test Date:** 2026-02-25  
 **Methodology:** Simulated 5 real-world user personas based on live app exploration  
 **App Version:** 1.0.0 (healthy — all components OK)
@@ -264,4 +264,4 @@ OrQuanta has a 6.8/10 experience today. The design is professional, the concept 
 
 ---
 
-*Report generated from live app exploration on 2026-02-25. All findings based on actual page content at https://orquanta-production.up.railway.app*
+*Report generated from live app exploration on 2026-02-25. All findings based on actual page content at https://orquanta.com*

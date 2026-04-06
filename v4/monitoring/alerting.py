@@ -32,8 +32,8 @@ logger = logging.getLogger("orquanta.monitoring.alerting")
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
 PAGERDUTY_ROUTING_KEY = os.getenv("PAGERDUTY_ROUTING_KEY", "")
-ALERT_EMAIL_FROM = os.getenv("ALERT_EMAIL_FROM", "alerts@orquanta.ai")
-ALERT_EMAIL_TO = os.getenv("ALERT_EMAIL_TO", "ops@orquanta.ai")
+ALERT_EMAIL_FROM = os.getenv("ALERT_EMAIL_FROM", "alerts@orquanta.com")
+ALERT_EMAIL_TO = os.getenv("ALERT_EMAIL_TO", "ops@orquanta.com")
 
 
 class AlertSeverity(IntEnum):

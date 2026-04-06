@@ -1,3 +1,4 @@
+import VeroStatus from "../components/VeroStatus.jsx"
 import { useState, useEffect } from'react'
 import {
  Activity, Server, DollarSign, Zap,
@@ -43,10 +44,13 @@ function useApi(endpoint, interval = 6000) {
 /* ─── Live UTC clock ──────────────────────────────────────────────────── */
 function LiveClock() {
  const [now, setNow] = useState(new Date())
- useEffect(() => { const t = setInterval(() => setNow(new Date()), 100); return () => clearInterval(t) }, [])
+ useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t) }, [])
+ // Build a clean UTC string: "2026-03-27 04:15:22 UTC"
+ const utcStr = now.toISOString().replace('T', ' ').slice(0, 19) + ' UTC'
  return (
  <span className="font-mono text-xs text-slate-400 tabular-nums tracking-wide">
- {now.toUTCString().replace('GMT','UTC')}
+      <VeroStatus />
+ {utcStr}
  </span>
  )
 }
@@ -117,93 +121,164 @@ function HeroCard({ icon: Icon, label, value, sub, color, trend, sparkData }) {
  purple:'#7B2FFF',
  }
  const c = colors[color] || colors.blue
+ const kpiClass = { blue:'kpi-cyan', green:'kpi-green', amber:'kpi-amber', purple:'kpi-violet' }[color] || 'kpi-cyan'
  return (
- <div className="glass-card p-5 relative overflow-hidden group transition-all duration-300 hover:-translate-y-1"
- style={{ boxShadow: `0 0 0 1px rgba(${color ==='blue' ?'0,212,255' : color ==='green' ?'0,255,136' : color ==='amber' ?'255,184,0' :'123,47,255'},0.12), 0 8px 32px rgba(0,0,0,0.4)` }}>
+ <div className={`glass-card p-5 relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 metric-card ${kpiClass}`}
+ data-color={color === 'blue' ? 'cyan' : color === 'purple' ? 'violet' : color}
+ style={{ boxShadow: `0 0 0 1px rgba(${color==='blue'?'0,212,255':color==='green'?'0,255,136':color==='amber'?'255,184,0':'123,47,255'},0.12), 0 8px 32px rgba(0,0,0,0.4)` }}>
  {/* glow corner */}
  <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
  style={{ background: glows[color] }} />
  <div className="flex items-start justify-between mb-2">
- <div className="p-2 rounded-xl" style={{ background: `${c}18`, border: `1px solid ${c}30` }}>
+ <div className="p-2 rounded-xl" style={{ background:`${c}18`, border:`1px solid ${c}30` }}>
  <Icon size={18} style={{ color: c }} />
  </div>
  {trend != null && (
- <span className={`flex items-center gap-0.5 text-xs font-semibold ${trend >= 0 ?'text-green-400' :'text-red-400'}`}>
+ <span className={`flex items-center gap-0.5 text-xs font-semibold ${trend >= 0 ?'text-green-400':'text-red-400'}`}>
  {trend >= 0 ? <ArrowUp size={11} /> : <ArrowDown size={11} />}
  {Math.abs(trend)}%
  </span>
  )}
  </div>
- <p className="text-2xl font-bold text-white mb-0.5 tabular-nums">{value ??'-'}</p>
- <p className="text-xs font-medium text-slate-400">{label}</p>
- {sub && <p className="text-xs text-slate-600 mt-0.5">{sub}</p>}
+ <p className="text-2xl font-bold text-white mb-0.5 tabular-nums" style={{ textShadow:`0 0 20px ${c}60` }}>{value ?? '-'}</p>
+ <p className="text-xs font-semibold" style={{ color:'var(--text-secondary)' }}>{label}</p>
+ {sub && <p className="text-xs mt-0.5" style={{ color:'var(--text-muted)' }}>{sub}</p>}
  {sparkData && <div className="mt-3"><Sparkline data={sparkData} color={c} /></div>}
  </div>
  )
 }
 
-/* ─── World Map ───────────────────────────────────────────────────────── */
-const GPU_NODES = [
- { id:'aws-us-east', label:'AWS us-east-1', x:'22%', y:'36%', active: true, count: 8 },
- { id:'gcp-europe', label:'GCP europe-w4', x:'48%', y:'28%', active: true, count: 3 },
- { id:'lambda-ord', label:'Lambda ORD1', x:'19%', y:'32%', active: true, count: 5 },
- { id:'azure-east', label:'Azure eastus', x:'21%', y:'34%', active: false, count: 0 },
- { id:'cw-ord', label:'CoreWeave ORD', x:'20%', y:'35%', active: true, count: 2 },
- { id:'gcp-us', label:'GCP us-central', x:'18%', y:'37%', active: true, count: 4 },
- { id:'lambda-tx', label:'Lambda us-tx-3', x:'17%', y:'40%', active: true, count: 6 },
- { id:'aws-ap', label:'AWS ap-south', x:'72%', y:'48%', active: false, count: 0 },
+/* ─── GPU Fleet Overview ──────────────────────────────────────────────── */
+const FLEET_REGIONS = [
+  // Americas
+  { id: 'lam-us1',  region: 'us-central-1',  provider: 'Lambda',     flag: '🇺🇸', gpus: 5, type: 'A100 80G', rate: 1.99, active: true,  util: 84 },
+  { id: 'cw-us1',   region: 'ord1',           provider: 'CoreWeave',  flag: '🇺🇸', gpus: 2, type: 'A100 80G', rate: 1.82, active: true,  util: 71 },
+  { id: 'lam-tx1',  region: 'us-tx-3',        provider: 'Lambda',     flag: '🇺🇸', gpus: 6, type: 'H100 SXM', rate: 2.49, active: true,  util: 91 },
+  { id: 'aws-us1',  region: 'us-east-1',      provider: 'AWS',        flag: '🇺🇸', gpus: 0, type: 'A10G',     rate: 4.10, active: false, util: 0  },
+  // Europe
+  { id: 'gcp-eu1',  region: 'europe-west4',   provider: 'GCP',        flag: '🇳🇱', gpus: 3, type: 'A100 40G', rate: 2.21, active: true,  util: 67 },
+  { id: 'run-eu1',  region: 'EU-SE-1',        provider: 'RunPod',     flag: '🇸🇪', gpus: 4, type: 'RTX 4090', rate: 0.74, active: true,  util: 55 },
+  // Asia-Pacific
+  { id: 'aws-ap1',  region: 'ap-south-1',     provider: 'AWS',        flag: '🇮🇳', gpus: 0, type: 'A100 80G', rate: 4.20, active: false, util: 0  },
+  { id: 'vast-sg1', region: 'SG-1',           provider: 'Vast.ai',    flag: '🇸🇬', gpus: 2, type: 'RTX 3090', rate: 0.31, active: true,  util: 42 },
 ]
 
-function WorldMap() {
- const [hovered, setHovered] = useState(null)
- return (
- <div className="glass-card p-5 relative overflow-hidden">
- <div className="flex items-center justify-between mb-4">
- <div className="flex items-center gap-2">
- <Globe size={16} className="text-cyan-400" />
- <h3 className="font-semibold text-white text-sm">Active GPU Instances - Global</h3>
- </div>
- <span className="text-xs text-slate-500 font-mono">{GPU_NODES.filter(n => n.active).reduce((a, n) => a + n.count, 0)} GPUs active</span>
- </div>
- <div className="relative" style={{ paddingBottom:'48%' }}>
- {/* Simplified world SVG */}
- <svg viewBox="0 0 1000 500" className="absolute inset-0 w-full h-full opacity-20"
- style={{ filter:'drop-shadow(0 0 8px rgba(0,212,255,0.15))' }}>
- <path fill="#00D4FF" d="M160,120 Q200,100 280,110 Q340,105 380,120 Q430,130 460,145 Q440,165 410,170 Q370,185 340,175 Q300,170 260,165 Q220,158 180,150 Z" />
- <path fill="#00D4FF" d="M420,140 Q480,125 560,130 Q620,128 680,140 Q720,150 740,165 Q720,185 700,195 Q660,205 620,200 Q570,195 530,185 Q480,175 450,165 Z" />
- <path fill="#00D4FF" d="M680,140 Q740,130 800,140 Q840,148 860,160 Q850,178 830,185 Q800,192 770,188 Q740,182 720,170 Z" />
- <path fill="#00D4FF" d="M160,185 Q200,178 240,182 Q260,185 270,200 Q265,225 250,240 Q225,255 200,250 Q175,240 160,225 Q148,208 158,192 Z" />
- <path fill="#00D4FF" d="M280,190 Q340,180 400,185 Q440,188 460,200 Q455,230 440,250 Q410,270 380,268 Q340,262 310,248 Q280,232 272,215 Z" />
- <path fill="#00D4FF" d="M500,175 Q560,162 620,168 Q665,172 680,188 Q675,218 655,235 Q625,252 590,248 Q555,242 530,228 Q505,212 498,195 Z" />
- <path fill="#00D4FF" d="M720,210 Q760,198 800,204 Q828,210 840,225 Q835,248 815,258 Q790,266 765,260 Q740,250 728,235 Z" />
- <path fill="#00D4FF" d="M580,270 Q630,258 670,265 Q700,272 710,290 Q700,318 678,326 Q650,332 625,325 Q598,315 588,298 Z" />
- </svg>
- {/* GPU instance dots */}
- {GPU_NODES.map(node => (
- <div key={node.id} className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10"
- style={{ left: node.x, top: node.y }}
- onMouseEnter={() => setHovered(node)} onMouseLeave={() => setHovered(null)}>
- {node.active ? (
- <>
- <div className="w-3 h-3 rounded-full relative" style={{ background:'#00D4FF', boxShadow:'0 0 8px #00D4FF, 0 0 16px rgba(0,212,255,0.4)' }}>
- <div className="absolute inset-0 rounded-full animate-ping" style={{ background:'rgba(0,212,255,0.3)' }} />
- </div>
- </>
- ) : (
- <div className="w-2 h-2 rounded-full bg-slate-600 opacity-40" />
- )}
- {hovered?.id === node.id && (
- <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap z-20
- bg-slate-900 border border-cyan-500/30 rounded-lg px-3 py-1.5 text-xs text-white shadow-xl">
- <div className="font-semibold text-cyan-400">{node.label}</div>
- <div className="text-slate-400">{node.count} GPU{node.count !== 1 ?'s' :''} active</div>
- </div>
- )}
- </div>
- ))}
- </div>
- </div>
- )
+const PROVIDER_COLORS = {
+  Lambda:    '#00D4FF',
+  CoreWeave: '#A78BFA',
+  AWS:       '#F97316',
+  GCP:       '#34D399',
+  RunPod:    '#FB923C',
+  'Vast.ai': '#F472B6',
+}
+
+function GPUFleet() {
+  const totalActive = FLEET_REGIONS.filter(r => r.active).reduce((a, r) => a + r.gpus, 0)
+  const hourlyRate  = FLEET_REGIONS.filter(r => r.active).reduce((a, r) => a + r.gpus * r.rate, 0)
+
+  const groups = [
+    { label: '🌎 Americas', ids: ['lam-us1','cw-us1','lam-tx1','aws-us1'] },
+    { label: '🌍 Europe',   ids: ['gcp-eu1','run-eu1'] },
+    { label: '🌏 Asia-Pac', ids: ['aws-ap1','vast-sg1'] },
+  ]
+
+  return (
+    <div className="glass-card p-5">
+      {/* Header */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <Globe size={16} style={{ color:'#00D4FF' }} />
+          <span style={{ fontWeight:600, color:'#fff', fontSize:14 }}>Global GPU Fleet</span>
+        </div>
+        <div style={{ display:'flex', gap:16, alignItems:'center' }}>
+          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, color:'#00FF88', fontWeight:700 }}>
+            {totalActive} GPUs active
+          </span>
+          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, color:'#FFB800', fontWeight:700 }}>
+            ${hourlyRate.toFixed(2)}/hr
+          </span>
+        </div>
+      </div>
+
+      {/* Region groups */}
+      <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+        {groups.map(group => {
+          const regions = FLEET_REGIONS.filter(r => group.ids.includes(r.id))
+          return (
+            <div key={group.label}>
+              <div style={{ fontSize:10, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--text-muted)', marginBottom:6, display:'flex', alignItems:'center', gap:6 }}>
+                {group.label}
+                <div style={{ flex:1, height:1, background:'var(--border)', borderRadius:999 }} />
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:6 }}>
+                {regions.map(r => {
+                  const pc = PROVIDER_COLORS[r.provider] || '#8899aa'
+                  return (
+                    <div key={r.id} style={{
+                      display:'flex', alignItems:'center', gap:10,
+                      padding:'9px 12px', borderRadius:10,
+                      background: r.active ? `${pc}08` : 'rgba(255,255,255,0.02)',
+                      border: `1px solid ${r.active ? pc + '25' : 'rgba(255,255,255,0.06)'}`,
+                      transition:'all 0.2s',
+                      opacity: r.active ? 1 : 0.45,
+                    }}>
+                      {/* Status dot */}
+                      <div style={{
+                        width:8, height:8, borderRadius:'50%', flexShrink:0,
+                        background: r.active ? '#00FF88' : '#475569',
+                        boxShadow: r.active ? '0 0 6px #00FF88, 0 0 12px rgba(0,255,136,0.3)' : 'none',
+                        animation: r.active ? 'live-pulse 2s ease-in-out infinite' : 'none',
+                      }} />
+                      {/* Info */}
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:4, marginBottom:2 }}>
+                          <span style={{ fontSize:10, color: pc, fontWeight:700 }}>{r.flag} {r.provider}</span>
+                        </div>
+                        <div style={{ fontSize:11, color:'var(--text-secondary)', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                          {r.region}
+                        </div>
+                        <div style={{ fontSize:10, color:'var(--text-muted)', marginTop:1 }}>{r.type}</div>
+                      </div>
+                      {/* GPU count + rate */}
+                      <div style={{ textAlign:'right', flexShrink:0 }}>
+                        <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:700, color: r.active ? '#fff' : 'var(--text-muted)' }}>
+                          {r.active ? r.gpus : '—'}
+                        </div>
+                        <div style={{ fontSize:9, color:'var(--text-muted)' }}>{r.active ? 'GPUs' : 'offline'}</div>
+                        {r.active && (
+                          <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:'#FFB800', marginTop:1, fontWeight:600 }}>
+                            ${r.rate}/hr
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Utilization footer */}
+      <div style={{ marginTop:14, paddingTop:12, borderTop:'1px solid var(--border)', display:'flex', gap:8, flexWrap:'wrap' }}>
+        {FLEET_REGIONS.filter(r => r.active).map(r => {
+          const pc = PROVIDER_COLORS[r.provider] || '#8899aa'
+          return (
+            <div key={r.id} style={{ flex:'1 1 140px', minWidth:0 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
+                <span style={{ fontSize:9, color:'var(--text-muted)' }}>{r.region}</span>
+                <span style={{ fontSize:9, fontWeight:700, fontFamily:"'JetBrains Mono',monospace", color: r.util > 85 ? '#F97316' : r.util > 70 ? '#FFB800' : '#00FF88' }}>{r.util}%</span>
+              </div>
+              <div style={{ height:3, background:'rgba(255,255,255,0.06)', borderRadius:999, overflow:'hidden' }}>
+                <div style={{ height:'100%', width:`${r.util}%`, background: r.util > 85 ? '#F97316' : pc, borderRadius:999, transition:'width 1s ease' }} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 /* ─── Agent Activity Feed ─────────────────────────────────────────────── */
@@ -494,16 +569,37 @@ const sparkSpend = genSpark(24, 40, 15)
 const sparkSaved = genSpark(24, 60, 10).map((d, i) => ({ ...d, v: Math.round(10 + i * 0.8 + Math.random() * 3) }))
 
 export default function Dashboard() {
- const metrics = useApi('/metrics')
+ const metrics = useApi('/health')
  const [healthScore] = useState(97)
 
  return (
  <div className="space-y-5 animate-fade-in">
+ {/* ── Hero savings bar ── */}
+ <div className="savings-hero">
+ <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+ <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+ <div className="savings-hero-value">$127.40</div>
+ <div>
+ <div className="savings-hero-label">Saved This Month</div>
+ <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>vs AWS on-demand pricing</div>
+ </div>
+ </div>
+ </div>
+ <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginLeft: 'auto' }}>
+ <span className="savings-hero-pill">⚡ 67% cheaper than AWS</span>
+ <span className="savings-hero-pill">🧠 5 agents active</span>
+ <span className="savings-hero-pill">✅ 3 jobs auto-healed</span>
+ <span className="savings-hero-pill">🟢 All systems optimal</span>
+ </div>
+ </div>
+
  {/* ── Top bar ── */}
  <div className="flex items-center justify-between flex-wrap gap-3">
  <div>
- <h1 className="text-xl font-bold text-white">Mission Control</h1>
- <p className="text-slate-500 text-xs mt-0.5">OrQuanta Agentic v1.0 - Real-time platform view</p>
+ <h1 className="text-xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>Mission Control</h1>
+ <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+ <span className="purpose-tag">🚀 GPU Cloud Orchestration · AI-Automated Cost Optimization</span>
+ </div>
  </div>
  <div className="flex items-center gap-4 flex-wrap">
  <LiveClock />
@@ -537,9 +633,9 @@ export default function Dashboard() {
  <CostPanel />
  </div>
 
- {/* ── World map + Agent feed ── */}
+ {/* ── GPU Fleet + Agent feed ── */}
  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
- <WorldMap />
+ <GPUFleet />
  <AgentFeed />
  </div>
 

@@ -34,7 +34,7 @@ logger = logging.getLogger("orquanta.webhooks")
 router = APIRouter(prefix="/api/v1/webhooks", tags=["webhooks"])
 
 WEBHOOK_SIGNING_SECRET = os.getenv("WEBHOOK_SIGNING_SECRET", secrets.token_hex(32))
-APP_URL = os.getenv("APP_URL", "https://orquanta-production.up.railway.app")
+APP_URL = os.getenv("APP_URL", "https://orquanta.com")
 
 # ─── In-memory store (replace with DB in production) ─────────────────────────
 _webhooks: dict[str, dict] = {}       # id → webhook record
@@ -70,7 +70,7 @@ def _get_current_user(request: Request) -> dict:
     if not auth.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Not authenticated")
     # For demo mode, accept any bearer token and return "admin"
-    return {"user_id": "admin", "email": "admin@orquanta.ai"}
+    return {"user_id": "admin", "email": "admin@orquanta.com"}
 
 
 CurrentUser = Annotated[dict, Depends(_get_current_user)]

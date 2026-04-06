@@ -19,7 +19,7 @@ OrQuanta
 Orchestrate. Optimize. Evolve.
 
 [Founder Name]
-[Email] | orquanta.ai
+[Email] | orquanta.com
 Pre-Seed Round — February 2026
 ```
 
@@ -197,7 +197,7 @@ Customer ROI:         13.4× on their OrQuanta subscription ✓
 ✅ Stripe billing: subscriptions + usage metering
 ✅ Full observability: Prometheus + Grafana (14 panels)
 ✅ Security: rate limiting, input validation, HMAC audit trail
-✅ Landing page: orquanta.ai live
+✅ Landing page: orquanta.com live
 ✅ Terraform IaC: deploy to AWS in one command
 ✅ CI/CD pipeline: automated test → staging → production
 
@@ -321,7 +321,7 @@ Total                                                       $500K
 ```
 [Founder Name]
 [Email]
-orquanta.ai | @OrQuantaAI
+orquanta.com | @OrQuantaAI
 
 "The infrastructure of the future doesn't just run your code —
  it thinks, learns, and adapts so you don't have to."

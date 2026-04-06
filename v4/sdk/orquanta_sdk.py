@@ -203,7 +203,7 @@ class OrQuanta:
 
     Parameters:
         api_key:  OrQuanta API key (starts with 'oq_'). Defaults to OQ_API_KEY env var.
-        base_url: API base URL. Defaults to https://api.orquanta.ai
+        base_url: API base URL. Defaults to https://api.orquanta.com
 
     Examples:
         oq = OrQuanta(api_key="oq_...")
@@ -211,7 +211,7 @@ class OrQuanta:
         job.wait(on_progress=lambda j: print(j.progress_pct, "%"))
     """
 
-    DEFAULT_BASE_URL = "https://api.orquanta.ai"
+    DEFAULT_BASE_URL = "https://api.orquanta.com"
 
     def __init__(
         self,
@@ -223,7 +223,7 @@ class OrQuanta:
         if not self.api_key:
             raise AuthError(
                 "No API key provided. Pass api_key= or set OQ_API_KEY environment variable.\n"
-                "Get your key at: https://orquanta.ai/dashboard/api-keys"
+                "Get your key at: https://orquanta.com/dashboard/api-keys"
             )
         self.base_url = (base_url or os.getenv("OQ_API_URL") or self.DEFAULT_BASE_URL).rstrip("/")
         self.timeout  = timeout

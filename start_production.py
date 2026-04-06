@@ -62,7 +62,7 @@ async def initialize_database():
 
 async def seed_admin(AsyncSessionLocal):
     """Seed admin user if ADMIN_PASSWORD is set and user doesn't exist."""
-    admin_email = os.getenv("ADMIN_EMAIL", "admin@orquanta.ai")
+    admin_email = os.getenv("ADMIN_EMAIL", "admin@orquanta.com")
     admin_password = os.getenv("ADMIN_PASSWORD", "")
 
     if not admin_password:

@@ -1,0 +1,97 @@
+{
+  "passed": 10,
+  "total": 18,
+  "score": 56,
+  "results": [
+    {
+      "test": "Login page loads",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Invalid login rejected",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Page /free loads",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Help link navigates correctly (no 404)",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Help search filters FAQs",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "FAQ accordion opens on click",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Billing page no 500 errors",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Billing subscription API",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "test": "UIXAgent audits 13 pages",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "test": "API GET /health",
+      "passed": false,
+      "detail": "500"
+    },
+    {
+      "test": "API GET /agents/status",
+      "passed": false,
+      "detail": "500"
+    },
+    {
+      "test": "API GET /jobs",
+      "passed": false,
+      "detail": "500"
+    },
+    {
+      "test": "API GET /audit",
+      "passed": false,
+      "detail": "500"
+    },
+    {
+      "test": "API GET /billing/plans",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "test": "API GET /pricing/live",
+      "passed": true,
+      "detail": "200"
+    },
+    {
+      "test": "API GET /nemoclaw/status",
+      "passed": false,
+      "detail": "500"
+    },
+    {
+      "test": "API GET /vero/status",
+      "passed": false,
+      "detail": "500"
+    },
+    {
+      "test": "API GET /uix/report",
+      "passed": false,
+      "detail": "500"
+    }
+  ]
+}

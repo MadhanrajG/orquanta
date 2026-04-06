@@ -304,4 +304,4 @@ Every power user knows Linear.app's command palette. OrQuanta brings this UX par
 ---
 
 *OrQuanta Competitive Analysis v1.0 | February 2026*  
-*Built by OrQuanta team | feedback: team@orquanta.ai*
+*Built by OrQuanta team | feedback: team@orquanta.com*

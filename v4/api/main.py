@@ -140,7 +140,7 @@ async def lifespan(app: FastAPI):
 
     # Seed a default admin user for first-boot and promote to admin role
     try:
-        admin_email = os.getenv("ADMIN_EMAIL", "admin@orquanta.ai")
+        admin_email = os.getenv("ADMIN_EMAIL", "admin@orquanta.com")
         admin_password = os.getenv("ADMIN_PASSWORD")
         if not admin_password:
             logger.warning(
@@ -156,7 +156,7 @@ async def lifespan(app: FastAPI):
     # Promote admin email to 'admin' role in SQLite
     try:
         from .middleware.auth import _get_db
-        admin_email = os.getenv("ADMIN_EMAIL", "admin@orquanta.ai")
+        admin_email = os.getenv("ADMIN_EMAIL", "admin@orquanta.com")
         conn = _get_db()
         conn.execute("UPDATE users SET role = 'admin' WHERE email = ?", (admin_email.lower(),))
         conn.commit()

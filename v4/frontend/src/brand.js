@@ -18,9 +18,9 @@ export const BRAND = {
  "The first Agentic AI Cloud GPU platform that autonomously orchestrates, " +
  "optimizes and heals your GPU workloads across AWS, GCP, Azure and CoreWeave.",
  email: "orquanta.founder@gmail.com",
- website: "https://orquanta.ai",
+ website: "https://orquanta.com",
  apiBase: process.env.REACT_APP_API_URL || "http://localhost:8000",
- docsUrl: "https://docs.orquanta.ai",
+ docsUrl: "https://docs.orquanta.com",
  githubUrl: "https://github.com/orquanta",
  discordUrl: "https://discord.gg/orquanta",
  twitterUrl: "https://twitter.com/OrQuantaAI",

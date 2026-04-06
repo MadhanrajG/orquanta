@@ -29,7 +29,7 @@ webhook_router = APIRouter(prefix="/api/v1/webhooks", tags=["Webhooks"])
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
 STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
-APP_URL = os.getenv("APP_URL", "https://orquanta.ai")
+APP_URL = os.getenv("APP_URL", "https://orquanta.com")
 
 
 # ── Schemas ────────────────────────────────────────────────────────────────────

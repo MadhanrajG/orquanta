@@ -468,6 +468,6 @@ MIT License. Copyright (c) 2026 OrQuanta Contributors.
 
 **Built for AI engineers who'd rather be training models than babysitting clouds.**
 
-[Documentation](https://docs.orquanta.ai) • [API Reference](http://localhost:8000/docs) • [Research Paper](RESEARCH_PAPER.md) • [Discord](https://discord.gg/orquanta)
+[Documentation](https://docs.orquanta.com) • [API Reference](http://localhost:8000/docs) • [Research Paper](RESEARCH_PAPER.md) • [Discord](https://discord.gg/orquanta)
 
 </div>

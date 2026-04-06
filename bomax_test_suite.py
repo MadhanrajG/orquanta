@@ -21,7 +21,7 @@ class OrQuantaTester:
     def __init__(self):
         self.session = None
         self.api_key = None
-        self.user_email = f"test_{secrets.token_hex(4)}@orquanta.ai"
+        self.user_email = f"test_{secrets.token_hex(4)}@orquanta.com"
         self.password = "secure_test_pass_123"
         self.passed = 0
         self.failed = 0

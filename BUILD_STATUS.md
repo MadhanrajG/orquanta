@@ -84,7 +84,7 @@ python start_orquanta.py --check                 # Health check only
 - `GET /demo/token` — issues 1-hour read-only demo token
 - `GET /demo/status` — JSON state of all running demo jobs
 
-**Share with cold outreach:** `https://orquanta.ai/demo`
+**Share with cold outreach:** `https://orquanta.com/demo`
 
 ### Task 6 — Product Hunt Assets
 **`v4/docs/PRODUCT_HUNT_LAUNCH.md`**
@@ -246,7 +246,7 @@ c:\ai-gpu-cloud\
 3. Post on Twitter/X: screenshot of agent console saving $X
 
 **Next week:**
-4. Reach out to 50 AI engineers with `orquanta.ai/demo` link
+4. Reach out to 50 AI engineers with `orquanta.com/demo` link
 5. Offer free 30-day pilot in exchange for feedback + testimonial
 6. Product Hunt launch (target: Tuesday or Thursday)
 

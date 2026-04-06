@@ -22,15 +22,15 @@ def client():
 def admin_token():
     """Register a test user (idempotent) and return an admin JWT for testing."""
     try:
-        register_user("test@orquanta.ai", "testpass123", "Test User")
+        register_user("test@orquanta.com", "testpass123", "Test User")
     except ValueError:
         pass  # Already registered — fine
     # Promote to admin directly in SQLite for testing
     from v4.api.middleware.auth import _get_db
     conn = _get_db()
-    conn.execute("UPDATE users SET role = 'admin' WHERE email = ?", ("test@orquanta.ai",))
+    conn.execute("UPDATE users SET role = 'admin' WHERE email = ?", ("test@orquanta.com",))
     conn.commit()
-    user = conn.execute("SELECT * FROM users WHERE email = ?", ("test@orquanta.ai",)).fetchone()
+    user = conn.execute("SELECT * FROM users WHERE email = ?", ("test@orquanta.com",)).fetchone()
     conn.close()
     if user:
         return create_access_token(user["id"], user["email"], "admin")

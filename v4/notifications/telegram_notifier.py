@@ -23,7 +23,7 @@ import httpx
 logger = logging.getLogger("orquanta.notifications.telegram")
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-APP_URL = os.getenv("APP_URL", "https://orquanta-production.up.railway.app")
+APP_URL = os.getenv("APP_URL", "https://orquanta.com")
 TELEGRAM_API = "https://api.telegram.org"
 
 

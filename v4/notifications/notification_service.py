@@ -38,7 +38,7 @@ from typing import Any
 logger = logging.getLogger("orquanta.notifications")
 
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
-SENDGRID_FROM = os.getenv("ALERT_EMAIL_FROM", "noreply@orquanta.ai")
+SENDGRID_FROM = os.getenv("ALERT_EMAIL_FROM", "noreply@orquanta.com")
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
@@ -312,7 +312,7 @@ class NotificationService:
             import httpx
             from base64 import b64encode
             auth = b64encode(f"{TWILIO_ACCOUNT_SID}:{TWILIO_AUTH_TOKEN}".encode()).decode()
-            body = f"OrQuanta Alert: {event.type.replace('_', ' ').title()} — check your dashboard: {os.getenv('APP_URL', 'https://app.orquanta.ai')}"
+            body = f"OrQuanta Alert: {event.type.replace('_', ' ').title()} — check your dashboard: {os.getenv('APP_URL', 'https://orquanta.com')}"
             async with httpx.AsyncClient(timeout=10.0) as client:
                 resp = await client.post(
                     f"https://api.twilio.com/2010-04-01/Accounts/{TWILIO_ACCOUNT_SID}/Messages.json",

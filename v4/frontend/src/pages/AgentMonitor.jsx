@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from'react'
 import { useAuth } from'../App.jsx'
+import AgentHealthCard from '../components/AgentHealthCard.jsx'
 
 const API = import.meta.env.VITE_API_URL ||''
 
@@ -126,6 +127,7 @@ export default function AgentMonitor() {
 
  return (
  <div className="space-y-5 animate-fade-in">
+ <AgentHealthCard />
  <div>
  <h1 className="text-xl font-bold text-white">Agent Monitor</h1>
  <p className="text-slate-500 text-sm mt-1">Real-time neural network view of 5 active OrQuanta agents</p>
