@@ -170,8 +170,12 @@ _CREATE_USERS_TABLE = """
 def _get_db():
     """Return a database connection — PostgreSQL in prod, SQLite in dev."""
     if _USE_PG:
-        # psycopg2 uses %s placeholders; RealDictCursor returns dict rows
-        conn = psycopg2.connect(_DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+        # connect_timeout=10 prevents startup hang on cross-region connections
+        conn = psycopg2.connect(
+            _DATABASE_URL,
+            cursor_factory=psycopg2.extras.RealDictCursor,
+            connect_timeout=10,
+        )
         conn.autocommit = False
         with conn.cursor() as cur:
             cur.execute(_CREATE_USERS_TABLE)

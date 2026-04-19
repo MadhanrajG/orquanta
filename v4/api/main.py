@@ -153,13 +153,20 @@ async def lifespan(app: FastAPI):
     except ValueError:
         pass  # Already registered Ã¢â‚¬â€ that's fine
 
-    # Promote admin email to 'admin' role in SQLite
+    # Promote admin email to 'admin' role
     try:
-        from .middleware.auth import _get_db
+        from .middleware.auth import _get_db, _USE_PG
         admin_email = os.getenv("ADMIN_EMAIL", "admin@orquanta.com")
         conn = _get_db()
-        conn.execute("UPDATE users SET role = 'admin' WHERE email = ?", (admin_email.lower(),))
-        conn.commit()
+        ph = "%s" if _USE_PG else "?"
+        if _USE_PG:
+            cur = conn.cursor()
+            cur.execute(f"UPDATE users SET role = {ph} WHERE email = {ph}", ("admin", admin_email.lower()))
+            conn.commit()
+            cur.close()
+        else:
+            conn.execute(f"UPDATE users SET role = {ph} WHERE email = {ph}", ("admin", admin_email.lower()))
+            conn.commit()
         conn.close()
         logger.info(f"User '{admin_email}' promoted to admin role.")
     except Exception as exc:
