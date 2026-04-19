@@ -3,7 +3,7 @@ import { useState, useEffect, createContext, useContext, Component } from 'react
 import {
     LayoutDashboard, Target, Server, DollarSign,
     ScrollText, Cpu, Zap, LogOut, Menu, X, AlertTriangle, Leaf, Gift, BarChart2,
-    Settings, HelpCircle, Loader2, CreditCard, Globe, Brain, Wand2
+    Settings, HelpCircle, Loader2, CreditCard, Globe, Brain, Wand2, Crown
 } from 'lucide-react'
 import Dashboard from './pages/Dashboard.jsx'
 import GoalSubmit from './pages/GoalSubmit.jsx'
@@ -192,10 +192,10 @@ function LoginPage() {
                             <div className="login-headline">$0.013 / hr</div>
                             <div className="login-subline">GPU Cloud · Orchestrated by 5 AI Agents · 67% Below AWS</div>
                             <div className="login-pills">
-                                <span className="login-pill">⚡ Auto-Routing</span>
-                                <span className="login-pill">🧠 NemoClaw AI</span>
-                                <span className="login-pill">💰 Cost Watcher</span>
-                                <span className="login-pill">🔒 Audit Trail</span>
+                                <span className="login-pill">Auto-Routing</span>
+                                <span className="login-pill">NemoClaw AI</span>
+                                <span className="login-pill">Cost Watcher</span>
+                                <span className="login-pill">Audit Trail</span>
                             </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', marginBottom: '6px' }}>
@@ -357,7 +357,7 @@ function CarbonTrackerPage() {
 }
 
 /* ── Navigation Sidebar ── */
-const VeroIcon = () => <span style={{ fontSize: 17, lineHeight: 1 }}>👑</span>
+const VeroIcon = () => <Crown size={16} style={{ minWidth: 16, flexShrink: 0 }} />
 
 /* ── Grouped nav structure ── */
 const NAV_GROUPS = [
@@ -454,7 +454,7 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
                 {!collapsed && (
                     <div className="sidebar-savings" style={{ marginTop: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={{ fontSize: 13 }}>💰</span>
+                            <DollarSign size={13} color="var(--success)" style={{ flexShrink: 0 }} />
                             <div>
                                 <div className="sidebar-savings-amount">$127.40 saved</div>
                                 <div className="sidebar-savings-label">this month · 67% below AWS</div>
@@ -478,11 +478,7 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
                                     title={collapsed ? label : undefined}
                                     style={{ gap: 9, padding: '8px 10px', borderRadius: 8, marginBottom: 1 }}
                                 >
-                                    {typeof Icon === 'function' && Icon.toString().includes('span') ? (
-                                        <Icon />
-                                    ) : (
-                                        <Icon size={16} style={{ minWidth: 16, flexShrink: 0 }} />
-                                    )}
+                                    <Icon size={16} style={{ minWidth: 16, flexShrink: 0 }} />
                                     {!collapsed && (
                                         <>
                                             <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
@@ -528,14 +524,18 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
 function AppLayout() {
     const [collapsed, setCollapsed] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
-    const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768)
+    const [isMobile, setIsMobile] = useState(
+        () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+    )
     const navigate = useNavigate()
     const { paletteOpen, setPaletteOpen, shortcutsOpen, setShortcutsOpen } = useCommandPalette(navigate)
 
+    // matchMedia keeps sidebar correct across zoom levels — window.innerWidth is zoom-sensitive
     useEffect(() => {
-        const handler = () => setIsMobile(window.innerWidth < 768)
-        window.addEventListener('resize', handler)
-        return () => window.removeEventListener('resize', handler)
+        const mq = window.matchMedia('(max-width: 767px)')
+        const handler = (e) => setIsMobile(e.matches)
+        mq.addEventListener('change', handler)
+        return () => mq.removeEventListener('change', handler)
     }, [])
 
     const ml = isMobile ? 0 : (collapsed ? 72 : 228)

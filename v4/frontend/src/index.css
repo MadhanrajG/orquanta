@@ -10,6 +10,23 @@
  padding: 0;
 }
 
+/* ── Global Accessibility: Focus Rings ─────────────────────────────────── */
+/* Remove default outline only when :focus-visible is supported */
+:focus:not(:focus-visible) {
+ outline: none;
+}
+
+:focus-visible {
+ outline: 2px solid var(--brand-500, #5271f5);
+ outline-offset: 2px;
+ border-radius: 4px;
+}
+
+/* Buttons and interactive elements must always be keyboard-accessible */
+button, a, [role="button"], [tabindex] {
+ cursor: pointer;
+}
+
 html {
  scroll-behavior: smooth;
 }
@@ -187,6 +204,13 @@ body {
 
 .nav-link:hover {
  background: rgba(255, 255, 255, 0.05);
+ color: var(--text-primary);
+}
+
+.nav-link:focus-visible {
+ outline: 2px solid var(--brand-500);
+ outline-offset: 2px;
+ background: rgba(82, 113, 245, 0.08);
  color: var(--text-primary);
 }
 
@@ -526,6 +550,35 @@ select option {
 
  .glass-card {
  overflow-x: auto;
+ }
+
+ /* Ensure full-width page content on mobile */
+ .page-body,
+ .page-header {
+ padding: 16px;
+ }
+}
+
+/* ── Tablet: sidebar stays visible, content reflows ───────────────────── */
+@media (min-width: 768px) and (max-width: 1024px) {
+ .orq-sidebar {
+ width: 200px !important;
+ }
+
+ .page-body,
+ .page-header {
+ padding: 20px 24px;
+ }
+
+ .grid-4 {
+ grid-template-columns: repeat(2, 1fr);
+ }
+}
+
+/* ── Desktop: ensure sidebar never disappears ──────────────────────────── */
+@media (min-width: 1025px) {
+ .orq-sidebar {
+ transform: none !important;
  }
 }
 

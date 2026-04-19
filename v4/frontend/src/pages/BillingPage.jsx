@@ -59,6 +59,7 @@ export default function BillingPage() {
   const [checkoutLoading, setCheckoutLoading] = useState('');
   const [message, setMessage] = useState('');
   const [billingHistory, setBillingHistory] = useState([]);
+  const [stripeReady, setStripeReady] = useState(false);
 
   const getToken = () => localStorage.getItem('orquanta_token') || '';
 
@@ -72,6 +73,11 @@ export default function BillingPage() {
     }
 
     fetchSubscription();
+    // Check if Stripe is configured on the backend
+    fetch('/api/v1/billing/plans', { headers: { Authorization: `Bearer ${getToken()}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.stripe_enabled) setStripeReady(true) })
+      .catch(() => {});
     // Generate mock billing history for demo
     setBillingHistory([
       { date: '2026-03-01', description: 'Job job-a3b2c1 — Fine-tune Llama 3', amount: 4.82, provider: 'RunPod' },
@@ -174,6 +180,31 @@ export default function BillingPage() {
         </p>
       </div>
 
+      {/* Stripe not configured banner */}
+      {!stripeReady && (
+        <div style={{
+          background: 'rgba(245, 158, 11, 0.1)',
+          border: '1px solid rgba(245, 158, 11, 0.35)',
+          borderRadius: '12px',
+          padding: '1rem 1.5rem',
+          marginBottom: '2rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
+          fontSize: '0.9rem',
+        }}>
+          <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>⚠</span>
+          <div>
+            <span style={{ color: '#fbbf24', fontWeight: 700 }}>Payment gateway not yet connected. </span>
+            <span style={{ color: '#94a3b8' }}>
+              Plans are visible and trials can be started. To enable real billing, add{' '}
+              <code style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 6px', borderRadius: 4, fontSize: '0.85rem', color: '#e2e8f0' }}>STRIPE_SECRET_KEY</code>{' '}
+              to your environment variables.
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Alert banner */}
       {message && (
         <div style={{
@@ -260,7 +291,7 @@ export default function BillingPage() {
                 color: 'white',
                 whiteSpace: 'nowrap',
               }}>
-                ⭐ Most Popular
+                Most Popular
               </div>
             )}
 
@@ -315,7 +346,10 @@ export default function BillingPage() {
                   color: '#cbd5e1',
                   fontSize: '0.875rem',
                 }}>
-                  <span style={{ color: '#10b981', flexShrink: 0, marginTop: '1px' }}>✓</span>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 2 }}>
+                    <circle cx="7" cy="7" r="6" stroke="#10b981" strokeWidth="1.5"/>
+                    <path d="M4.5 7l1.75 1.75L9.5 5.5" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                   {f}
                 </li>
               ))}
@@ -331,14 +365,13 @@ export default function BillingPage() {
                 fontWeight: 700,
                 fontSize: '0.95rem',
                 cursor: isActivePlan(plan.id) ? 'default' : 'pointer',
-                border: 'none',
+                border: isActivePlan(plan.id) ? '1px solid rgba(16,185,129,0.5)' : 'none',
                 background: isActivePlan(plan.id)
                   ? 'rgba(16, 185, 129, 0.3)'
                   : plan.popular
                     ? 'linear-gradient(135deg, #6366f1, #a855f7)'
                     : 'rgba(99, 102, 241, 0.2)',
                 color: isActivePlan(plan.id) ? '#10b981' : 'white',
-                border: isActivePlan(plan.id) ? '1px solid rgba(16,185,129,0.5)' : 'none',
                 opacity: checkoutLoading === plan.id ? 0.7 : 1,
                 transition: 'all 0.2s',
               }}
@@ -364,7 +397,7 @@ export default function BillingPage() {
         marginBottom: '2rem',
       }}>
         <h3 style={{ color: '#f1f5f9', fontWeight: 700, marginBottom: '1rem' }}>
-          💡 Why OrQuanta Pays for Itself
+          Why OrQuanta Pays for Itself
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
           {[
@@ -399,7 +432,7 @@ export default function BillingPage() {
           padding: '2rem',
         }}>
           <h3 style={{ color: '#f1f5f9', fontWeight: 700, marginBottom: '1.25rem' }}>
-            📋 Recent GPU Usage
+            Recent GPU Usage
           </h3>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>

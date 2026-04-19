@@ -132,7 +132,7 @@ async def require_admin(user: dict = Depends(get_current_user)) -> dict[str, Any
 
 
 # ---------------------------------------------------------------------------
-# SQLite user store (persistent across deployments)
+# User store — PostgreSQL (prod) with SQLite fallback (local dev)
 # ---------------------------------------------------------------------------
 
 import hashlib
@@ -140,57 +140,76 @@ import sqlite3
 import secrets as sec_module
 from typing import Optional
 
-_DB_PATH = os.getenv("DATABASE_URL", "sqlite:///./orquanta.db")
-# Strip 'sqlite:///' prefix for sqlite3.connect()
-_DB_FILE = _DB_PATH.replace("sqlite:///", "") if _DB_PATH.startswith("sqlite:///") else "./orquanta.db"
+_DATABASE_URL = os.getenv("DATABASE_URL", "")
+_USE_PG = _DATABASE_URL.startswith(("postgresql://", "postgres://"))
+
+if _USE_PG:
+    try:
+        import psycopg2
+        import psycopg2.extras
+        logger.info("Auth: PostgreSQL mode (DATABASE_URL detected)")
+    except ImportError:
+        logger.error("psycopg2-binary not installed — falling back to SQLite")
+        _USE_PG = False
+
+_DB_FILE = "./orquanta.db" if not _USE_PG else None
+
+_CREATE_USERS_TABLE = """
+    CREATE TABLE IF NOT EXISTS users (
+        id          TEXT PRIMARY KEY,
+        email       TEXT UNIQUE NOT NULL,
+        name        TEXT NOT NULL DEFAULT '',
+        hashed_pw   TEXT NOT NULL,
+        salt        TEXT NOT NULL,
+        role        TEXT NOT NULL DEFAULT 'user',
+        created_at  TEXT NOT NULL
+    )
+"""
 
 
-def _get_db() -> sqlite3.Connection:
-    """Get a SQLite connection with auto-created user table."""
-    conn = sqlite3.connect(_DB_FILE)
-    conn.row_factory = sqlite3.Row
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id          TEXT PRIMARY KEY,
-            email       TEXT UNIQUE NOT NULL,
-            name        TEXT NOT NULL DEFAULT '',
-            hashed_pw   TEXT NOT NULL,
-            salt        TEXT NOT NULL,
-            role        TEXT NOT NULL DEFAULT 'user',
-            created_at  TEXT NOT NULL
-        )
-    """)
-    conn.commit()
-    return conn
+def _get_db():
+    """Return a database connection — PostgreSQL in prod, SQLite in dev."""
+    if _USE_PG:
+        # psycopg2 uses %s placeholders; RealDictCursor returns dict rows
+        conn = psycopg2.connect(_DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+        conn.autocommit = False
+        with conn.cursor() as cur:
+            cur.execute(_CREATE_USERS_TABLE)
+        conn.commit()
+        return conn
+    else:
+        conn = sqlite3.connect(_DB_FILE)
+        conn.row_factory = sqlite3.Row
+        conn.execute(_CREATE_USERS_TABLE)
+        conn.commit()
+        return conn
+
+
+def _ph() -> str:
+    """Parameter placeholder — %s for PostgreSQL, ? for SQLite."""
+    return "%s" if _USE_PG else "?"
 
 
 def hash_password(password: str, salt: str) -> str:
-    """Hash a password with salt using SHA-256 + PBKDF2 stretching."""
     return hashlib.pbkdf2_hmac(
         "sha256", password.encode(), salt.encode(), iterations=100_000
     ).hex()
 
 
 def register_user(email: str, password: str, name: str = "") -> dict[str, Any]:
-    """Register a new user (persisted to SQLite).
-
-    Args:
-        email: User email.
-        password: Plain-text password (will be hashed).
-        name: Display name.
-
-    Returns:
-        User dict.
-
-    Raises:
-        ValueError: If email already registered.
-    """
+    """Register a new user. Works with both PostgreSQL and SQLite."""
     conn = _get_db()
+    ph = _ph()
     try:
-        # Check if email exists
-        existing = conn.execute(
-            "SELECT id FROM users WHERE email = ?", (email.lower(),)
-        ).fetchone()
+        if _USE_PG:
+            cur = conn.cursor()
+            cur.execute(f"SELECT id FROM users WHERE email = {ph}", (email.lower(),))
+            existing = cur.fetchone()
+        else:
+            existing = conn.execute(
+                f"SELECT id FROM users WHERE email = {ph}", (email.lower(),)
+            ).fetchone()
+
         if existing:
             raise ValueError(f"Email '{email}' is already registered.")
 
@@ -198,41 +217,52 @@ def register_user(email: str, password: str, name: str = "") -> dict[str, Any]:
         salt = sec_module.token_hex(8)
         hashed = hash_password(password, salt)
         created_at = datetime.now(timezone.utc).isoformat()
+        display_name = name or email.split("@")[0]
 
-        conn.execute(
-            "INSERT INTO users (id, email, name, hashed_pw, salt, role, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (user_id, email.lower(), name or email.split("@")[0], hashed, salt, "user", created_at),
+        sql = (
+            f"INSERT INTO users (id, email, name, hashed_pw, salt, role, created_at) "
+            f"VALUES ({ph},{ph},{ph},{ph},{ph},{ph},{ph})"
         )
-        conn.commit()
+        params = (user_id, email.lower(), display_name, hashed, salt, "user", created_at)
 
-        user = {
-            "id": user_id,
-            "email": email.lower(),
-            "name": name or email.split("@")[0],
-            "hashed_pw": hashed,
-            "salt": salt,
-            "role": "user",
-            "created_at": created_at,
-        }
-        logger.info(f"User registered: {email} (id={user_id}) — persisted to SQLite")
-        return user
+        if _USE_PG:
+            cur.execute(sql, params)
+            conn.commit()
+            cur.close()
+        else:
+            conn.execute(sql, params)
+            conn.commit()
+
+        logger.info(f"User registered: {email} (id={user_id}) — {'PostgreSQL' if _USE_PG else 'SQLite'}")
+        return {"id": user_id, "email": email.lower(), "name": display_name,
+                "hashed_pw": hashed, "salt": salt, "role": "user", "created_at": created_at}
     finally:
         conn.close()
 
 
 def authenticate_user(email: str, password: str) -> Optional[dict[str, Any]]:
-    """Verify credentials and return user if valid (reads from SQLite)."""
+    """Verify credentials. Works with both PostgreSQL and SQLite."""
     conn = _get_db()
+    ph = _ph()
     try:
-        row = conn.execute(
-            "SELECT * FROM users WHERE email = ?", (email.lower(),)
-        ).fetchone()
-        if not row:
-            return None
-        expected = hash_password(password, row["salt"])
-        if expected == row["hashed_pw"]:
-            return dict(row)
+        if _USE_PG:
+            cur = conn.cursor()
+            cur.execute(f"SELECT * FROM users WHERE email = {ph}", (email.lower(),))
+            row = cur.fetchone()
+            cur.close()
+            if row is None:
+                return None
+            row = dict(row)
+        else:
+            row = conn.execute(
+                f"SELECT * FROM users WHERE email = {ph}", (email.lower(),)
+            ).fetchone()
+            if row is None:
+                return None
+            row = dict(row)
+
+        if hash_password(password, row["salt"]) == row["hashed_pw"]:
+            return row
         return None
     finally:
         conn.close()
