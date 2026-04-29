@@ -1,0 +1,25 @@
+name = "orquanta-proxy"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+account_id = "2dd90fe6473410b2605b5b177d606599"
+
+[vars]
+# Live backend on Render (Singapore) — override in CF dashboard if needed
+BACKEND_URL = "https://orquanta-sg.onrender.com"
+APP_URL     = "https://orquanta.pages.dev"
+
+# ── Production zone routes ───────────────────────────────────────────────────
+[[routes]]
+pattern = "orquanta.com/*"
+zone_id = "ce15f8600b6f1cd8af8ebee53dd08608"
+
+[[routes]]
+pattern = "www.orquanta.com/*"
+zone_id = "ce15f8600b6f1cd8af8ebee53dd08608"
+
+# ── Cloudflare Pages (separate project for React SPA) ────────────────────────
+# Deploy frontend separately:
+#   cd v4/frontend && npm run build
+#   npx wrangler pages deploy dist --project-name orquanta-app
