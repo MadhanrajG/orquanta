@@ -7,7 +7,7 @@ set -euo pipefail
 
 CF_API_TOKEN="${CF_API_TOKEN:?Set CF_API_TOKEN}"
 DOMAIN="orquanta.com"
-RENDER_TARGET="orquanta-wsn1.onrender.com"
+RENDER_TARGET="orquanta-sg.onrender.com"   # Singapore — co-located with PostgreSQL DB
 
 echo "==> Finding Cloudflare Zone ID for $DOMAIN..."
 ZONE_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=$DOMAIN" \
