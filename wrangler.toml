@@ -6,9 +6,9 @@ compatibility_flags = ["nodejs_compat"]
 account_id = "2dd90fe6473410b2605b5b177d606599"
 
 [vars]
-# Live backend on Render (Singapore) — override in CF dashboard if needed
 BACKEND_URL = "https://orquanta-sg.onrender.com"
-APP_URL     = "https://orquanta.pages.dev"
+PAGES_URL   = "https://orquanta-app.pages.dev"
+APP_URL     = "https://orquanta.com/app/"
 
 # ── Production zone routes ───────────────────────────────────────────────────
 [[routes]]

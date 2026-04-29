@@ -1,0 +1,6 @@
+# Cloudflare Pages SPA routing
+# All /app/* routes → React SPA (client-side router handles them)
+/app/*  /app/index.html  200
+
+# Root redirect → app
+/  /app/  302

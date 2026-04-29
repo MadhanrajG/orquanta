@@ -2,18 +2,18 @@
  * OrQuanta Agentic v1.0 — Cloudflare Edge Worker
  * ================================================
  * Routes:
- *   /api/*      → proxy to BACKEND_URL (Railway)
- *   /auth/*     → proxy to BACKEND_URL
- *   /health     → proxy to BACKEND_URL
- *   /ws/*       → WebSocket proxy to BACKEND_URL
- *   /docs       → proxy to BACKEND_URL
- *   /metrics    → proxy to BACKEND_URL
- *   /           → landing page
- *   /app/*      → redirect to Cloudflare Pages SPA
+ *   /           → edge landing page (Worker HTML)
+ *   /app/*      → Cloudflare Pages SPA (orquanta-app.pages.dev)
+ *   /api/*      → FastAPI on Render Singapore
+ *   /auth/*     → FastAPI on Render Singapore
+ *   /health     → FastAPI on Render Singapore
+ *   /ws/*       → WebSocket proxy to Render
+ *   /docs       → FastAPI on Render Singapore
+ *   everything else → FastAPI on Render Singapore
  *
- * Environment Variables (set in Cloudflare dashboard):
- *   BACKEND_URL  = https://orquanta-api.up.railway.app
- *   APP_URL      = https://orquanta.pages.dev  (Cloudflare Pages URL)
+ * Environment Variables:
+ *   BACKEND_URL  = https://orquanta-sg.onrender.com
+ *   PAGES_URL    = https://orquanta-app.pages.dev
  */
 
 const SECURITY_HEADERS = {
@@ -49,15 +49,13 @@ function addHeaders(response, extra = {}) {
   return r;
 }
 
-async function proxyToBackend(request, env) {
-  const backendUrl = env.BACKEND_URL || "https://orquanta-api.up.railway.app";
+async function proxyTo(request, originUrl) {
   const url = new URL(request.url);
-  const target = `${backendUrl}${url.pathname}${url.search}`;
+  const target = `${originUrl}${url.pathname}${url.search}`;
 
   // WebSocket upgrade
   if (request.headers.get("Upgrade") === "websocket") {
-    const wsTarget = target.replace(/^https?:\/\//, "wss://");
-    return fetch(wsTarget, request);
+    return fetch(target.replace(/^https?:\/\//, "wss://"), request);
   }
 
   const proxied = new Request(target, {
@@ -72,11 +70,15 @@ async function proxyToBackend(request, env) {
     return addHeaders(resp, CORS_HEADERS);
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: "Backend unavailable", detail: err.message }),
-      { status: 503, headers: { "Content-Type": "application/json", ...CORS_HEADERS } }
+      JSON.stringify({ error: "Gateway error", detail: err.message }),
+      { status: 502, headers: { "Content-Type": "application/json", ...CORS_HEADERS } }
     );
   }
 }
+
+// Keep backward compat alias
+const proxyToBackend = (req, env) =>
+  proxyTo(req, env.BACKEND_URL || "https://orquanta-sg.onrender.com");
 
 function landingPage(env) {
   const backendUrl = env.BACKEND_URL || "https://orquanta-api.up.railway.app";
@@ -188,8 +190,11 @@ export default {
     // Root landing page — marketing page served at the edge
     if (path === "/") return landingPage(env);
 
-    // Proxy everything else to Render (API routes, SPA routes, auth, health, docs)
-    // The React SPA handles /dashboard, /billing, /profile etc. on the client
+    // Cloudflare Pages SPA — /app/* served from edge CDN (fast global load)
+    const pagesUrl = env.PAGES_URL || "https://orquanta-app.pages.dev";
+    if (path.startsWith("/app")) return proxyTo(request, pagesUrl);
+
+    // FastAPI backend on Render Singapore — all other routes
     return proxyToBackend(request, env);
   },
 };
