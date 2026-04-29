@@ -1,4 +1,4 @@
-"""
+﻿"""
 OrQuanta Agentic v1.0 Ã¢â‚¬â€ FastAPI Application Entry Point
 
 Wires together all routers, middleware, startup/shutdown hooks,
@@ -138,40 +138,39 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         logger.warning(f"[Pipeline] WS broadcaster not available: {exc}")
 
-    # Seed a default admin user for first-boot and promote to admin role
-    try:
-        admin_email = os.getenv("ADMIN_EMAIL", "admin@orquanta.com")
-        admin_password = os.getenv("ADMIN_PASSWORD")
-        if not admin_password:
-            logger.warning(
-                "ADMIN_PASSWORD not set — skipping default admin seed. "
-                "Set ADMIN_PASSWORD env var to create the initial admin account."
-            )
-        else:
-            register_user(email=admin_email, password=admin_password, name="OrQuanta Admin")
-            logger.info(f"Admin user '{admin_email}' created.")
-    except ValueError:
-        pass  # Already registered Ã¢â‚¬â€ that's fine
+    # Seed admin user + promote role in background — DB latency must never block startup
+    # (critical for cross-region PostgreSQL: Oregon web service -> Singapore DB)
+    import asyncio as _asyncio
 
-    # Promote admin email to 'admin' role
-    try:
+    async def _seed_admin() -> None:
         from .middleware.auth import _get_db, _USE_PG
-        admin_email = os.getenv("ADMIN_EMAIL", "admin@orquanta.com")
-        conn = _get_db()
-        ph = "%s" if _USE_PG else "?"
-        if _USE_PG:
-            cur = conn.cursor()
-            cur.execute(f"UPDATE users SET role = {ph} WHERE email = {ph}", ("admin", admin_email.lower()))
-            conn.commit()
-            cur.close()
-        else:
-            conn.execute(f"UPDATE users SET role = {ph} WHERE email = {ph}", ("admin", admin_email.lower()))
-            conn.commit()
-        conn.close()
-        logger.info(f"User '{admin_email}' promoted to admin role.")
-    except Exception as exc:
-        logger.warning(f"Admin role promotion skipped: {exc}")
+        _admin_email = os.getenv("ADMIN_EMAIL", "admin@orquanta.com")
+        _admin_password = os.getenv("ADMIN_PASSWORD", "")
+        if not _admin_password:
+            logger.warning("ADMIN_PASSWORD not set — skipping admin seed.")
+            return
+        try:
+            register_user(email=_admin_email, password=_admin_password, name="OrQuanta Admin")
+            logger.info(f"Admin user '{_admin_email}' created.")
+        except Exception:
+            pass  # Already exists — fine
+        try:
+            _ph = "%s" if _USE_PG else "?"
+            _conn = _get_db()
+            if _USE_PG:
+                _cur = _conn.cursor()
+                _cur.execute(f"UPDATE users SET role = {_ph} WHERE email = {_ph}", ("admin", _admin_email.lower()))
+                _conn.commit()
+                _cur.close()
+            else:
+                _conn.execute(f"UPDATE users SET role = {_ph} WHERE email = {_ph}", ("admin", _admin_email.lower()))
+                _conn.commit()
+            _conn.close()
+            logger.info(f"Admin role set for '{_admin_email}'.")
+        except Exception as _exc:
+            logger.warning(f"Admin role promotion skipped: {_exc}")
 
+    _asyncio.ensure_future(_seed_admin())
     # Start demo engine if in demo mode
     if _DEMO_MODE:
         try:
