@@ -4,11 +4,8 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     plan: free
-    region: singapore  # Closest to India
+    region: singapore
     healthCheckPath: /health
-    domains:
-      - orquanta.com
-      - www.orquanta.com
     envVars:
       - key: PORT
         value: 8000
