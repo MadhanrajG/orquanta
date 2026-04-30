@@ -19,6 +19,11 @@ zone_id = "ce15f8600b6f1cd8af8ebee53dd08608"
 pattern = "www.orquanta.com/*"
 zone_id = "ce15f8600b6f1cd8af8ebee53dd08608"
 
+# ── Cron triggers ────────────────────────────────────────────────────────────
+# Ping Render every 5 min to prevent free-tier cold starts (30-60s spin-up)
+[triggers]
+crons = ["*/5 * * * *"]
+
 # ── Cloudflare Pages (separate project for React SPA) ────────────────────────
 # Deploy frontend separately:
 #   cd v4/frontend && npm run build

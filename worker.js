@@ -197,4 +197,16 @@ export default {
     // FastAPI backend on Render Singapore — all other routes
     return proxyToBackend(request, env);
   },
+
+  // Cron: every 5 min — keeps Render free tier alive (prevents 30-60s cold starts)
+  async scheduled(_event, env, ctx) {
+    const backend = env.BACKEND_URL || "https://orquanta-sg.onrender.com";
+    ctx.waitUntil(
+      fetch(`${backend}/health`, { method: "GET" }).then(r =>
+        console.log(`[keepalive] ${new Date().toISOString()} → HTTP ${r.status}`)
+      ).catch(e =>
+        console.error(`[keepalive] failed: ${e.message}`)
+      )
+    );
+  },
 };
