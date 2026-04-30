@@ -753,15 +753,26 @@ async def change_password(
             content={"error": "New password must be at least 8 characters."},
         )
     import secrets as _sec
+    from .middleware.auth import _ph as _placeholder, _USE_PG
     new_salt = _sec.token_hex(8)
     new_hash = hash_password(req.new_password, new_salt)
+    ph = _placeholder()
     conn = _get_db()
     try:
-        conn.execute(
-            "UPDATE users SET hashed_pw = ?, salt = ? WHERE email = ?",
-            (new_hash, new_salt, current_user["email"].lower()),
-        )
-        conn.commit()
+        if _USE_PG:
+            cur = conn.cursor()
+            cur.execute(
+                f"UPDATE users SET hashed_pw = {ph}, salt = {ph} WHERE email = {ph}",
+                (new_hash, new_salt, current_user["email"].lower()),
+            )
+            conn.commit()
+            cur.close()
+        else:
+            conn.execute(
+                f"UPDATE users SET hashed_pw = {ph}, salt = {ph} WHERE email = {ph}",
+                (new_hash, new_salt, current_user["email"].lower()),
+            )
+            conn.commit()
     finally:
         conn.close()
     logger.info(f"Password changed for user: {current_user['email']}")
@@ -780,14 +791,24 @@ async def update_profile(
     current_user: dict = Depends(get_current_user),
 ):
     """Update the authenticated user's display name."""
-    from .middleware.auth import _get_db
+    from .middleware.auth import _get_db, _ph as _placeholder, _USE_PG
+    ph = _placeholder()
     conn = _get_db()
     try:
-        conn.execute(
-            "UPDATE users SET name = ? WHERE email = ?",
-            (req.full_name, current_user["email"].lower()),
-        )
-        conn.commit()
+        if _USE_PG:
+            cur = conn.cursor()
+            cur.execute(
+                f"UPDATE users SET name = {ph} WHERE email = {ph}",
+                (req.full_name, current_user["email"].lower()),
+            )
+            conn.commit()
+            cur.close()
+        else:
+            conn.execute(
+                f"UPDATE users SET name = {ph} WHERE email = {ph}",
+                (req.full_name, current_user["email"].lower()),
+            )
+            conn.commit()
     finally:
         conn.close()
     return {"success": True, "full_name": req.full_name}

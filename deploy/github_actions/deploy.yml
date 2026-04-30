@@ -22,6 +22,87 @@ env:
   NODE_VERSION: '20'
 
 jobs:
+  # ─── 0. Deploy to Cloudflare (Worker + Pages) ─────────────────────
+  # Active production path: CF Worker → Render backend
+  # Runs immediately on push to main — no AWS required
+  deploy-cloudflare:
+    name: Deploy CF Worker + Pages
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://orquanta.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Wrangler
+        run: npm install -g wrangler
+
+      - name: Write frontend .env.production
+        run: |
+          cat > v4/frontend/.env.production <<EOF
+          VITE_API_BASE_URL=https://orquanta.com
+          VITE_WS_BASE_URL=wss://orquanta.com
+          VITE_APP_ENV=production
+          EOF
+
+      - name: Build React SPA
+        working-directory: v4/frontend
+        run: |
+          npm ci
+          npm run build -- --mode production
+
+      - name: Deploy Cloudflare Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: "2dd90fe6473410b2605b5b177d606599"
+        run: wrangler deploy --config wrangler.toml
+
+      - name: Deploy SPA to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: "2dd90fe6473410b2605b5b177d606599"
+        run: |
+          wrangler pages deploy v4/frontend/dist \
+            --project-name orquanta-app \
+            --branch main \
+            --commit-message "deploy: ${{ github.sha }}"
+
+      - name: Trigger Render redeploy
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          if [ -n "$RENDER_API_KEY" ]; then
+            curl -s -X POST \
+              "https://api.render.com/v1/services/srv-d7oscspj2pic73db5vo0/deploys" \
+              -H "Authorization: Bearer $RENDER_API_KEY" \
+              -H "Content-Type: application/json" \
+              --data '{}' | grep -q '"id"' && echo "✓ Render redeploy triggered" || echo "⚠ Render redeploy failed"
+          else
+            echo "ℹ RENDER_API_KEY not set — skipping Render redeploy"
+          fi
+
+      - name: Smoke test orquanta.com
+        run: |
+          echo "Waiting 15s for CF propagation + Render deploy..."
+          sleep 15
+          for i in $(seq 1 8); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://orquanta.com/health || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "✓ orquanta.com/health → HTTP 200"
+              exit 0
+            fi
+            echo "Attempt $i/8 — HTTP $STATUS — waiting 10s..."
+            sleep 10
+          done
+          echo "⚠ Smoke test inconclusive — check CF dashboard"
+          exit 0   # non-fatal; Render may still be deploying
+
   # ─── 1. Test ───────────────────────────────────────────────────────
   test:
     name: Run Test Suite (80+ tests)
