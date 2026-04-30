@@ -1,5 +1,5 @@
 /* OrQuanta Agentic v1.0 — Core Stylesheet (Pure CSS, no PostCSS required) */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
 
 /* ── Reset ─────────────────────────────────────────────────────────────── */
 *,
@@ -1777,8 +1777,7 @@ h1[class*="text-2xl"] {
    Expert: 10+ years NVIDIA GPU cloud architecture
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Load JetBrains Mono for all GPU metrics ────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
+/* ── JetBrains Mono + Space Grotesk loaded at top of file ───────────────── */
 
 /* ── Raise base contrast across the board ───────────────────────────────── */
 :root {
