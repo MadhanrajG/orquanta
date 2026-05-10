@@ -29,9 +29,10 @@ logger = logging.getLogger("orquanta.llm")
 class LLMProvider(str, Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
-    MOCK = "mock"  # Used in tests / when no API key is set
-    AUTO = "auto"  # Auto-detect best available provider
-    NIM = "nim"    # NVIDIA Inference Microservices (Nemotron / Llama via NVIDIA API)
+    GROQ = "groq"   # Groq — Llama3/Mixtral at 200+ tok/s, free tier: groq.com
+    MOCK = "mock"   # Used in tests / when no API key is set
+    AUTO = "auto"   # Auto-detect best available provider
+    NIM = "nim"     # NVIDIA Inference Microservices (Nemotron / Llama via NVIDIA API)
 
 # ---------------------------------------------------------------------------
 # TurboQuant — KV-cache compression (Google ICLR 2026, arXiv:2504.19874)
@@ -125,8 +126,10 @@ class LLMConfig(BaseModel):
     )
     openai_api_key: str = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""))
     anthropic_api_key: str = Field(default_factory=lambda: os.getenv("ANTHROPIC_API_KEY", ""))
+    groq_api_key: str = Field(default_factory=lambda: os.getenv("GROQ_API_KEY", ""))
     openai_model: str = Field(default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-4o"))
     anthropic_model: str = Field(default_factory=lambda: os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022"))
+    groq_model: str = Field(default_factory=lambda: os.getenv("GROQ_MODEL", "llama3-70b-8192"))
     max_tokens: int = 2048
     temperature: float = 0.2
     timeout_seconds: int = 60
@@ -362,6 +365,7 @@ class LLMReasoningEngine:
         self.cfg = config or LLMConfig()
         self._openai_client: Any = None
         self._anthropic_client: Any = None
+        self._groq_client: Any = None
         self._nim_client: Any = None  # NIMClient singleton (lazy)
         # Per-agent call timestamps for rate limiting
         self._rate_buckets: defaultdict[str, deque] = defaultdict(deque)
@@ -399,9 +403,22 @@ class LLMReasoningEngine:
             except ImportError:
                 logger.warning("anthropic package not installed — skipping Anthropic.")
 
+        # Try Groq (200+ tokens/s, free tier available — preferred for agent reasoning loops)
+        if self.cfg.groq_api_key:
+            try:
+                import groq  # type: ignore
+                self._groq_client = groq.AsyncGroq(api_key=self.cfg.groq_api_key)
+                logger.info("Groq client initialised (Llama3/Mixtral — fast free-tier provider).")
+            except ImportError:
+                logger.warning("groq package not installed — skipping Groq.")
+
         # Auto-detect primary provider from available clients
+        # Priority: Groq (fastest/cheapest) → OpenAI → Anthropic → Mock
         if self.cfg.provider == LLMProvider.AUTO:
-            if self._openai_client:
+            if self._groq_client:
+                self.cfg.provider = LLMProvider.GROQ
+                logger.info("AUTO: Selected Groq as primary LLM provider (fastest free tier).")
+            elif self._openai_client:
                 self.cfg.provider = LLMProvider.OPENAI
                 logger.info("AUTO: Selected OpenAI as primary LLM provider.")
             elif self._anthropic_client:
@@ -410,6 +427,11 @@ class LLMReasoningEngine:
             else:
                 self.cfg.provider = LLMProvider.MOCK
                 logger.info("AUTO: No API keys found — using MOCK provider.")
+        elif self.cfg.provider == LLMProvider.GROQ and not self._groq_client:
+            logger.warning("Groq requested but not available. Falling back.")
+            self.cfg.provider = LLMProvider.OPENAI if self._openai_client else (
+                LLMProvider.ANTHROPIC if self._anthropic_client else LLMProvider.MOCK
+            )
         elif self.cfg.provider == LLMProvider.OPENAI and not self._openai_client:
             logger.warning("OpenAI requested but not available. Falling back.")
             self.cfg.provider = LLMProvider.ANTHROPIC if self._anthropic_client else LLMProvider.MOCK
@@ -566,7 +588,14 @@ class LLMReasoningEngine:
 
         # Try primary provider
         primary_error = None
-        if self.cfg.provider == LLMProvider.OPENAI and self._openai_client:
+        if self.cfg.provider == LLMProvider.GROQ and self._groq_client:
+            try:
+                return await self._call_groq(prompt)
+            except Exception as exc:
+                primary_error = exc
+                logger.warning(f"Groq call failed: {exc}")
+
+        elif self.cfg.provider == LLMProvider.OPENAI and self._openai_client:
             try:
                 return await self._call_openai(prompt)
             except Exception as exc:
@@ -580,8 +609,14 @@ class LLMReasoningEngine:
                 primary_error = exc
                 logger.warning(f"Anthropic call failed: {exc}")
 
-        # Try fallback provider
+        # Try fallback providers in order: Groq → OpenAI → Anthropic
         if primary_error:
+            if self.cfg.provider != LLMProvider.GROQ and self._groq_client:
+                try:
+                    logger.info("Falling back to Groq...")
+                    return await self._call_groq(prompt)
+                except Exception as exc:
+                    logger.warning(f"Groq fallback also failed: {exc}")
             if self.cfg.provider != LLMProvider.ANTHROPIC and self._anthropic_client:
                 try:
                     logger.info("Falling back to Anthropic...")
@@ -598,6 +633,22 @@ class LLMReasoningEngine:
         # Last resort: mock
         logger.info("All LLM providers unavailable. Returning mock data.")
         return json.dumps({"mock": True})
+
+    async def _call_groq(self, prompt: str) -> str:
+        """Call Groq API (OpenAI-compatible) — Llama3-70B / Mixtral at 200+ tok/s."""
+        if self._groq_client is None:
+            raise RuntimeError("Groq client not initialised.")
+        response = await self._groq_client.chat.completions.create(
+            model=self.cfg.groq_model,
+            messages=[
+                {"role": "system", "content": "You are an expert AI assistant. Always respond with valid JSON only."},
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=self.cfg.max_tokens,
+            temperature=self.cfg.temperature,
+            timeout=self.cfg.timeout_seconds,
+        )
+        return response.choices[0].message.content
 
     async def _call_openai(self, prompt: str) -> str:
         """Call OpenAI Chat Completions API."""

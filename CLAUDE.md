@@ -59,6 +59,13 @@ npm run build
 # Output goes to v4/frontend/dist/ — FastAPI serves it at /app/*
 ```
 
+### Start local services (Redis + ChromaDB)
+```bash
+# Requires Docker Desktop running
+docker-compose -f docker-compose.dev.yml up -d
+# Redis: localhost:6379  |  ChromaDB: localhost:8200
+```
+
 ### Run tests
 ```bash
 cd c:/ai-gpu-cloud
@@ -247,6 +254,9 @@ All routers and main.py must use `get_xyz()` — never instantiate directly.
 | `RUNPOD_API_KEY` | no | `""` | RunPod v2 REST API key |
 | `OPENAI_API_KEY` | no | `""` | GPT-4 reasoning |
 | `ANTHROPIC_API_KEY` | no | `""` | Claude reasoning |
+| `GROQ_API_KEY` | no | `""` | Groq — Llama3-70B/Mixtral at 200+ tok/s; AUTO mode picks this first |
+| `GROQ_MODEL` | no | `llama3-70b-8192` | Groq model to use |
+| `SENTRY_DSN` | no | `""` | Sentry error tracking + performance (no-op if absent) |
 | `STRIPE_SECRET_KEY` | no | `""` | Billing (warning mode if absent) |
 | `ADMIN_EMAIL` | no | `admin@orquanta.com` | Auto-seeded admin |
 | `ADMIN_PASSWORD` | no | `""` | Skip seed if not set |
@@ -353,6 +363,9 @@ All configured in `.mcp.json` at project root. Secrets are prompted once per ses
 | `sequential-thinking` | Multi-step reasoning for complex architecture decisions |
 | `memory` | Persistent knowledge graph across sessions |
 | `filesystem` | Read/write `v4/` and `.github/` directories |
+| `brave-search` | Live web research — GPU pricing, provider APIs, ML framework docs (needs `BRAVE_API_KEY`) |
+| `git` | Local git ops — blame, log, show, diff on `c:/ai-gpu-cloud` repo |
+| `context7` | Library documentation lookup — FastAPI, Pydantic, ChromaDB, etc. (no auth needed) |
 
 **Effective MCP usage patterns:**
 ```
@@ -367,6 +380,15 @@ playwright: navigate to http://localhost:3000/app, take screenshot
 
 # Check CI job status
 github: get workflow runs for repository
+
+# Research current GPU spot prices
+brave-search: "RunPod H100 spot price 2025"
+
+# Look up FastAPI docs inline
+context7: resolve library FastAPI, then search "background tasks"
+
+# Inspect git history for a specific file
+git: log v4/agents/llm_reasoning_engine.py
 ```
 
 ---
@@ -379,7 +401,7 @@ github: get workflow runs for repository
 | Stripe unconfigured | Active | `STRIPE_SECRET_KEY` not set — billing in warning mode |
 | Oracle Cloud ARM64 | Planned | Scripts at `infra/oracle/` — replace Render free tier |
 | Google/GitHub OAuth | v1.1 | Placeholder "SSO coming soon" in login page; `authlib` already installed |
-| Redis/Celery | Optional | Installed in requirements but not running; caching uses in-memory dict |
+| Redis/Celery | Optional | Use `docker-compose -f docker-compose.dev.yml up -d` to run locally; caching uses in-memory dict otherwise |
 | SQLAlchemy/asyncpg | Unused | requirements.txt has async ORM but auth.py uses psycopg2 direct. Dead weight. |
 | TurboQuant vLLM | Commented out | Python 3.12+ only; commented in requirements.txt |
 

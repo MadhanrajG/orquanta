@@ -11,6 +11,12 @@
       "type": "promptString",
       "description": "Neon PostgreSQL connection string — neon.tech dashboard → Connection Details",
       "password": true
+    },
+    {
+      "id": "brave_api_key",
+      "type": "promptString",
+      "description": "Brave Search API key — brave.com/search/api (free tier: 2000 queries/month)",
+      "password": true
     }
   ],
   "servers": {
@@ -63,6 +69,26 @@
         "c:/ai-gpu-cloud/v4",
         "c:/ai-gpu-cloud/.github"
       ],
+      "env": {}
+    },
+    "brave-search": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "${input:brave_api_key}"
+      }
+    },
+    "git": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "c:/ai-gpu-cloud"],
+      "env": {}
+    },
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"],
       "env": {}
     }
   }

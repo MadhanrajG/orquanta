@@ -55,6 +55,31 @@ _ENV = os.getenv("ENV", "production")
 _DEFAULT_ORIGINS = "*" if _ENV == "development" else "https://orquanta.com,https://orquanta-app.pages.dev"
 ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", _DEFAULT_ORIGINS).split(",")
 
+# Sentry — production error tracking + performance monitoring (no-op when DSN absent)
+_SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+if _SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.fastapi import FastApiIntegration
+        from sentry_sdk.integrations.starlette import StarletteIntegration
+        sentry_sdk.init(
+            dsn=_SENTRY_DSN,
+            environment=_ENV,
+            release=f"orquanta@{VERSION}",
+            traces_sample_rate=0.1,     # 10% of requests traced for performance
+            profiles_sample_rate=0.05,  # 5% profiling overhead
+            integrations=[
+                StarletteIntegration(transaction_style="endpoint"),
+                FastApiIntegration(transaction_style="endpoint"),
+            ],
+            send_default_pii=False,
+        )
+        logger.info(f"[Sentry] Initialized — env={_ENV}, traces=10%")
+    except ImportError:
+        logger.warning("[Sentry] sentry-sdk not installed — skipping")
+else:
+    logger.debug("[Sentry] SENTRY_DSN not set — error tracking disabled")
+
 
 # Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Lifespan (startup / shutdown) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 

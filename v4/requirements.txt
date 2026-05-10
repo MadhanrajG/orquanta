@@ -32,6 +32,7 @@ websockets==14.1
 # ─── LLM Providers ───────────────────────────────────────────────────────────
 openai==1.58.1
 anthropic==0.40.0
+groq>=0.8.0                          # Groq — Llama3/Mixtral at 200+ tok/s, free tier available
 
 # ─── TurboQuant — KV-cache compression (optional, requires Python >=3.12) ────
 # Only needed when TURBOQUANT_ENABLED=true. Install manually:
@@ -56,6 +57,7 @@ docker==7.1.0                        # Docker SDK
 
 # ─── Monitoring / Observability ──────────────────────────────────────────────
 prometheus-client==0.21.1
+sentry-sdk[fastapi]>=2.0.0           # Production error tracking + performance monitoring
 
 # ─── Alerting ─────────────────────────────────────────────────────────────────
 slack-sdk==3.33.4
