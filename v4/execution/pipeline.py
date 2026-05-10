@@ -141,6 +141,52 @@ class JobPipeline:
         """Inject the WebSocket broadcast function for live log streaming."""
         self._ws_broadcast = fn
 
+    def _save(self, job: PipelineJob) -> None:
+        """Persist job state to DB. Fire-and-forget — never raises."""
+        try:
+            from ..database.persistence import upsert_job
+            upsert_job(job.to_dict())
+        except Exception as exc:
+            logger.debug(f"[Pipeline] _save suppressed: {exc}")
+
+    def restore_jobs(self, jobs: list[dict]) -> None:
+        """Restore persisted jobs on startup. In-flight jobs are marked failed."""
+        for j in jobs:
+            job = PipelineJob.__new__(PipelineJob)
+            job.job_id = j.get("job_id", "")
+            job.user_id = j.get("user_id", "")
+            job.intent = j.get("intent", "")
+            job.gpu_type = j.get("gpu_type", "H100")
+            job.gpu_count = j.get("gpu_count", 1)
+            job.provider = j.get("provider", "runpod")
+            job.region = j.get("region", "")
+            job.instance_id = j.get("instance_id", "")
+            job.script = j.get("script", "")
+            job.exit_code = j.get("exit_code")
+            job.stdout = ""
+            job.stderr = ""
+            job.cost_usd = j.get("cost_usd", 0.0)
+            job.hourly_rate = j.get("hourly_rate", 0.0)
+            job.gpu_peak_util_pct = 0.0
+            job.gpu_peak_mem_gb = 0.0
+            job.created_at = j.get("created_at", "")
+            job.started_at = j.get("started_at")
+            job.completed_at = j.get("completed_at")
+            job.duration_seconds = j.get("duration_seconds", 0.0)
+            job.log_lines = j.get("log_lines", [])
+            job.error = j.get("error")
+            job.metadata = j.get("metadata", {})
+            status = j.get("status", "failed")
+            if status in (JobStatus.QUEUED, JobStatus.PROVISIONING,
+                          JobStatus.BOOTING, JobStatus.RUNNING, JobStatus.COMPLETING):
+                job.status = JobStatus.FAILED
+                job.error = job.error or "Server restarted — job was interrupted."
+                job.completed_at = job.completed_at or datetime.now(timezone.utc).isoformat()
+            else:
+                job.status = status
+            self._jobs[job.job_id] = job
+        logger.info(f"[Pipeline] Restored {len(jobs)} jobs from DB.")
+
     async def _broadcast(self, job_id: str, event: str, data: dict) -> None:
         """Send a real-time event to all connected WebSocket clients."""
         if self._ws_broadcast:
@@ -193,6 +239,7 @@ class JobPipeline:
             },
         )
         self._jobs[job_id] = job
+        self._save(job)
         logger.info(f"[Pipeline] Job {job_id} queued: {intent[:60]} ({gpu_count}×{gpu_type})")
 
         # Execute in background (non-blocking)
@@ -277,6 +324,7 @@ class JobPipeline:
             job.status = JobStatus.COMPLETED if exit_code == 0 else JobStatus.FAILED
             if exit_code != 0:
                 job.error = f"Job failed with exit code {exit_code}"
+            self._save(job)
 
             await self._broadcast(job.job_id, "completed", {
                 "status": job.status,
@@ -295,6 +343,7 @@ class JobPipeline:
             job.status = JobStatus.CANCELLED
             job.error = "Job was cancelled"
             job.completed_at = datetime.now(timezone.utc).isoformat()
+            self._save(job)
             logger.info(f"[Pipeline] {job.job_id} cancelled")
 
         except Exception as exc:
@@ -302,6 +351,7 @@ class JobPipeline:
             job.error = str(exc)
             job.completed_at = datetime.now(timezone.utc).isoformat()
             job.duration_seconds = time.time() - t0
+            self._save(job)
             logger.error(f"[Pipeline] {job.job_id} pipeline error: {exc}", exc_info=True)
             await self._broadcast(job.job_id, "error", {"error": str(exc), "status": "failed"})
             # Best-effort terminate even on error

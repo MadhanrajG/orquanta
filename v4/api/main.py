@@ -102,10 +102,22 @@ async def lifespan(_app: FastAPI):
     except Exception as exc:
         logger.warning(f"Env validation error (non-fatal): {exc}")
 
+    # Ensure goals + jobs tables exist and restore persisted state
+    try:
+        from ..database.persistence import ensure_tables, load_all_goals, load_all_jobs
+        ensure_tables()
+        _persisted_goals = load_all_goals()
+        _persisted_jobs = load_all_jobs()
+    except Exception as _exc:
+        logger.warning(f"[Persistence] Startup load failed (non-fatal): {_exc}")
+        _persisted_goals, _persisted_jobs = [], []
+
     # Start MasterOrchestrator
     from .routers.goals import get_orchestrator
     orchestrator = get_orchestrator()
     await orchestrator.start()
+    if _persisted_goals:
+        orchestrator.restore_goals(_persisted_goals)
 
     # Start specialist agents — use module-level singletons so all routers
     # share the same instances (not orphan copies with empty state).
@@ -158,6 +170,8 @@ async def lifespan(_app: FastAPI):
     # Ã¢â€â‚¬Ã¢â€â‚¬ Init production job pipeline Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
     from ..execution.pipeline import get_pipeline
     pipeline = get_pipeline()
+    if _persisted_jobs:
+        pipeline.restore_jobs(_persisted_jobs)
     # Wire WebSocket broadcaster so pipeline can push live events to clients
     try:
         from .websocket.agent_stream import broadcast_to_all

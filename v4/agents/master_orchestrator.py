@@ -146,6 +146,7 @@ class MasterOrchestrator:
         goal_id = str(uuid4())
         execution = GoalExecution(goal_id=goal_id, raw_text=raw_text, user_id=user_id)
         self._goals[goal_id] = execution
+        self._save_goal(execution)
 
         logger.info(f"[Orchestrator] Goal submitted: {goal_id} — '{raw_text[:80]}...'")
 
@@ -153,6 +154,31 @@ class MasterOrchestrator:
         asyncio.create_task(self._execute_goal(execution))
 
         return goal_id
+
+    def restore_goals(self, goals: list[dict]) -> None:
+        """Restore persisted goals on startup. In-flight goals are marked failed."""
+        for g in goals:
+            ex = GoalExecution.__new__(GoalExecution)
+            ex.goal_id = g["goal_id"]
+            ex.raw_text = g.get("raw_text", "")
+            ex.user_id = g.get("user_id", "")
+            ex.plan = g.get("plan", {})
+            ex.tasks = g.get("tasks", [])
+            ex.completed_tasks = g.get("completed_tasks", [])
+            ex.failed_tasks = g.get("failed_tasks", [])
+            ex.result = g.get("result", {})
+            ex.cost_incurred_usd = g.get("cost_incurred_usd", 0.0)
+            ex.created_at = g.get("created_at", "")
+            ex.updated_at = g.get("updated_at", "")
+            ex.reasoning_log = []
+            status = g.get("status", "failed")
+            if status in ("decomposing", "running"):
+                ex.status = "failed"
+                ex.result = {"error": "Server restarted — goal was interrupted."}
+            else:
+                ex.status = status
+            self._goals[ex.goal_id] = ex
+        logger.info(f"[Orchestrator] Restored {len(goals)} goals from DB.")
 
     def get_goal_status(self, goal_id: str) -> dict[str, Any] | None:
         """Return current status of a goal execution."""
@@ -178,6 +204,14 @@ class MasterOrchestrator:
     # ------------------------------------------------------------------
     # ReAct Execution Engine
     # ------------------------------------------------------------------
+
+    def _save_goal(self, ex: GoalExecution) -> None:
+        """Persist goal state to DB. Fire-and-forget — never raises."""
+        try:
+            from ..database.persistence import upsert_goal
+            upsert_goal(ex.to_dict())
+        except Exception as exc:
+            logger.debug(f"[Orchestrator] _save_goal suppressed: {exc}")
 
     async def _execute_goal(self, ex: GoalExecution) -> None:
         """Main ReAct loop for a single goal."""
@@ -206,6 +240,7 @@ class MasterOrchestrator:
             ex.tasks = plan.get("tasks", [])
             ex.status = "running"
             ex.log_reasoning("ACT", f"Plan created with {len(ex.tasks)} tasks.")
+            self._save_goal(ex)
             logger.info(
                 f"[ReAct] Goal {ex.goal_id} decomposed into {len(ex.tasks)} tasks. "
                 f"Est. cost: ${plan.get('estimated_cost_usd', 0):.2f}"
@@ -264,6 +299,7 @@ class MasterOrchestrator:
                 "plan_reasoning": plan.get("reasoning", ""),
             }
             ex.log_reasoning("OBSERVE", "Goal completed successfully.")
+            self._save_goal(ex)
 
             # Store outcome in memory for future goals
             await self.memory.store_event({
@@ -285,6 +321,7 @@ class MasterOrchestrator:
             ex.status = "failed"
             ex.result = {"error": str(exc)}
             ex.log_reasoning("ERROR", str(exc))
+            self._save_goal(ex)
             logger.error(f"[ReAct] Goal {ex.goal_id} FAILED: {exc}", exc_info=True)
 
         finally:
@@ -313,10 +350,12 @@ class MasterOrchestrator:
             ex.cost_incurred_usd += cost
 
             ex.log_reasoning("OBSERVE", f"Task {task_id} completed: {result}")
+            self._save_goal(ex)
 
         except Exception as exc:
             ex.failed_tasks.append(task_id)
             ex.log_reasoning("OBSERVE", f"Task {task_id} FAILED: {exc}")
+            self._save_goal(ex)
             logger.error(f"[Orchestrator] Task {task_id} FAILED: {exc}")
 
         finally:
