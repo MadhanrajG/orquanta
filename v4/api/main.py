@@ -51,13 +51,15 @@ logging.basicConfig(
 logger = logging.getLogger("orquanta.api")
 
 VERSION = "1.0.0"
-ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",")
+_ENV = os.getenv("ENV", "production")
+_DEFAULT_ORIGINS = "*" if _ENV == "development" else "https://orquanta.com,https://orquanta-app.pages.dev"
+ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", _DEFAULT_ORIGINS).split(",")
 
 
 # Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Lifespan (startup / shutdown) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     """Startup: validate env, boot agents, wire pipeline. Shutdown: graceful stop."""
     logger.info(f"OrQuanta Agentic v{VERSION} starting upÃ¢â‚¬Â¦")
 
@@ -80,22 +82,23 @@ async def lifespan(app: FastAPI):
     orchestrator = get_orchestrator()
     await orchestrator.start()
 
-    # Start specialist agents
-    from ..agents.scheduler_agent import SchedulerAgent
-    from ..agents.cost_optimizer_agent import CostOptimizerAgent
-    from ..agents.healing_agent import HealingAgent
-    from ..agents.forecast_agent import ForecastAgent
+    # Start specialist agents — use module-level singletons so all routers
+    # share the same instances (not orphan copies with empty state).
+    from ..agents.scheduler_agent import get_scheduler as _get_scheduler
+    from ..agents.cost_optimizer_agent import get_cost_optimizer as _get_cost_optimizer
+    from ..agents.healing_agent import get_healing_agent as _get_healing_agent
+    from ..agents.forecast_agent import get_forecast_agent as _get_forecast_agent
 
-    scheduler = SchedulerAgent()
+    scheduler = _get_scheduler()
     await scheduler.start()
 
-    cost_agent = CostOptimizerAgent()
+    cost_agent = _get_cost_optimizer()
     await cost_agent.start()
 
-    healing_agent = HealingAgent()
+    healing_agent = _get_healing_agent()
     await healing_agent.start()
 
-    forecast_agent = ForecastAgent()
+    forecast_agent = _get_forecast_agent()
     await forecast_agent.start()
 
     # Start Vero -- Superior Intelligence Meta-Agent (boots last, monitors all)
@@ -901,14 +904,14 @@ if os.path.isdir(_DIST_DIR):
 
     @app.get("/app", include_in_schema=False)
     @app.get("/app/{path:path}", include_in_schema=False)
-    async def serve_react_app(path: str = ""):
+    async def serve_react_app(_path: str = ""):
         """Serve the React SPA Ã¢â‚¬â€ index.html handles all client-side routes."""
         return FileResponse(os.path.join(_DIST_DIR, "index.html"))
 else:
     # Frontend not built Ã¢â‚¬â€ tell developers clearly
     @app.get("/app", include_in_schema=False)
     @app.get("/app/{path:path}", include_in_schema=False)
-    async def react_not_built(path: str = ""):
+    async def react_not_built(_path: str = ""):
         return HTMLResponse(
             content="<h2>Frontend not built. Run <code>npm run build</code> inside v4/frontend/.</h2>",
             status_code=503,

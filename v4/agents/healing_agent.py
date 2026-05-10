@@ -359,3 +359,18 @@ class HealingAgent:
             "healed_at": datetime.now(timezone.utc).isoformat(),
         })
         record.last_healed_at = datetime.now(timezone.utc).isoformat()
+
+
+# ---------------------------------------------------------------------------
+# Singleton
+# ---------------------------------------------------------------------------
+
+_healing_agent: "HealingAgent | None" = None
+
+
+def get_healing_agent() -> "HealingAgent":
+    """Return the application-wide HealingAgent singleton."""
+    global _healing_agent
+    if _healing_agent is None:
+        _healing_agent = HealingAgent()
+    return _healing_agent

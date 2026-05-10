@@ -18,21 +18,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ..middleware.auth import get_current_user
 from ..middleware.rate_limit import rate_limit_dependency
-from ..models.schemas import JobCreateRequest, JobListResponse
-from ...agents.scheduler_agent import SchedulerAgent
+from ..models.schemas import JobCreateRequest
 from ...execution.pipeline import get_pipeline, JobStatus
 
 logger = logging.getLogger("orquanta.routers.jobs")
 router = APIRouter(prefix="/api/v1/jobs", tags=["Jobs"])
-
-_scheduler: SchedulerAgent | None = None
-
-
-def get_scheduler() -> SchedulerAgent:
-    global _scheduler
-    if _scheduler is None:
-        _scheduler = SchedulerAgent()
-    return _scheduler
 
 
 @router.post(
@@ -76,6 +66,7 @@ async def create_job(
         provider_preference=request.provider,
         max_cost_usd=request.max_cost_usd or 50.0,
         max_runtime_minutes=request.max_runtime_minutes or 120.0,
+        tags={"goal_id": request.goal_id} if request.goal_id else {},
     )
 
     logger.info(f"[Jobs] {job.job_id} submitted for user {user.get('email', '?')}")
@@ -171,21 +162,32 @@ async def cancel_job(
     return result
 
 
+def _shell_quote(s: str) -> str:
+    """Single-quote a string for safe bash interpolation (prevents injection)."""
+    return "'" + s.replace("'", "'\"'\"'") + "'"
+
+
 def _intent_to_script(intent: str, gpu_type: str, gpu_count: int) -> str:
-    """Convert a plain-English intent into a minimal GPU job script."""
+    """Convert a plain-English intent into a minimal GPU job script.
+
+    Intent is assigned via single-quoted variable assignment so that no
+    shell metacharacters ($(...), backticks, etc.) can execute.
+    """
+    q_intent = _shell_quote(intent)
+    q_gpu = _shell_quote(gpu_type)
     return f"""#!/bin/bash
 set -euo pipefail
+INTENT={q_intent}
+GPU_TYPE={q_gpu}
+GPU_COUNT={gpu_count}
 echo "=== OrQuanta GPU Job ==="
-echo "Intent: {intent}"
-echo "GPU: {gpu_count}x {gpu_type}"
+printf 'Intent: %s\\n' "$INTENT"
+printf 'GPU: %sx %s\\n' "$GPU_COUNT" "$GPU_TYPE"
 echo "Started: $(date -u)"
 echo ""
-# GPU info
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader 2>/dev/null || echo "GPU info unavailable"
 echo ""
 echo "=== Running workload ==="
-# User intent has been interpreted by the AI agent.
-# The SchedulerAgent generates the actual execution script.
 echo "Job ready — attach your script or use the script field in the API."
 echo "=== Completed: $(date -u) ==="
 """

@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, Optional
-from uuid import UUID
-
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 
 # ---------------------------------------------------------------------------
@@ -115,6 +113,7 @@ class GoalListResponse(BaseModel):
 
 class JobCreateRequest(BaseModel):
     intent: str = Field(..., min_length=5, max_length=500, description="Job description")
+    goal_id: Optional[str] = Field(None, description="Parent goal ID to associate this job with")
     gpu_type: str = Field("H100", description="GPU model: H100/A100/T4/A10G")
     gpu_count: int = Field(1, ge=1, le=64)
     provider: str = Field("aws", description="Cloud provider: aws/gcp/azure/coreweave")

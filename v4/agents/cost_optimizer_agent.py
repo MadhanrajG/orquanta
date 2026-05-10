@@ -315,3 +315,18 @@ class CostOptimizerAgent:
                         logger.debug(f"[CostOptimizer] Price poll error {provider}/{gpu}: {exc}")
 
             await asyncio.sleep(300)  # Poll every 5 minutes
+
+
+# ---------------------------------------------------------------------------
+# Singleton
+# ---------------------------------------------------------------------------
+
+_cost_optimizer: "CostOptimizerAgent | None" = None
+
+
+def get_cost_optimizer() -> "CostOptimizerAgent":
+    """Return the application-wide CostOptimizerAgent singleton."""
+    global _cost_optimizer
+    if _cost_optimizer is None:
+        _cost_optimizer = CostOptimizerAgent()
+    return _cost_optimizer

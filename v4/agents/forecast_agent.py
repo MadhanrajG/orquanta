@@ -304,3 +304,18 @@ class ForecastAgent:
                 await self.run_forecast(window_hours=24)
             except Exception as exc:
                 logger.error(f"[Forecast] Periodic forecast failed: {exc}")
+
+
+# ---------------------------------------------------------------------------
+# Singleton
+# ---------------------------------------------------------------------------
+
+_forecast_agent: "ForecastAgent | None" = None
+
+
+def get_forecast_agent() -> "ForecastAgent":
+    """Return the application-wide ForecastAgent singleton."""
+    global _forecast_agent
+    if _forecast_agent is None:
+        _forecast_agent = ForecastAgent()
+    return _forecast_agent

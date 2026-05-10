@@ -200,3 +200,13 @@ async def broadcast_alert(message: str, severity: str = "info") -> None:
         "severity": severity,
         "ts": datetime.now(timezone.utc).isoformat(),
     })
+
+
+async def broadcast_to_all(message: dict[str, Any]) -> None:
+    """Broadcast any JSON message to all connected WebSocket clients.
+
+    Used by JobPipeline to push live job events (provisioning, log lines,
+    completion) to every open dashboard tab. Injected via
+    pipeline.set_ws_broadcaster(broadcast_to_all) at startup.
+    """
+    await manager.broadcast(message)

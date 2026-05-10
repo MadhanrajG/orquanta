@@ -490,3 +490,19 @@ def _estimate_provision_cost(job: ScheduledJob) -> float:
     }
     base = cost_map.get((job.provider, job.gpu_type), 5.0)
     return base * job.gpu_count * (job.max_runtime_minutes / 60)
+
+
+
+# ---------------------------------------------------------------------------
+# Singleton — one shared instance across all routers and the lifespan
+# ---------------------------------------------------------------------------
+
+_scheduler: SchedulerAgent | None = None
+
+
+def get_scheduler() -> SchedulerAgent:
+    """Return the application-wide SchedulerAgent singleton."""
+    global _scheduler
+    if _scheduler is None:
+        _scheduler = SchedulerAgent()
+    return _scheduler

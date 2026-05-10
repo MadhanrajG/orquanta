@@ -186,7 +186,11 @@ class JobPipeline:
             script=script,
             gpu_type=gpu_type,
             gpu_count=gpu_count,
-            metadata={"max_cost_usd": max_cost_usd, "max_runtime_minutes": max_runtime_minutes},
+            metadata={
+                "max_cost_usd": max_cost_usd,
+                "max_runtime_minutes": max_runtime_minutes,
+                "tags": tags or {},
+            },
         )
         self._jobs[job_id] = job
         logger.info(f"[Pipeline] Job {job_id} queued: {intent[:60]} ({gpu_count}×{gpu_type})")
@@ -339,7 +343,7 @@ class JobPipeline:
                 gpu_type=job.gpu_type,
                 gpu_count=job.gpu_count,
                 spot=True,
-                tags={"orquanta_job": job.job_id, "user_id": job.user_id},
+                tags={"orquanta_job": job.job_id, "user_id": job.user_id, **job.metadata.get("tags", {})},
                 budget_usd_hr=budget_hr,
             )
             return (
@@ -437,12 +441,21 @@ class JobPipeline:
 
         return 0, "\n".join(log_lines), "", 95.0 + random.uniform(-5, 3), 72.5
 
+    @staticmethod
+    def _shell_quote(s: str) -> str:
+        """Single-quote a string for bash — prevents all metacharacter injection."""
+        return "'" + s.replace("'", "'\"'\"'") + "'"
+
     def _default_script(self, job: PipelineJob) -> str:
         """Generate a default job script when user doesn't provide one."""
+        q_intent = self._shell_quote(job.intent)
+        q_gpu = self._shell_quote(job.gpu_type)
         return f"""#!/bin/bash
 set -euo pipefail
-echo "[OrQuanta] Job {job.job_id}: {job.intent}"
-echo "[OrQuanta] GPUs: {job.gpu_count}× {job.gpu_type}"
+INTENT={q_intent}
+GPU_TYPE={q_gpu}
+printf '[OrQuanta] Job {job.job_id}: %s\\n' "$INTENT"
+printf '[OrQuanta] GPUs: {job.gpu_count}x %s\\n' "$GPU_TYPE"
 nvidia-smi
 echo "[OrQuanta] Job completed at $(date -u)"
 """
