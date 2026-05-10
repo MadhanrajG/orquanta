@@ -31,6 +31,8 @@ from .routers.free_tier import router as free_tier_router
 from .routers.vero import router as vero_router
 from .routers.nemoclaw import router as nemoclaw_router
 from .routers.uix import router as uix_router
+from .routers.oauth import router as oauth_router
+from .routers.api_keys import router as api_keys_router
 from .websocket.agent_stream import router as ws_router
 from .middleware.auth import authenticate_user, create_access_token, register_user, get_current_user
 from .models.schemas import (
@@ -919,6 +921,8 @@ app.include_router(pricing_router)  # /api/v1/pricing -- live GPU prices from La
 app.include_router(vero_router)     # /api/v1/vero -- Vero meta-agent
 app.include_router(nemoclaw_router) # /api/v1/nemoclaw -- NemoClaw cognitive layer
 app.include_router(uix_router)      # /api/v1/uix -- UIXAgent autonomous UI/UX diagnostics
+app.include_router(oauth_router)    # /auth/google + /auth/github -- OAuth2 SSO
+app.include_router(api_keys_router) # /api/v1/api-keys -- programmatic access keys
 app.include_router(ws_router)
 
 # Demo router Ã¢â‚¬â€ always included; active only when DEMO_MODE=true

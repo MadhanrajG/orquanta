@@ -149,6 +149,28 @@ class JobPipeline:
         except Exception as exc:
             logger.debug(f"[Pipeline] _save suppressed: {exc}")
 
+    def _fire_webhook(self, job: PipelineJob, event_type: str) -> None:
+        """Dispatch a webhook event for this job. Fire-and-forget."""
+        try:
+            from ..api.routers.webhooks import dispatch_event
+            asyncio.create_task(dispatch_event(
+                event_type=event_type,
+                data={
+                    "job_id": job.job_id,
+                    "intent": job.intent[:120],
+                    "gpu_type": job.gpu_type,
+                    "gpu_count": job.gpu_count,
+                    "provider": job.provider,
+                    "status": job.status,
+                    "cost_usd": round(job.cost_usd, 4),
+                    "duration_seconds": round(job.duration_seconds, 1),
+                    "error": job.error,
+                },
+                user_id=job.user_id,
+            ))
+        except Exception as exc:
+            logger.debug(f"[Pipeline] _fire_webhook suppressed: {exc}")
+
     def restore_jobs(self, jobs: list[dict]) -> None:
         """Restore persisted jobs on startup. In-flight jobs are marked failed."""
         for j in jobs:
@@ -326,6 +348,9 @@ class JobPipeline:
                 job.error = f"Job failed with exit code {exit_code}"
             self._save(job)
 
+            event_type = "job_completed" if exit_code == 0 else "job_failed"
+            self._fire_webhook(job, event_type)
+
             await self._broadcast(job.job_id, "completed", {
                 "status": job.status,
                 "exit_code": exit_code,
@@ -344,6 +369,7 @@ class JobPipeline:
             job.error = "Job was cancelled"
             job.completed_at = datetime.now(timezone.utc).isoformat()
             self._save(job)
+            self._fire_webhook(job, "job_failed")
             logger.info(f"[Pipeline] {job.job_id} cancelled")
 
         except Exception as exc:
@@ -352,6 +378,7 @@ class JobPipeline:
             job.completed_at = datetime.now(timezone.utc).isoformat()
             job.duration_seconds = time.time() - t0
             self._save(job)
+            self._fire_webhook(job, "job_failed")
             logger.error(f"[Pipeline] {job.job_id} pipeline error: {exc}", exc_info=True)
             await self._broadcast(job.job_id, "error", {"error": str(exc), "status": "failed"})
             # Best-effort terminate even on error

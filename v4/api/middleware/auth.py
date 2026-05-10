@@ -89,9 +89,10 @@ async def get_current_user(
 ) -> dict[str, Any]:
     """FastAPI dependency: extract and validate the current user.
 
-    Supports two auth methods:
+    Supports three auth methods:
     1. Bearer JWT token (primary)
-    2. X-API-Key header (legacy v3.8 compatibility)
+    2. Bearer sk-orq-... API key (programmatic access)
+    3. X-API-Key header (legacy v3.8 compatibility)
 
     Returns:
         User payload dict with sub, email, role.
@@ -99,9 +100,24 @@ async def get_current_user(
     Raises:
         HTTPException 401: If no valid credentials provided.
     """
-    # Method 1: Bearer token
+    # Method 1: Bearer token (JWT or sk-orq-... API key)
     if credentials and credentials.scheme.lower() == "bearer":
-        return decode_token(credentials.credentials)
+        token = credentials.credentials
+        if token.startswith("sk-orq-"):
+            # User API key — look up in DB
+            try:
+                from ..routers.api_keys import lookup_api_key
+                user = lookup_api_key(token)
+                if user:
+                    return user
+            except Exception as exc:
+                logger.debug(f"API key lookup error: {exc}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or revoked API key.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return decode_token(token)
 
     # Method 2: Legacy API key (X-API-Key header)
     if request:

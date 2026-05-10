@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { User, Key, Bell, Shield, Save, Eye, EyeOff, Copy, RefreshCw, CheckCircle } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { User, Key, Bell, Shield, Save, Eye, EyeOff, Copy, RefreshCw, CheckCircle, Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '../App.jsx'
 
 const API = import.meta.env.VITE_API_URL || ''
@@ -32,7 +32,63 @@ export default function ProfilePage() {
     )
     const [notifSaved, setNotifSaved] = useState(false)
 
-    const apiKey = token ? `oq-${token.slice(0, 24)}` : 'oq-xxxx-login-to-view'
+    // API key management state
+    const [apiKeys, setApiKeys] = useState([])
+    const [newKeyName, setNewKeyName] = useState('')
+    const [createdKey, setCreatedKey] = useState(null)  // shown once after creation
+    const [keyCopied, setKeyCopied] = useState(false)
+    const [keyLoading, setKeyLoading] = useState(false)
+
+    useEffect(() => {
+        if (tab === 'api') fetchApiKeys()
+    }, [tab])
+
+    const fetchApiKeys = async () => {
+        try {
+            const res = await fetch(`${API}/api/v1/api-keys`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+            if (res.ok) setApiKeys(await res.json())
+        } catch { /* non-fatal */ }
+    }
+
+    const handleCreateKey = async (e) => {
+        e.preventDefault()
+        if (!newKeyName.trim()) return
+        setKeyLoading(true)
+        try {
+            const res = await fetch(`${API}/api/v1/api-keys`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ name: newKeyName.trim() }),
+            })
+            if (res.ok) {
+                const created = await res.json()
+                setCreatedKey(created)
+                setNewKeyName('')
+                fetchApiKeys()
+            } else {
+                const err = await res.json().catch(() => ({}))
+                setError(err.detail || 'Failed to create key')
+            }
+        } catch { setError('Network error') }
+        finally { setKeyLoading(false) }
+    }
+
+    const handleRevokeKey = async (keyId) => {
+        try {
+            await fetch(`${API}/api/v1/api-keys/${keyId}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` },
+            })
+            setApiKeys(ks => ks.filter(k => k.key_id !== keyId))
+        } catch { /* non-fatal */ }
+    }
+
+    const copyCreatedKey = () => {
+        navigator.clipboard.writeText(createdKey?.key || '')
+        setKeyCopied(true); setTimeout(() => setKeyCopied(false), 2000)
+    }
 
     // Bug 5 fix: call real API, with graceful fallback
     const handleSaveProfile = async (e) => {
@@ -216,22 +272,71 @@ export default function ProfilePage() {
             {/* API Keys Tab */}
             {tab === 'api' && (
                 <div className="space-y-4">
-                    <div className="glass-card p-6">
-                        <h3 className="text-white font-semibold mb-1">Your API Token</h3>
-                        <p className="text-xs text-slate-500 mb-4">Use this token to authenticate API requests. Keep it secret.</p>
-                        <div className="flex items-center gap-2">
-                            <code className="flex-1 input-field font-mono text-xs py-2 text-slate-300 overflow-hidden text-ellipsis whitespace-nowrap">
-                                {apiKey}
-                            </code>
-                            <button onClick={copyApiKey} className="btn-ghost flex items-center gap-1.5 text-xs whitespace-nowrap" style={{ minWidth: 80 }}>
-                                {apiKeyCopied ? <CheckCircle size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                                {apiKeyCopied ? 'Copied' : 'Copy'}
+                    {/* One-time key reveal */}
+                    {createdKey && (
+                        <div className="glass-card p-5 border border-emerald-500/30" style={{ background: 'rgba(16,185,129,0.05)' }}>
+                            <p className="text-emerald-400 font-semibold text-sm mb-1">API key created — copy it now</p>
+                            <p className="text-xs text-slate-500 mb-3">This key will not be shown again. Store it securely.</p>
+                            <div className="flex items-center gap-2">
+                                <code className="flex-1 input-field font-mono text-xs py-2 text-emerald-300 overflow-hidden text-ellipsis whitespace-nowrap">
+                                    {createdKey.key}
+                                </code>
+                                <button onClick={copyCreatedKey} className="btn-ghost flex items-center gap-1.5 text-xs whitespace-nowrap" style={{ minWidth: 80 }}>
+                                    {keyCopied ? <CheckCircle size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                                    {keyCopied ? 'Copied!' : 'Copy'}
+                                </button>
+                            </div>
+                            <button onClick={() => setCreatedKey(null)} className="text-xs text-slate-500 mt-3 hover:text-slate-300">
+                                I've saved it — dismiss
                             </button>
                         </div>
-                        <p className="text-xs text-slate-600 mt-3">
-                            Use as: <code className="text-slate-400">Authorization: Bearer {'<token>'}</code>
-                        </p>
+                    )}
+
+                    {/* Create new key */}
+                    <div className="glass-card p-6">
+                        <h3 className="text-white font-semibold mb-1">Create API Key</h3>
+                        <p className="text-xs text-slate-500 mb-4">Keys use format <code className="text-slate-400">sk-orq-...</code> and work anywhere a Bearer JWT does.</p>
+                        <form onSubmit={handleCreateKey} className="flex gap-2">
+                            <input
+                                className="input-field flex-1 text-sm py-2"
+                                placeholder="Key name, e.g. CI pipeline"
+                                value={newKeyName}
+                                onChange={e => setNewKeyName(e.target.value)}
+                                maxLength={80}
+                            />
+                            <button type="submit" disabled={keyLoading || !newKeyName.trim()} className="btn btn-primary flex items-center gap-1.5 text-sm px-4 py-2">
+                                <Plus size={14} />
+                                {keyLoading ? 'Creating…' : 'Create'}
+                            </button>
+                        </form>
                     </div>
+
+                    {/* Existing keys */}
+                    <div className="glass-card p-6">
+                        <h3 className="text-white font-semibold mb-4">Active Keys</h3>
+                        {apiKeys.length === 0
+                            ? <p className="text-xs text-slate-500">No API keys yet. Create one above.</p>
+                            : <div className="space-y-3">
+                                {apiKeys.map(k => (
+                                    <div key={k.key_id} className="flex items-center justify-between py-2 border-b border-white/[0.04]">
+                                        <div>
+                                            <p className="text-sm text-white font-medium">{k.name}</p>
+                                            <p className="text-xs text-slate-500 font-mono mt-0.5">{k.key_prefix}…</p>
+                                            <p className="text-xs text-slate-600 mt-0.5">
+                                                Created {new Date(k.created_at).toLocaleDateString()}
+                                                {k.last_used ? ` · Last used ${new Date(k.last_used).toLocaleDateString()}` : ' · Never used'}
+                                            </p>
+                                        </div>
+                                        <button onClick={() => handleRevokeKey(k.key_id)}
+                                            className="btn-ghost text-red-400 hover:text-red-300 flex items-center gap-1 text-xs px-3 py-1.5">
+                                            <Trash2 size={13} /> Revoke
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        }
+                    </div>
+
                     <div className="glass-card p-5">
                         <h3 className="text-white font-semibold mb-2 text-sm">API Documentation</h3>
                         <p className="text-xs text-slate-500 mb-3">Full REST API with WebSocket streaming support.</p>

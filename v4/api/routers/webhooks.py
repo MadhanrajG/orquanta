@@ -26,8 +26,10 @@ from datetime import datetime, timezone
 from typing import Annotated, Any
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, HttpUrl
+
+from ..middleware.auth import get_current_user
 
 logger = logging.getLogger("orquanta.webhooks")
 
@@ -62,18 +64,7 @@ class WebhookOut(BaseModel):
     inbound_url: str
 
 
-# ─── Auth dependency (reuse from app) ────────────────────────────────────────
-
-def _get_current_user(request: Request) -> dict:
-    """Simplified auth — in production uses the real JWT middleware."""
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    # For demo mode, accept any bearer token and return "admin"
-    return {"user_id": "admin", "email": "admin@orquanta.com"}
-
-
-CurrentUser = Annotated[dict, Depends(_get_current_user)]
+CurrentUser = Annotated[dict, Depends(get_current_user)]
 
 
 # ─── Routes ──────────────────────────────────────────────────────────────────
@@ -85,7 +76,7 @@ async def create_webhook(body: WebhookCreate, user: CurrentUser):
     token = secrets.token_urlsafe(24)
     record = {
         "id": wid,
-        "user_id": user["user_id"],
+        "user_id": user["sub"],
         "url": str(body.url),
         "events": body.events,
         "description": body.description,
@@ -96,7 +87,7 @@ async def create_webhook(body: WebhookCreate, user: CurrentUser):
         "delivery_count": 0,
     }
     _webhooks[wid] = record
-    _inbound_tokens[token] = user["user_id"]
+    _inbound_tokens[token] = user["sub"]
     _deliveries[wid] = []
     logger.info(f"[Webhooks] Registered {wid} → {body.url} for {user['user_id']}")
     return _to_out(record)
@@ -105,14 +96,14 @@ async def create_webhook(body: WebhookCreate, user: CurrentUser):
 @router.get("", response_model=list[WebhookOut])
 async def list_webhooks(user: CurrentUser):
     """List all webhooks for the current user."""
-    return [_to_out(w) for w in _webhooks.values() if w["user_id"] == user["user_id"]]
+    return [_to_out(w) for w in _webhooks.values() if w["user_id"] == user["sub"]]
 
 
 @router.delete("/{webhook_id}", status_code=204)
 async def delete_webhook(webhook_id: str, user: CurrentUser):
     """Remove a webhook."""
     hook = _webhooks.get(webhook_id)
-    if not hook or hook["user_id"] != user["user_id"]:
+    if not hook or hook["user_id"] != user["sub"]:
         raise HTTPException(status_code=404, detail="Webhook not found")
     _inbound_tokens.pop(hook["inbound_token"], None)
     _webhooks.pop(webhook_id)
@@ -123,7 +114,7 @@ async def delete_webhook(webhook_id: str, user: CurrentUser):
 async def test_webhook(webhook_id: str, user: CurrentUser):
     """Test-fire a webhook with a sample job_completed event."""
     hook = _webhooks.get(webhook_id)
-    if not hook or hook["user_id"] != user["user_id"]:
+    if not hook or hook["user_id"] != user["sub"]:
         raise HTTPException(status_code=404, detail="Webhook not found")
 
     test_payload = {
@@ -150,7 +141,7 @@ async def test_webhook(webhook_id: str, user: CurrentUser):
 async def get_deliveries(webhook_id: str, user: CurrentUser):
     """Get delivery log for a webhook."""
     hook = _webhooks.get(webhook_id)
-    if not hook or hook["user_id"] != user["user_id"]:
+    if not hook or hook["user_id"] != user["sub"]:
         raise HTTPException(status_code=404, detail="Webhook not found")
     return _deliveries.get(webhook_id, [])[-50:]  # Last 50
 
@@ -178,18 +169,20 @@ async def inbound_trigger(token: str, request: Request):
     if not goal:
         raise HTTPException(status_code=400, detail="'goal' field is required")
 
-    # Create job via internal API (import here to avoid circular)
-    job_id = f"job-{secrets.token_hex(6)}"
     logger.info(f"[Webhooks] Inbound trigger from {user_id}: {goal[:60]}")
+    try:
+        from ..routers.goals import get_orchestrator
+        orchestrator = get_orchestrator()
+        goal_id = await orchestrator.submit_goal(raw_text=goal[:2000], user_id=user_id)
+    except Exception as exc:
+        logger.error(f"[Webhooks] Inbound goal submission failed: {exc}")
+        raise HTTPException(status_code=500, detail="Failed to queue goal")
 
-    # In production: call the goal orchestration pipeline
-    # from v4.agents.master_orchestrator import MasterOrchestrator
-    # For now: queue a job record and return immediately
     return {
-        "job_id": job_id,
-        "status": "queued",
+        "goal_id": goal_id,
+        "status": "accepted",
         "goal": goal[:120],
-        "message": "Job queued — check dashboard for status",
+        "message": "Goal accepted — check dashboard for status",
         "dashboard_url": f"{APP_URL}/app",
     }
 
