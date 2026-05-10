@@ -24,9 +24,9 @@ class RegisterRequest(BaseModel):
         """Lowercase and strip whitespace; block obviously injected values."""
         import re
         v = str(v).strip().lower()
-        # Block SQL and script injection in the email field
-        # Hyphen must be at end of character class to avoid regex range errors
-        if re.search(r"[<>'\"\\;-]|--", v):
+        # Block SQL/script injection — hyphen alone is valid in emails (user@my-domain.com)
+        # Double-dash (SQL comment) is caught by the |-- branch
+        if re.search(r"[<>'\"\\;]|--", v):
             raise ValueError("Invalid characters in email address")
         return v
 

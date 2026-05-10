@@ -64,10 +64,11 @@ def test_root(client):
 # ─── Auth ──────────────────────────────────────────────────────────────────
 
 def test_register_new_user(client):
+    import uuid
     res = client.post("/auth/register", json={
-        "email": "newuser@test.com", "password": "password123", "name": "New User"
+        "email": f"newuser-{uuid.uuid4().hex[:8]}@test.com", "password": "password123", "name": "New User"
     })
-    assert res.status_code == 200
+    assert res.status_code == 201  # register returns 201 Created
     data = res.json()
     assert "access_token" in data
 

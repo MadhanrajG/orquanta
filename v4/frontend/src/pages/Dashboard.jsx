@@ -45,13 +45,9 @@ function useApi(endpoint, interval = 6000) {
 function LiveClock() {
  const [now, setNow] = useState(new Date())
  useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t) }, [])
- // Build a clean UTC string: "2026-03-27 04:15:22 UTC"
  const utcStr = now.toISOString().replace('T', ' ').slice(0, 19) + ' UTC'
  return (
- <span className="font-mono text-xs text-slate-400 tabular-nums tracking-wide">
-      <VeroStatus />
- {utcStr}
- </span>
+ <span className="font-mono text-xs text-slate-400 tabular-nums tracking-wide">{utcStr}</span>
  )
 }
 
@@ -574,6 +570,9 @@ export default function Dashboard() {
 
  return (
  <div className="space-y-5 animate-fade-in">
+ {/* ── Vero meta-agent status ── */}
+ <VeroStatus />
+
  {/* ── Hero savings bar ── */}
  <div className="savings-hero">
  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>

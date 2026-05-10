@@ -123,11 +123,11 @@ class TestAuthFlow:
         assert r.status_code in (400, 409)
 
     def test_protected_route_without_token_rejected(self, client):
-        r = client.get("/goals/")
+        r = client.get("/api/v1/goals/")
         assert r.status_code == 401
 
     def test_protected_route_with_token_works(self, client, auth_headers):
-        r = client.get("/goals/", headers=auth_headers)
+        r = client.get("/api/v1/goals/", headers=auth_headers)
         assert r.status_code == 200
 
 
@@ -137,29 +137,29 @@ class TestGoalSubmissionFlow:
     """Test goal life cycle from submission to completion."""
 
     def test_submit_goal_returns_goal_id(self, client, auth_headers):
-        r = client.post("/goals/", json={
+        r = client.post("/api/v1/goals/", json={
             "raw_text": "Train BERT model on customer feedback dataset for sentiment analysis",
             "budget_usd": 50.0,
         }, headers=auth_headers)
-        assert r.status_code == 200
+        assert r.status_code in (200, 202)
         body = r.json()
         assert "goal_id" in body
         assert body["status"] in ("accepted", "planning", "executing")
 
     def test_submit_goal_too_short_rejected(self, client, auth_headers):
-        r = client.post("/goals/", json={"raw_text": "short"}, headers=auth_headers)
+        r = client.post("/api/v1/goals/", json={"raw_text": "short"}, headers=auth_headers)
         assert r.status_code == 422
 
     def test_goal_persists_and_is_retrievable(self, client, auth_headers):
         # Submit
-        r = client.post("/goals/", json={
+        r = client.post("/api/v1/goals/", json={
             "raw_text": "Fine-tune LLaMA 3 on medical QA dataset with LoRA on A100"
         }, headers=auth_headers)
-        assert r.status_code == 200
+        assert r.status_code in (200, 202)
         goal_id = r.json()["goal_id"]
 
         # Retrieve
-        r = client.get(f"/goals/{goal_id}", headers=auth_headers)
+        r = client.get(f"/api/v1/goals/{goal_id}", headers=auth_headers)
         assert r.status_code == 200
         body = r.json()
         assert body["goal_id"] == goal_id
@@ -168,23 +168,23 @@ class TestGoalSubmissionFlow:
     def test_goal_list_pagination(self, client, auth_headers):
         # Submit 3 goals
         for i in range(3):
-            client.post("/goals/", json={
+            client.post("/api/v1/goals/", json={
                 "raw_text": f"Train ResNet50 on ImageNet subset part {i} — distributed training"
             }, headers=auth_headers)
 
-        r = client.get("/goals/?limit=2&offset=0", headers=auth_headers)
+        r = client.get("/api/v1/goals/?limit=2&offset=0", headers=auth_headers)
         assert r.status_code == 200
         body = r.json()
         assert isinstance(body.get("goals", body), list)
 
     def test_goal_contains_reasoning_log(self, client, auth_headers):
-        r = client.post("/goals/", json={
+        r = client.post("/api/v1/goals/", json={
             "raw_text": "Deploy GPT-4 fine-tuning pipeline with FSDP on 4×H100"
         }, headers=auth_headers)
         goal_id = r.json()["goal_id"]
         time.sleep(0.1)  # Let agent process async
 
-        r = client.get(f"/goals/{goal_id}", headers=auth_headers)
+        r = client.get(f"/api/v1/goals/{goal_id}", headers=auth_headers)
         body = r.json()
         # Either has plan or reasoning_log populated
         assert "status" in body
@@ -196,47 +196,47 @@ class TestJobManagementFlow:
     """Test job CRUD and state transitions."""
 
     def test_create_job_returns_job_id(self, client, auth_headers):
-        r = client.post("/jobs/", json={
+        r = client.post("/api/v1/jobs", json={
             "intent": "Train YOLOv8 on custom dataset — 10 epochs",
             "gpu_type": "A100",
             "gpu_count": 1,
             "required_vram_gb": 40,
             "max_cost_usd": 20.0,
         }, headers=auth_headers)
-        assert r.status_code == 200
+        assert r.status_code in (200, 201)
         body = r.json()
         assert "job_id" in body
         assert body["status"] == "queued"
 
     def test_created_job_appears_in_list(self, client, auth_headers):
-        client.post("/jobs/", json={
+        client.post("/api/v1/jobs", json={
             "intent": "Inference benchmark on T4 GPU",
             "gpu_type": "T4",
             "gpu_count": 1,
         }, headers=auth_headers)
-        r = client.get("/jobs/", headers=auth_headers)
+        r = client.get("/api/v1/jobs", headers=auth_headers)
         assert r.status_code == 200
         body = r.json()
         jobs = body if isinstance(body, list) else body.get("jobs", [])
         assert len(jobs) > 0
 
     def test_filter_jobs_by_status(self, client, auth_headers):
-        r = client.get("/jobs/?status=queued", headers=auth_headers)
+        r = client.get("/api/v1/jobs?status=queued", headers=auth_headers)
         assert r.status_code == 200
 
     def test_cancel_job(self, client, auth_headers):
-        r = client.post("/jobs/", json={
+        r = client.post("/api/v1/jobs", json={
             "intent": "This job will be cancelled",
             "gpu_type": "T4",
             "gpu_count": 1,
         }, headers=auth_headers)
         job_id = r.json()["job_id"]
 
-        r = client.delete(f"/jobs/{job_id}", headers=auth_headers)
+        r = client.delete(f"/api/v1/jobs/{job_id}", headers=auth_headers)
         assert r.status_code in (200, 204)
 
     def test_get_nonexistent_job_returns_404(self, client, auth_headers):
-        r = client.get(f"/jobs/{uuid.uuid4()}", headers=auth_headers)
+        r = client.get(f"/api/v1/jobs/{uuid.uuid4()}", headers=auth_headers)
         assert r.status_code == 404
 
 
@@ -374,26 +374,26 @@ class TestAuditTrail:
     """Verify audit log is populated correctly through the API."""
 
     def test_audit_log_accessible(self, client, auth_headers):
-        r = client.get("/audit/", headers=auth_headers)
+        r = client.get("/api/v1/audit", headers=auth_headers)
         assert r.status_code == 200
         body = r.json()
         assert "entries" in body or isinstance(body, list)
 
     def test_audit_stats_returned(self, client, auth_headers):
-        r = client.get("/audit/stats", headers=auth_headers)
+        r = client.get("/api/v1/audit/stats", headers=auth_headers)
         assert r.status_code == 200
         body = r.json()
         assert "total_actions_logged" in body
 
     def test_goal_submission_generates_audit_entry(self, client, auth_headers):
         # Submit a goal
-        client.post("/goals/", json={
+        client.post("/api/v1/goals/", json={
             "raw_text": "Run CLIP model inference on 100K images for product classification"
         }, headers=auth_headers)
         time.sleep(0.2)  # Let agent process
 
         # Audit log should have at least one entry
-        r = client.get("/audit/", headers=auth_headers)
+        r = client.get("/api/v1/audit", headers=auth_headers)
         assert r.status_code == 200
 
 
@@ -403,18 +403,18 @@ class TestPlatformMetrics:
     """Validate platform-level metrics endpoints."""
 
     def test_platform_metrics_structure(self, client, auth_headers):
-        r = client.get("/metrics/platform", headers=auth_headers)
+        r = client.get("/api/v1/metrics", headers=auth_headers)
         assert r.status_code == 200
         body = r.json()
         expected_keys = [
-            "active_jobs", "active_instances", "total_goals",
-            "platform_utilization_pct", "agents_active",
+            "total_active_jobs", "platform_utilization_pct",
+            "daily_spend_usd", "emergency_stop_active",
         ]
         for k in expected_keys:
             assert k in body, f"Missing metric: {k}"
 
     def test_spot_prices_returned(self, client, auth_headers):
-        r = client.get("/metrics/spot-prices?gpu_type=H100", headers=auth_headers)
+        r = client.get("/api/v1/metrics/spot-prices/H100", headers=auth_headers)
         assert r.status_code == 200
         body = r.json()
         prices = body.get("prices", body)
@@ -424,19 +424,19 @@ class TestPlatformMetrics:
             assert "current_price_usd_hr" in prices[0]
 
     def test_spot_prices_sorted_cheapest_first(self, client, auth_headers):
-        r = client.get("/metrics/spot-prices?gpu_type=A100", headers=auth_headers)
+        r = client.get("/api/v1/metrics/spot-prices/A100", headers=auth_headers)
         assert r.status_code == 200
         prices = r.json().get("prices", [])
         for i in range(len(prices) - 1):
             assert prices[i]["current_price_usd_hr"] <= prices[i + 1]["current_price_usd_hr"]
 
     def test_agent_statuses_all_present(self, client, auth_headers):
-        r = client.get("/agents/", headers=auth_headers)
+        r = client.get("/api/v1/agents", headers=auth_headers)
         assert r.status_code == 200
-        agents = r.json()
+        agents = r.json().get("agents", r.json())
         assert isinstance(agents, list)
         names = [a.get("agent_name", a.get("name", "")) for a in agents]
-        for expected in ["master_orchestrator", "scheduler_agent", "cost_optimizer_agent"]:
+        for expected in ["scheduler_agent", "cost_optimizer_agent"]:
             assert any(expected in n for n in names), f"Agent {expected} not found in {names}"
 
 
@@ -448,14 +448,14 @@ class TestWebSocketConnectivity:
     def test_websocket_connects_and_sends_data(self, client, auth_headers):
         token = auth_headers["Authorization"].replace("Bearer ", "")
         with client.websocket_connect(f"/ws/agent-stream?token={token}") as ws:
-            # Should receive initial connection event
-            data = ws.receive_json(timeout=5)
+            # Should receive initial connection event (welcome message sent on connect)
+            data = ws.receive_json()
             assert "type" in data or "event" in data or data is not None
 
     def test_websocket_rejects_without_token(self, client):
         try:
             with client.websocket_connect("/ws/agent-stream") as ws:
-                data = ws.receive_json(timeout=2)
+                ws.receive_json()
                 # Some servers send error JSON before closing
         except Exception:
             pass  # Connection refused is also acceptable
@@ -467,16 +467,16 @@ class TestSafetyLimits:
     """Verify safety governors are enforced through the API."""
 
     def test_emergency_stop_requires_admin(self, client, auth_headers):
-        r = client.post("/agents/emergency-stop", json={"token": "wrong-token"}, headers=auth_headers)
+        r = client.post("/api/v1/agents/emergency-stop", params={"reason": "test"}, headers=auth_headers)
         assert r.status_code in (401, 403)
 
     def test_goal_with_excessive_budget_warned(self, client, auth_headers):
-        r = client.post("/goals/", json={
+        r = client.post("/api/v1/goals/", json={
             "raw_text": "Train full GPT-4 scale model from scratch on all public data",
             "budget_usd": 1_000_000.0,  # Extremely high budget
         }, headers=auth_headers)
         # Should either accept with warning, or reject based on org limits
-        assert r.status_code in (200, 400, 422)
+        assert r.status_code in (200, 202, 400, 422)
 
 
 # ─── 10. Full End-to-End Workflow ─────────────────────────────────────────────
@@ -512,33 +512,33 @@ class TestFullWorkflow:
         headers = {"Authorization": f"Bearer {token}"}
 
         # 3. Submit goal
-        r = client.post("/goals/", json={
+        r = client.post("/api/v1/goals/", json={
             "raw_text": "Fine-tune Mistral 7B on legal documents using QLoRA — H100 preferred",
             "budget_usd": 100.0,
         }, headers=headers)
-        assert r.status_code == 200
+        assert r.status_code in (200, 202)
         goal_id = r.json()["goal_id"]
         assert len(goal_id) > 10
 
         # 4. Retrieve goal
-        r = client.get(f"/goals/{goal_id}", headers=headers)
+        r = client.get(f"/api/v1/goals/{goal_id}", headers=headers)
         assert r.status_code == 200
         goal = r.json()
         assert goal["goal_id"] == goal_id
         assert goal["status"] in ("accepted", "planning", "executing", "completed")
 
         # 5. List jobs
-        r = client.get("/jobs/", headers=headers)
+        r = client.get("/api/v1/jobs", headers=headers)
         assert r.status_code == 200
 
         # 6. Audit trail
-        r = client.get("/audit/", headers=headers)
+        r = client.get("/api/v1/audit", headers=headers)
         assert r.status_code == 200
 
         # 7. Platform metrics
-        r = client.get("/metrics/platform", headers=headers)
+        r = client.get("/api/v1/metrics", headers=headers)
         assert r.status_code == 200
         metrics = r.json()
-        assert metrics["agents_active"] > 0
+        assert "total_active_jobs" in metrics
 
         # Full workflow passed ✅

@@ -640,18 +640,18 @@ async def register_page():
     return HTMLResponse(content=_REGISTER_HTML, status_code=200)
 
 
-@app.post("/auth/register", tags=["Auth"], summary="Register a new user")
+@app.post("/auth/register", tags=["Auth"], summary="Register a new user", status_code=201)
 async def register(req: RegisterRequest):
     """Create a new OrQuanta user account."""
     try:
         user = register_user(email=req.email, password=req.password, name=req.name)
         token = create_access_token(user["id"], user["email"], user["role"])
-        return {
+        return JSONResponse(status_code=201, content={
             "user_id": user["id"],
             "email": user["email"],
             "access_token": token,
             "token_type": "bearer",
-        }
+        })
     except ValueError as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
 
