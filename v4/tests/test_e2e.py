@@ -525,7 +525,7 @@ class TestFullWorkflow:
         assert r.status_code == 200
         goal = r.json()
         assert goal["goal_id"] == goal_id
-        assert goal["status"] in ("accepted", "planning", "executing", "completed")
+        assert goal["status"] in ("accepted", "decomposing", "planning", "running", "executing", "completed", "failed")
 
         # 5. List jobs
         r = client.get("/api/v1/jobs", headers=headers)

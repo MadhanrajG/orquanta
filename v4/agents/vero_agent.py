@@ -239,6 +239,9 @@ class VeroAgent:
         self._decision_log: list[VeroDecisionEntry] = []
         self._corrective_goals_total = 0
         self._orchestrator: Any = None
+        # Per-agent cooldown: suppress repeat corrections within 5 minutes
+        self._last_correction: dict[str, float] = {}
+        self._CORRECTION_COOLDOWN_S = 300.0
 
         # Analytics + market (lazy import to avoid circular deps)
         self._analytics_engine: Any = None
@@ -323,6 +326,16 @@ class VeroAgent:
         Vero injects a corrective goal to fix a degraded/critical agent.
         Logged to VeroDecisionLog with full NeMoClaw-style reasoning trace.
         """
+        now = time.time()
+        last = self._last_correction.get(kpi.agent_name, 0.0)
+        if now - last < self._CORRECTION_COOLDOWN_S:
+            logger.debug(
+                f"[Vero] Cooldown active for {kpi.agent_name} "
+                f"({self._CORRECTION_COOLDOWN_S - (now - last):.0f}s remaining) — skipping injection."
+            )
+            return
+        self._last_correction[kpi.agent_name] = now
+
         goal_text = self._build_corrective_goal(kpi)
         reasoning = (
             f"Agent '{kpi.agent_name}' overall KPI={kpi.overall_score:.2f} "

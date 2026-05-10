@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 # ---------------------------------------------------------------------------
@@ -68,6 +68,15 @@ class GoalSubmitRequest(BaseModel):
     )
     budget_usd: Optional[float] = Field(None, ge=0.0, description="Optional budget cap in USD")
     priority: Optional[float] = Field(0.5, ge=0.0, le=1.0, description="Priority 0.0-1.0")
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_goal_alias(cls, data: Any) -> Any:
+        """Accept 'goal' as an alias for 'raw_text' so both field names work."""
+        if isinstance(data, dict) and "goal" in data and "raw_text" not in data:
+            data = dict(data)
+            data["raw_text"] = data.pop("goal")
+        return data
 
     @field_validator("raw_text", mode="before")
     @classmethod
