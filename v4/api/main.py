@@ -1,5 +1,5 @@
 ﻿"""
-OrQuanta Agentic v1.0 Ã¢â‚¬â€ FastAPI Application Entry Point
+OrQuanta Agentic v1.0  - FastAPI Application Entry Point
 
 Wires together all routers, middleware, startup/shutdown hooks,
 authentication, Prometheus metrics exposure, and WebSocket stream.
@@ -39,7 +39,7 @@ from .models.schemas import (
     HealthResponse, LoginRequest, RegisterRequest, TokenResponse
 )
 
-# Demo mode Ã¢â‚¬â€ check both env var names for compatibility
+# Demo mode - check both env var names for compatibility
 _DEMO_MODE = (
     os.getenv("ORQUANTA_DEMO_MODE", "false").lower() in ("true", "1", "yes")
     or os.getenv("DEMO_MODE", "false").lower() in ("true", "1", "yes")
@@ -48,7 +48,7 @@ _DEMO_MODE = (
 # Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Logging Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s Ã¢â‚¬â€ %(message)s",
+    format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
 )
 logger = logging.getLogger("orquanta.api")
 
@@ -161,6 +161,9 @@ async def lifespan(_app: FastAPI):
         logger.error(f"[ForecastAgent] Failed to start (degraded mode): {exc}")
         forecast_agent = _get_forecast_agent()
 
+    # Pre-initialize so shutdown loop never hits NameError if a start fails
+    vero = None
+
     # Start Vero -- Superior Intelligence Meta-Agent (boots last, monitors all)
     try:
         from ..agents.vero_agent import get_vero
@@ -174,7 +177,7 @@ async def lifespan(_app: FastAPI):
     try:
         from ..agents.nemoclaw_engine import get_nemoclaw
         nemoclaw = get_nemoclaw()
-        _vero_ref = vero if 'vero' in dir() else None
+        _vero_ref = vero
         await nemoclaw.start(vero=_vero_ref, orchestrator=orchestrator)
         logger.info('🧬 NEMOCLAW ONLINE — ContextGraph ready, CostWatcher active, PredictivePrefetch started.')
     except Exception as exc:
@@ -184,7 +187,7 @@ async def lifespan(_app: FastAPI):
     try:
         from .routers.pricing import _refresh_cache
         import asyncio as _asyncio
-        _asyncio.ensure_future(_refresh_cache())
+        _asyncio.create_task(_refresh_cache())
         logger.info('[Pricing] Cache pre-warm scheduled.')
     except Exception as exc:
         logger.warning(f'[Pricing] Pre-warm failed (non-fatal): {exc}')
@@ -235,7 +238,7 @@ async def lifespan(_app: FastAPI):
         except Exception as _exc:
             logger.warning(f"Admin role promotion skipped: {_exc}")
 
-    _asyncio.ensure_future(_seed_admin())
+    _asyncio.create_task(_seed_admin())
     # Start demo engine if in demo mode
     if _DEMO_MODE:
         try:
@@ -246,7 +249,7 @@ async def lifespan(_app: FastAPI):
             # Auto-run first scenario in background
             import asyncio
             asyncio.create_task(run_scenario("cost_optimizer", engine))
-            logger.info("[Demo] Demo mode active Ã¢â‚¬â€ scenario 'cost_optimizer' starting")
+            logger.info("[Demo] Demo mode active - scenario 'cost_optimizer' starting")
         except Exception as exc:
             logger.warning(f"[Demo] Demo startup error (non-fatal): {exc}")
 
@@ -267,6 +270,8 @@ async def lifespan(_app: FastAPI):
     # Shutdown — graceful; ignore errors from agents that never fully started
     logger.info("OrQuanta shutting down…")
     for _agent in (orchestrator, scheduler, cost_agent, healing_agent, forecast_agent):
+        if _agent is None:
+            continue
         try:
             await _agent.stop()
         except Exception:
@@ -280,7 +285,7 @@ app = FastAPI(
     title="OrQuanta Agentic v1.0",
     description=(
         "Autonomous GPU Cloud Orchestration Platform. "
-        "Submit natural-language goals Ã¢â‚¬â€ OrQuanta agents handle the rest."
+        "Submit natural-language goals - OrQuanta agents handle the rest."
     ),
     version=VERSION,
     docs_url="/docs",
@@ -891,7 +896,7 @@ async def prometheus_metrics():
 
 @app.get("/health", tags=["System"], response_model=HealthResponse, summary="Health check")
 async def health():
-    """System health check Ã¢â‚¬â€ no auth required."""
+    """System health check - no auth required."""
     return HealthResponse(
         status="healthy",
         version=VERSION,
@@ -934,11 +939,11 @@ app.include_router(agents.router)
 app.include_router(metrics.router)
 app.include_router(audit.router)
 app.include_router(admin_router)
-app.include_router(billing_router)   # /api/v1/billing Ã¢â‚¬â€ Stripe + subscriptions
-app.include_router(webhooks_router)  # /api/v1/webhooks Ã¢â‚¬â€ outbound + inbound webhooks (OpenClaw)
-app.include_router(schedules_router) # /api/v1/schedules Ã¢â‚¬â€ cron-based recurring GPU jobs
+app.include_router(billing_router)   # /api/v1/billing - Stripe + subscriptions
+app.include_router(webhooks_router)  # /api/v1/webhooks - outbound + inbound webhooks (OpenClaw)
+app.include_router(schedules_router) # /api/v1/schedules - cron-based recurring GPU jobs
 app.include_router(free_tier_router)
-app.include_router(pricing_router)  # /api/v1/pricing -- live GPU prices from Lambda/RunPod/Vast.ai # /api/v1/free Ã¢â‚¬â€ Colab/Kaggle/Lambda free GPU tier
+app.include_router(pricing_router)  # /api/v1/pricing -- live GPU prices from Lambda/RunPod/Vast.ai # /api/v1/free - Colab/Kaggle/Lambda free GPU tier
 app.include_router(vero_router)     # /api/v1/vero -- Vero meta-agent
 app.include_router(nemoclaw_router) # /api/v1/nemoclaw -- NemoClaw cognitive layer
 app.include_router(uix_router)      # /api/v1/uix -- UIXAgent autonomous UI/UX diagnostics
@@ -946,7 +951,7 @@ app.include_router(oauth_router)    # /auth/google + /auth/github -- OAuth2 SSO
 app.include_router(api_keys_router) # /api/v1/api-keys -- programmatic access keys
 app.include_router(ws_router)
 
-# Demo router Ã¢â‚¬â€ always included; active only when DEMO_MODE=true
+# Demo router - always included; active only when DEMO_MODE=true
 try:
     from ..demo.public_demo import demo_router
     app.include_router(demo_router, prefix="/demo", tags=["Demo"])
@@ -956,7 +961,7 @@ except Exception:
 
 # Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Serve built React frontend Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
-# FIX-9: Resolve from the v4/ root (two levels up from api/) Ã¢â‚¬â€ avoids double v4/ prefix
+# FIX-9: Resolve from the v4/ root (two levels up from api/) - avoids double v4/ prefix
 _DIST_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 _DIST_DIR = os.path.abspath(_DIST_DIR)
 
@@ -969,10 +974,10 @@ if os.path.isdir(_DIST_DIR):
     @app.get("/app", include_in_schema=False)
     @app.get("/app/{path:path}", include_in_schema=False)
     async def serve_react_app(_path: str = ""):
-        """Serve the React SPA Ã¢â‚¬â€ index.html handles all client-side routes."""
+        """Serve the React SPA - index.html handles all client-side routes."""
         return FileResponse(os.path.join(_DIST_DIR, "index.html"))
 else:
-    # Frontend not built Ã¢â‚¬â€ tell developers clearly
+    # Frontend not built - tell developers clearly
     @app.get("/app", include_in_schema=False)
     @app.get("/app/{path:path}", include_in_schema=False)
     async def react_not_built(_path: str = ""):
@@ -982,7 +987,7 @@ else:
         )
 
 
-# Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Providers endpoint (public Ã¢â‚¬â€ no auth required) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+# Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Providers endpoint (public - no auth required) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 @app.get("/providers/prices", tags=["Providers"], summary="Live GPU spot prices")
 async def provider_prices(gpu_type: str = "A100"):
@@ -1044,7 +1049,7 @@ async def readiness_check():
     # FIX B02: In demo mode, report as ready so load balancers don't block
     if _DEMO_MODE:
         readiness["ready"] = True
-        readiness["verdict"] = "Ã°Å¸Å¸Â¡ Demo Mode Ã¢â‚¬â€ All Systems Operational"
+        readiness["verdict"] = "Ã°Å¸Å¸Â¡ Demo Mode - All Systems Operational"
         readiness["demo_mode"] = True
 
     return {

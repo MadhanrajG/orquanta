@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ..middleware.auth import get_current_user
 from ..middleware.rate_limit import rate_limit_dependency
-from ..models.schemas import GoalListResponse, GoalResponse, GoalSubmitRequest
+from ..models.schemas import GoalSubmitRequest
 from ...agents.master_orchestrator import MasterOrchestrator
 
 logger = logging.getLogger("orquanta.routers.goals")
@@ -58,7 +58,7 @@ async def submit_goal(
         "status": "accepted",
         "message": "Goal accepted. Agents are working on it.",
         "polling_url": f"/api/v1/goals/{goal_id}",
-        "submitted_at": datetime.now().isoformat(),
+        "submitted_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -74,10 +74,14 @@ async def get_goal(
     """Get the current status and execution plan of a submitted goal."""
     orchestrator = get_orchestrator()
     goal = orchestrator.get_goal_status(goal_id)
-    
+
     if not goal:
         raise HTTPException(status_code=404, detail=f"Goal '{goal_id}' not found.")
-    
+
+    # Ownership check — admins see all goals, users see only their own
+    if user.get("role") != "admin" and goal.get("user_id") != user["sub"]:
+        raise HTTPException(status_code=404, detail=f"Goal '{goal_id}' not found.")
+
     return goal
 
 
@@ -109,11 +113,16 @@ async def get_reasoning_log(
 ) -> dict[str, Any]:
     """Return the full step-by-step ReAct reasoning log for a goal execution."""
     orchestrator = get_orchestrator()
-    log = orchestrator.get_reasoning_log(goal_id)
-    
-    if not log and not orchestrator.get_goal_status(goal_id):
+    goal = orchestrator.get_goal_status(goal_id)
+
+    if not goal:
         raise HTTPException(status_code=404, detail=f"Goal '{goal_id}' not found.")
-    
+
+    # Ownership check — admins see all goals, users see only their own
+    if user.get("role") != "admin" and goal.get("user_id") != user["sub"]:
+        raise HTTPException(status_code=404, detail=f"Goal '{goal_id}' not found.")
+
+    log = orchestrator.get_reasoning_log(goal_id)
     return {
         "goal_id": goal_id,
         "reasoning_steps": len(log),

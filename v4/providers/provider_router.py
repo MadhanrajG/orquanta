@@ -121,15 +121,25 @@ class ProviderRouter:
             logger.warning(f"[Router] Lambda Labs provider init failed: {exc}")
 
     def _init_mock_providers(self) -> None:
-        """Register real provider instances but they will operate in
-        graceful-degradation mode (return mock data when no credentials)."""
-        self._providers["runpod"] = RunPodProvider()
-        self._providers["aws"] = AWSProvider()
-        self._providers["gcp"] = GCPProvider()
-        self._providers["azure"] = AzureProvider()
-        self._providers["coreweave"] = CoreWeaveProvider()
-        self._providers["lambda"] = LambdaLabsProvider()
-        logger.info("[Router] Initialised with 6 providers (mock mode — set USE_REAL_PROVIDERS=true for real cloud)")
+        """Register real provider instances operating in graceful-degradation mode.
+        Each provider is guarded individually so a missing SDK (boto3, google-cloud, etc.)
+        never prevents the other providers from loading."""
+        _pairs = [
+            ("runpod",    RunPodProvider),
+            ("lambda",    LambdaLabsProvider),
+            ("coreweave", CoreWeaveProvider),
+            ("aws",       AWSProvider),
+            ("gcp",       GCPProvider),
+            ("azure",     AzureProvider),
+        ]
+        loaded: list[str] = []
+        for name, cls in _pairs:
+            try:
+                self._providers[name] = cls()
+                loaded.append(name)
+            except Exception as exc:
+                logger.warning(f"[Router] {name} provider unavailable in mock mode: {exc}")
+        logger.info(f"[Router] Mock mode — {len(loaded)}/6 providers loaded: {loaded}")
 
     # ------------------------------------------------------------------
     # Core routing operations

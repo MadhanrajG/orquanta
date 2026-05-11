@@ -123,12 +123,12 @@ class GoalListResponse(BaseModel):
 class JobCreateRequest(BaseModel):
     intent: str = Field(..., min_length=5, max_length=500, description="Job description")
     goal_id: Optional[str] = Field(None, description="Parent goal ID to associate this job with")
-    gpu_type: str = Field("H100", description="GPU model: H100/A100/T4/A10G")
+    gpu_type: str = Field("H100", description="GPU model: H100/A100/T4/A10G/L4/V100")
     gpu_count: int = Field(1, ge=1, le=64)
-    provider: str = Field("aws", description="Cloud provider: aws/gcp/azure/coreweave")
-    required_vram_gb: int = Field(40, ge=1, le=10000)
+    provider: str = Field("runpod", description="Cloud provider preference: runpod/lambda/coreweave/aws/gcp/azure (router selects cheapest if not found)")
+    required_vram_gb: int = Field(40, ge=1, le=640, description="Required VRAM in GB — used for bin-packing scheduler")
     max_runtime_minutes: int = Field(120, ge=1, le=10080)
-    max_cost_usd: float = Field(500.0, ge=0.0)
+    max_cost_usd: float = Field(50.0, ge=0.0)
     priority: float = Field(0.5, ge=0.0, le=1.0)
 
     @field_validator("intent", mode="before")

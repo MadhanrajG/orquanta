@@ -434,16 +434,20 @@ class JobPipeline:
             raise RuntimeError(f"No GPU capacity available: {exc}")
 
     async def _wait_for_ssh(self, ip: str, timeout_s: int = 180) -> None:
-        """Poll until SSH port is open (instance has booted)."""
-        import socket
+        """Poll until SSH port 22 is open (instance has booted).
+        Uses asyncio.open_connection — never blocks the event loop."""
         deadline = time.time() + timeout_s
         while time.time() < deadline:
             try:
-                s = socket.create_connection((ip, 22), timeout=5)
-                s.close()
+                _, writer = await asyncio.wait_for(
+                    asyncio.open_connection(ip, 22),
+                    timeout=5.0,
+                )
+                writer.close()
+                await writer.wait_closed()
                 logger.info(f"[Pipeline] SSH open on {ip}")
                 return
-            except (socket.timeout, ConnectionRefusedError, OSError):
+            except (OSError, asyncio.TimeoutError):
                 await asyncio.sleep(8)
         raise TimeoutError(f"SSH not available on {ip} within {timeout_s}s")
 
