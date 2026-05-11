@@ -89,7 +89,7 @@ async def create_webhook(body: WebhookCreate, user: CurrentUser):
     _webhooks[wid] = record
     _inbound_tokens[token] = user["sub"]
     _deliveries[wid] = []
-    logger.info(f"[Webhooks] Registered {wid} → {body.url} for {user['user_id']}")
+    logger.info(f"[Webhooks] Registered {wid} → {body.url} for {user['sub']}")
     return _to_out(record)
 
 

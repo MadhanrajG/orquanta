@@ -114,12 +114,17 @@ async def lifespan(_app: FastAPI):
         logger.warning(f"[Persistence] Startup load failed (non-fatal): {_exc}")
         _persisted_goals, _persisted_jobs = [], []
 
-    # Start MasterOrchestrator
-    from .routers.goals import get_orchestrator
-    orchestrator = get_orchestrator()
-    await orchestrator.start()
-    if _persisted_goals:
-        orchestrator.restore_goals(_persisted_goals)
+    # Start MasterOrchestrator — wrapped so a DB/import error never blocks startup
+    try:
+        from .routers.goals import get_orchestrator
+        orchestrator = get_orchestrator()
+        await orchestrator.start()
+        if _persisted_goals:
+            orchestrator.restore_goals(_persisted_goals)
+    except Exception as exc:
+        logger.error(f"[Orchestrator] Failed to start (degraded mode): {exc}")
+        from .routers.goals import get_orchestrator
+        orchestrator = get_orchestrator()  # still need the ref for agent wiring
 
     # Start specialist agents — use module-level singletons so all routers
     # share the same instances (not orphan copies with empty state).
@@ -128,17 +133,33 @@ async def lifespan(_app: FastAPI):
     from ..agents.healing_agent import get_healing_agent as _get_healing_agent
     from ..agents.forecast_agent import get_forecast_agent as _get_forecast_agent
 
-    scheduler = _get_scheduler()
-    await scheduler.start()
+    try:
+        scheduler = _get_scheduler()
+        await scheduler.start()
+    except Exception as exc:
+        logger.error(f"[Scheduler] Failed to start (degraded mode): {exc}")
+        scheduler = _get_scheduler()
 
-    cost_agent = _get_cost_optimizer()
-    await cost_agent.start()
+    try:
+        cost_agent = _get_cost_optimizer()
+        await cost_agent.start()
+    except Exception as exc:
+        logger.error(f"[CostOptimizer] Failed to start (degraded mode): {exc}")
+        cost_agent = _get_cost_optimizer()
 
-    healing_agent = _get_healing_agent()
-    await healing_agent.start()
+    try:
+        healing_agent = _get_healing_agent()
+        await healing_agent.start()
+    except Exception as exc:
+        logger.error(f"[HealingAgent] Failed to start (degraded mode): {exc}")
+        healing_agent = _get_healing_agent()
 
-    forecast_agent = _get_forecast_agent()
-    await forecast_agent.start()
+    try:
+        forecast_agent = _get_forecast_agent()
+        await forecast_agent.start()
+    except Exception as exc:
+        logger.error(f"[ForecastAgent] Failed to start (degraded mode): {exc}")
+        forecast_agent = _get_forecast_agent()
 
     # Start Vero -- Superior Intelligence Meta-Agent (boots last, monitors all)
     try:
@@ -243,13 +264,13 @@ async def lifespan(_app: FastAPI):
     cron_scheduler.stop()
     cron_task.cancel()
 
-    # Shutdown
-    logger.info("OrQuanta shutting downÃ¢â‚¬Â¦")
-    await orchestrator.stop()
-    await scheduler.stop()
-    await cost_agent.stop()
-    await healing_agent.stop()
-    await forecast_agent.stop()
+    # Shutdown — graceful; ignore errors from agents that never fully started
+    logger.info("OrQuanta shutting down…")
+    for _agent in (orchestrator, scheduler, cost_agent, healing_agent, forecast_agent):
+        try:
+            await _agent.stop()
+        except Exception:
+            pass
     logger.info("Shutdown complete.")
 
 

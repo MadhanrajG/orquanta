@@ -199,3 +199,130 @@ def test_audit_stats(client, auth_headers):
     res = client.get("/api/v1/audit/stats", headers=auth_headers)
     assert res.status_code == 200
     assert "emergency_stop_active" in res.json()
+
+
+# ─── API Keys ──────────────────────────────────────────────────────────────
+
+def test_create_api_key(client, auth_headers):
+    res = client.post("/api/v1/api-keys", json={"name": "ci-test-key"}, headers=auth_headers)
+    assert res.status_code == 201
+    data = res.json()
+    assert data["key"].startswith("sk-orq-")
+    assert "key_id" in data
+    assert data["name"] == "ci-test-key"
+
+
+def test_list_api_keys(client, auth_headers):
+    res = client.get("/api/v1/api-keys", headers=auth_headers)
+    assert res.status_code == 200
+    keys = res.json()
+    assert isinstance(keys, list)
+    assert any(k["name"] == "ci-test-key" for k in keys)
+
+
+def test_api_key_auth_works(client, auth_headers):
+    """A created sk-orq-* key should authenticate protected routes."""
+    create = client.post("/api/v1/api-keys", json={"name": "auth-test-key"}, headers=auth_headers)
+    raw_key = create.json()["key"]
+    res = client.get("/api/v1/jobs", headers={"Authorization": f"Bearer {raw_key}"})
+    assert res.status_code == 200
+
+
+def test_revoke_api_key(client, auth_headers):
+    create = client.post("/api/v1/api-keys", json={"name": "to-revoke"}, headers=auth_headers)
+    key_id = create.json()["key_id"]
+    res = client.delete(f"/api/v1/api-keys/{key_id}", headers=auth_headers)
+    assert res.status_code == 204
+
+
+def test_revoked_key_rejected(client, auth_headers):
+    create = client.post("/api/v1/api-keys", json={"name": "revoke-then-use"}, headers=auth_headers)
+    data = create.json()
+    raw_key, key_id = data["key"], data["key_id"]
+    client.delete(f"/api/v1/api-keys/{key_id}", headers=auth_headers)
+    res = client.get("/api/v1/jobs", headers={"Authorization": f"Bearer {raw_key}"})
+    assert res.status_code == 401
+
+
+def test_api_key_limit_enforced(client, auth_headers):
+    """Cannot exceed 10 active keys — returns 429."""
+    existing = client.get("/api/v1/api-keys", headers=auth_headers).json()
+    needed = max(0, 10 - len(existing))
+    for i in range(needed):
+        client.post("/api/v1/api-keys", json={"name": f"fill-{i}"}, headers=auth_headers)
+    res = client.post("/api/v1/api-keys", json={"name": "over-limit"}, headers=auth_headers)
+    assert res.status_code == 429
+
+
+def test_api_keys_unauthenticated(client):
+    res = client.get("/api/v1/api-keys")
+    assert res.status_code == 401
+
+
+# ─── Webhooks ──────────────────────────────────────────────────────────────
+
+def test_create_webhook(client, auth_headers):
+    res = client.post("/api/v1/webhooks", json={
+        "url": "https://example.com/hook",
+        "events": ["job_completed", "job_failed"],
+        "description": "CI test hook",
+    }, headers=auth_headers)
+    assert res.status_code == 201
+    data = res.json()
+    assert data["id"].startswith("wh-")
+    assert "inbound_url" in data
+
+
+def test_list_webhooks(client, auth_headers):
+    res = client.get("/api/v1/webhooks", headers=auth_headers)
+    assert res.status_code == 200
+    assert isinstance(res.json(), list)
+
+
+def test_webhook_deliveries(client, auth_headers):
+    create = client.post("/api/v1/webhooks", json={
+        "url": "https://example.com/hook2",
+        "events": ["job_completed"],
+    }, headers=auth_headers)
+    wid = create.json()["id"]
+    res = client.get(f"/api/v1/webhooks/{wid}/deliveries", headers=auth_headers)
+    assert res.status_code == 200
+    assert isinstance(res.json(), list)
+
+
+def test_delete_webhook(client, auth_headers):
+    create = client.post("/api/v1/webhooks", json={
+        "url": "https://example.com/hook-del",
+        "events": ["job_completed"],
+    }, headers=auth_headers)
+    wid = create.json()["id"]
+    res = client.delete(f"/api/v1/webhooks/{wid}", headers=auth_headers)
+    assert res.status_code == 204
+
+
+def test_webhook_not_found(client, auth_headers):
+    res = client.get("/api/v1/webhooks/wh-nonexistent/deliveries", headers=auth_headers)
+    assert res.status_code == 404
+
+
+def test_webhooks_unauthenticated(client):
+    res = client.get("/api/v1/webhooks")
+    assert res.status_code == 401
+
+
+# ─── OAuth redirects ───────────────────────────────────────────────────────
+
+def test_google_login_redirects(client):
+    """OAuth login redirects — to Google when configured, error page when not."""
+    res = client.get("/auth/google/login", follow_redirects=False)
+    assert res.status_code in (302, 307)
+    location = res.headers.get("location", "")
+    assert "accounts.google.com" in location or "error=google_not_configured" in location
+
+
+def test_github_login_redirects(client):
+    """OAuth login redirects — to GitHub when configured, error page when not."""
+    res = client.get("/auth/github/login", follow_redirects=False)
+    assert res.status_code in (302, 307)
+    location = res.headers.get("location", "")
+    assert "github.com" in location or "error=github_not_configured" in location

@@ -21,8 +21,8 @@ os.environ.setdefault("ADMIN_PASSWORD", "test-admin-pass")
 
 def pytest_configure(config):
     """Ensure test environment is clean."""
-    # Remove any test DB leftover from previous runs
     import pathlib
-    test_db = pathlib.Path("orquanta_test.db")
-    if test_db.exists():
-        test_db.unlink()
+    for db_file in ("orquanta_test.db", "orquanta.db"):
+        p = pathlib.Path(db_file)
+        if p.exists():
+            p.unlink()

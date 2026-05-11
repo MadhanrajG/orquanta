@@ -15,7 +15,7 @@ from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorization
 
 logger = logging.getLogger("orquanta.auth")
 
-JWT_SECRET = os.getenv("JWT_SECRET", "orquanta-dev-secret-change-in-production-please")
+JWT_SECRET = os.getenv("JWT_SECRET_KEY") or os.getenv("JWT_SECRET", "orquanta-dev-secret-change-in-production-please")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_HOURS = int(os.getenv("JWT_EXPIRE_HOURS", "24"))
 LEGACY_API_KEY = os.getenv("ORQUANTA_API_KEY", "dev-key-change-in-production")
