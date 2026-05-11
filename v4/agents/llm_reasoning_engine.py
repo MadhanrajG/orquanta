@@ -293,7 +293,12 @@ MOCK_RESPONSES: dict[str, Any] = {
                 "task_id": "t-001",
                 "agent": "scheduler_agent",
                 "action": "schedule_job",
-                "parameters": {"gpu_type": "H100", "count": 1},
+                "parameters": {
+                    "intent": "Train model on GPU",
+                    "required_vram_gb": 40,
+                    "gpu_type": "H100",
+                    "gpu_count": 1,
+                },
                 "priority": 8,
                 "depends_on": [],
             },
@@ -309,7 +314,7 @@ MOCK_RESPONSES: dict[str, Any] = {
                 "task_id": "t-003",
                 "agent": "healing_agent",
                 "action": "monitor_job",
-                "parameters": {},
+                "parameters": {"job_id": "mock-job-001"},
                 "priority": 5,
                 "depends_on": ["t-001"],
             },
@@ -534,9 +539,10 @@ class LLMReasoningEngine:
         # Short-circuit for mock provider — return rich template responses without any LLM call.
         # _call_llm() in mock mode returns {"mock": True} which has no task data; this is correct.
         if self.cfg.provider == LLMProvider.MOCK:
+            import copy
             logger.info(f"[{agent_name}] Calling LLM ({self.cfg.provider}) template='{template_name}'")
             logger.info(f"[{agent_name}] LLM succeeded on attempt 1.")
-            return MOCK_RESPONSES.get(template_name, {"reasoning": "MOCK", "tasks": []})
+            return copy.deepcopy(MOCK_RESPONSES.get(template_name, {"reasoning": "MOCK", "tasks": []}))
 
         prompt = self._render_template(template_name, variables)
         logger.info(f"[{agent_name}] Calling LLM ({self.cfg.provider}) template='{template_name}'")

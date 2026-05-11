@@ -135,10 +135,10 @@ async def agent_stream(ws: WebSocket) -> None:
 
 async def _metrics_ticker(ws: WebSocket) -> None:
     """Send periodic metrics updates to a connected client."""
-    from ...agents.scheduler_agent import SchedulerAgent
+    from ...agents.scheduler_agent import get_scheduler
     from ...agents.safety_governor import get_governor
 
-    scheduler = SchedulerAgent()
+    scheduler = get_scheduler()
     while True:
         try:
             await asyncio.sleep(5)
