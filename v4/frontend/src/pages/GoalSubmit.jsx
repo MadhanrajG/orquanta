@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { Send, Mic, Loader, ChevronRight, Cpu, Zap, DollarSign, Clock, CheckCircle, AlertCircle, Sparkles } from 'lucide-react'
 import { useAuth } from'../App.jsx'
 
-import { useNavigate } from'react-router-dom'
+import { useNavigate, useLocation } from'react-router-dom'
 
 const API = import.meta.env.VITE_API_URL ||''
 
@@ -250,6 +250,7 @@ function AgentTheater({ phase, activeAgent }) {
 export default function GoalSubmit() {
  const { token } = useAuth()
  const navigate = useNavigate()
+ const location = useLocation()
  const [goal, setGoal] = useState('')
  const [phase, setPhase] = useState('idle') // idle | planning | running | complete | error
  const [activeAgent, setAgent] = useState(0)
@@ -259,6 +260,13 @@ export default function GoalSubmit() {
  const [pIdx, setPIdx] = useState(0)
  const textRef = useRef(null)
  const costEstRef = useRef(null)
+
+ // Pre-fill goal from ?goal= query param (set by onboarding wizard)
+ useEffect(() => {
+ const params = new URLSearchParams(location.search)
+ const pre = params.get('goal')
+ if (pre) setGoal(decodeURIComponent(pre))
+ }, [])
 
  // Cycle placeholder
  useEffect(() => {

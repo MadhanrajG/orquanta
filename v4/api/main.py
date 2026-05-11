@@ -1,4 +1,4 @@
-﻿"""
+"""
 OrQuanta Agentic v1.0  - FastAPI Application Entry Point
 
 Wires together all routers, middleware, startup/shutdown hooks,
@@ -88,7 +88,7 @@ else:
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     """Startup: validate env, boot agents, wire pipeline. Shutdown: graceful stop."""
-    logger.info(f"OrQuanta Agentic v{VERSION} starting upÃ¢â‚¬Â¦")
+    logger.info(f"OrQuanta Agentic v{VERSION} starting up...")
 
     # Ã¢â€â‚¬Ã¢â€â‚¬ 0. Validate production environment Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
     try:
@@ -649,7 +649,7 @@ function copyToken(){
   var t = document.getElementById('tok-val').textContent;
   navigator.clipboard.writeText(t).then(function(){
     var b = document.querySelector('.copy-btn');
-    b.textContent = 'Ã¢Å“â€œ Copied!';
+    b.textContent = 'Copied!';
     setTimeout(function(){ b.textContent = 'Copy Token'; }, 2000);
   });
 }
@@ -1049,7 +1049,7 @@ async def readiness_check():
     # FIX B02: In demo mode, report as ready so load balancers don't block
     if _DEMO_MODE:
         readiness["ready"] = True
-        readiness["verdict"] = "Ã°Å¸Å¸Â¡ Demo Mode - All Systems Operational"
+        readiness["verdict"] = "Demo Mode - All Systems Operational"
         readiness["demo_mode"] = True
 
     return {

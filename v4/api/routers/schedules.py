@@ -220,9 +220,21 @@ class CronScheduler:
             f"(job_id={job_id}, next={sched['next_run']})"
         )
 
-        # In production: call goal pipeline
-        # from v4.agents.master_orchestrator import orchestrate_goal
-        # await orchestrate_goal(sched["goal"], sched["budget_usd"], sched["gpu_type"])
+        # Submit goal to the orchestrator
+        try:
+            from .goals import get_orchestrator as _get_orch
+            real_goal_id = await _get_orch().submit_goal(
+                raw_text=sched["goal"],
+                user_id=sched["user_id"],
+            )
+            run_record["goal_id"] = real_goal_id
+            run_record["status"] = "submitted"
+            sched["last_status"] = "submitted"
+            logger.info(f"[CronScheduler] Goal submitted: {real_goal_id}")
+        except Exception as exc:
+            logger.error(f"[CronScheduler] Goal submission failed: {exc}")
+            run_record["status"] = "failed"
+            sched["last_status"] = "failed"
 
         # Fire notifications
         await self._notify(sched, job_id)

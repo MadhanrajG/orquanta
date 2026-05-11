@@ -22,6 +22,7 @@ import UIXAgentPage from './pages/UIXAgentPage.jsx'
 import HelpPage from './pages/HelpPage.jsx'
 import OrQuantaAssistant from './components/OrQuantaAssistant.jsx'
 import { CommandPalette, ShortcutsModal, useCommandPalette } from './components/CommandPalette.jsx'
+import OnboardingWizard from './components/OnboardingWizard.jsx'
 
 /* ── Error Boundary — catches unhandled render errors across all routes ── */
 class ErrorBoundary extends Component {
@@ -616,6 +617,7 @@ function AppLayout() {
             </main>
 
             <OrQuantaAssistant />
+            <OnboardingWizard />
             {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} onNavigate={navigate} />}
             {shortcutsOpen && <ShortcutsModal onClose={() => setShortcutsOpen(false)} />}
         </div>
