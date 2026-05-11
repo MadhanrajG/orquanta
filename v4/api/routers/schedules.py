@@ -25,8 +25,10 @@ import secrets
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+
+from ..middleware.auth import get_current_user
 
 logger = logging.getLogger("orquanta.scheduler.cron")
 
@@ -80,14 +82,7 @@ class ScheduleOut(BaseModel):
 
 # ─── Auth dependency ──────────────────────────────────────────────────────────
 
-def _get_current_user(request: Request) -> dict:
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    return {"user_id": "admin", "email": "admin@orquanta.com"}
-
-
-CurrentUser = Annotated[dict, Depends(_get_current_user)]
+CurrentUser = Annotated[dict, Depends(get_current_user)]
 
 
 # ─── Routes ──────────────────────────────────────────────────────────────────
@@ -100,7 +95,7 @@ async def create_schedule(body: ScheduleCreate, user: CurrentUser):
     sid = f"sched-{secrets.token_hex(6)}"
     record = {
         "id": sid,
-        "user_id": user["user_id"],
+        "user_id": user["sub"],
         "goal": body.goal,
         "cron_expr": body.cron_expr,
         "budget_usd": body.budget_usd,
@@ -124,14 +119,14 @@ async def create_schedule(body: ScheduleCreate, user: CurrentUser):
 @router.get("", response_model=list[ScheduleOut])
 async def list_schedules(user: CurrentUser):
     """List all schedules for the current user."""
-    return [_to_out(s) for s in _schedules.values() if s["user_id"] == user["user_id"]]
+    return [_to_out(s) for s in _schedules.values() if s["user_id"] == user["sub"]]
 
 
 @router.put("/{schedule_id}", response_model=ScheduleOut)
 async def update_schedule(schedule_id: str, body: ScheduleUpdate, user: CurrentUser):
     """Update or pause/resume a schedule."""
     sched = _schedules.get(schedule_id)
-    if not sched or sched["user_id"] != user["user_id"]:
+    if not sched or sched["user_id"] != user["sub"]:
         raise HTTPException(status_code=404, detail="Schedule not found")
 
     updates = body.model_dump(exclude_none=True)
@@ -151,7 +146,7 @@ async def update_schedule(schedule_id: str, body: ScheduleUpdate, user: CurrentU
 async def delete_schedule(schedule_id: str, user: CurrentUser):
     """Delete a schedule permanently."""
     sched = _schedules.get(schedule_id)
-    if not sched or sched["user_id"] != user["user_id"]:
+    if not sched or sched["user_id"] != user["sub"]:
         raise HTTPException(status_code=404, detail="Schedule not found")
     _schedules.pop(schedule_id)
     _runs.pop(schedule_id, None)
@@ -161,7 +156,7 @@ async def delete_schedule(schedule_id: str, user: CurrentUser):
 async def get_runs(schedule_id: str, user: CurrentUser):
     """Get run history for a schedule."""
     sched = _schedules.get(schedule_id)
-    if not sched or sched["user_id"] != user["user_id"]:
+    if not sched or sched["user_id"] != user["sub"]:
         raise HTTPException(status_code=404, detail="Schedule not found")
     return _runs.get(schedule_id, [])[-50:]
 

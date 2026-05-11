@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { User, Key, Bell, Shield, Save, Eye, EyeOff, Copy, RefreshCw, CheckCircle, Plus, Trash2 } from 'lucide-react'
+import { User, Key, Bell, Shield, Save, Eye, EyeOff, Copy, RefreshCw, CheckCircle, Plus, Trash2, Globe, Zap, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react'
 import { useAuth } from '../App.jsx'
 
 const API = import.meta.env.VITE_API_URL || ''
@@ -39,8 +39,21 @@ export default function ProfilePage() {
     const [keyCopied, setKeyCopied] = useState(false)
     const [keyLoading, setKeyLoading] = useState(false)
 
+    // Webhook management state
+    const WEBHOOK_EVENTS = ['job_completed', 'job_failed', 'job_started', 'cost_alert', 'agent_failure']
+    const [webhooks, setWebhooks] = useState([])
+    const [webhookForm, setWebhookForm] = useState({ url: '', events: ['job_completed', 'job_failed'], description: '' })
+    const [webhookLoading, setWebhookLoading] = useState(false)
+    const [webhookError, setWebhookError] = useState('')
+    const [testingWebhook, setTestingWebhook] = useState(null)   // id being tested
+    const [testResult, setTestResult] = useState({})             // id → {success, http_status}
+    const [deliveries, setDeliveries] = useState({})             // id → delivery[]
+    const [expandedDeliveries, setExpandedDeliveries] = useState(null)  // id or null
+    const [copiedInbound, setCopiedInbound] = useState(null)     // id whose inbound URL was copied
+
     useEffect(() => {
         if (tab === 'api') fetchApiKeys()
+        if (tab === 'webhooks') fetchWebhooks()
     }, [tab])
 
     const fetchApiKeys = async () => {
@@ -88,6 +101,95 @@ export default function ProfilePage() {
     const copyCreatedKey = () => {
         navigator.clipboard.writeText(createdKey?.key || '')
         setKeyCopied(true); setTimeout(() => setKeyCopied(false), 2000)
+    }
+
+    const fetchWebhooks = async () => {
+        try {
+            const res = await fetch(`${API}/api/v1/webhooks`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+            if (res.ok) setWebhooks(await res.json())
+        } catch { /* non-fatal */ }
+    }
+
+    const handleCreateWebhook = async (e) => {
+        e.preventDefault()
+        setWebhookError('')
+        if (!webhookForm.url.trim()) return
+        if (webhookForm.events.length === 0) { setWebhookError('Select at least one event'); return }
+        setWebhookLoading(true)
+        try {
+            const res = await fetch(`${API}/api/v1/webhooks`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify(webhookForm),
+            })
+            if (res.ok) {
+                setWebhookForm({ url: '', events: ['job_completed', 'job_failed'], description: '' })
+                fetchWebhooks()
+            } else {
+                const err = await res.json().catch(() => ({}))
+                setWebhookError(err.detail || 'Failed to create webhook')
+            }
+        } catch { setWebhookError('Network error') }
+        finally { setWebhookLoading(false) }
+    }
+
+    const handleDeleteWebhook = async (id) => {
+        try {
+            await fetch(`${API}/api/v1/webhooks/${id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` },
+            })
+            setWebhooks(ws => ws.filter(w => w.id !== id))
+            if (expandedDeliveries === id) setExpandedDeliveries(null)
+        } catch { /* non-fatal */ }
+    }
+
+    const handleTestWebhook = async (id) => {
+        setTestingWebhook(id)
+        try {
+            const res = await fetch(`${API}/api/v1/webhooks/${id}/test`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+            })
+            const data = await res.json().catch(() => ({}))
+            setTestResult(r => ({ ...r, [id]: data }))
+        } catch { setTestResult(r => ({ ...r, [id]: { success: false, http_status: 0 } })) }
+        finally { setTestingWebhook(null) }
+    }
+
+    const fetchDeliveries = async (id) => {
+        try {
+            const res = await fetch(`${API}/api/v1/webhooks/${id}/deliveries`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+            if (res.ok) {
+                const data = await res.json()
+                setDeliveries(d => ({ ...d, [id]: data }))
+            }
+        } catch { /* non-fatal */ }
+    }
+
+    const toggleDeliveries = (id) => {
+        if (expandedDeliveries === id) {
+            setExpandedDeliveries(null)
+        } else {
+            setExpandedDeliveries(id)
+            fetchDeliveries(id)
+        }
+    }
+
+    const copyInboundUrl = (id, url) => {
+        navigator.clipboard.writeText(url)
+        setCopiedInbound(id); setTimeout(() => setCopiedInbound(null), 2000)
+    }
+
+    const toggleWebhookEvent = (evt) => {
+        setWebhookForm(f => ({
+            ...f,
+            events: f.events.includes(evt) ? f.events.filter(e => e !== evt) : [...f.events, evt],
+        }))
     }
 
     // Bug 5 fix: call real API, with graceful fallback
@@ -162,6 +264,7 @@ export default function ProfilePage() {
         { id: 'security', label: 'Security', Icon: Shield },
         { id: 'api', label: 'API Keys', Icon: Key },
         { id: 'notifications', label: 'Notifications', Icon: Bell },
+        { id: 'webhooks', label: 'Webhooks', Icon: Globe },
     ]
 
     return (
@@ -342,6 +445,188 @@ export default function ProfilePage() {
                         <p className="text-xs text-slate-500 mb-3">Full REST API with WebSocket streaming support.</p>
                         <a href="/docs" target="_blank" rel="noopener noreferrer" className="btn-ghost text-sm inline-flex items-center gap-2">
                             Open Swagger Docs
+                        </a>
+                    </div>
+                </div>
+            )}
+
+            {/* Webhooks Tab */}
+            {tab === 'webhooks' && (
+                <div className="space-y-4">
+                    {webhookError && (
+                        <div className="glass-card p-3 border border-red-500/30 bg-red-500/10">
+                            <p className="text-sm text-red-400">{webhookError}</p>
+                        </div>
+                    )}
+
+                    {/* Create webhook */}
+                    <div className="glass-card p-6">
+                        <h3 className="text-white font-semibold mb-1">Register Webhook</h3>
+                        <p className="text-xs text-slate-500 mb-4">OrQuanta will POST a signed JSON payload to your URL on the selected events.</p>
+                        <form onSubmit={handleCreateWebhook} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Target URL</label>
+                                <input
+                                    className="input-field text-sm"
+                                    placeholder="https://your-server.com/webhooks/orquanta"
+                                    value={webhookForm.url}
+                                    onChange={e => setWebhookForm(f => ({ ...f, url: e.target.value }))}
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Events</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {WEBHOOK_EVENTS.map(evt => (
+                                        <button
+                                            key={evt}
+                                            type="button"
+                                            onClick={() => toggleWebhookEvent(evt)}
+                                            className="text-xs px-3 py-1.5 rounded-full border transition-all"
+                                            style={{
+                                                background: webhookForm.events.includes(evt) ? 'rgba(82,113,245,0.2)' : 'rgba(255,255,255,0.04)',
+                                                borderColor: webhookForm.events.includes(evt) ? 'rgba(82,113,245,0.6)' : 'rgba(255,255,255,0.1)',
+                                                color: webhookForm.events.includes(evt) ? '#7a9bfa' : '#94a3b8',
+                                                cursor: 'pointer',
+                                            }}>
+                                            {evt}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Description <span className="text-slate-600">(optional)</span></label>
+                                <input
+                                    className="input-field text-sm"
+                                    placeholder="e.g. Notify Slack on job completion"
+                                    value={webhookForm.description}
+                                    onChange={e => setWebhookForm(f => ({ ...f, description: e.target.value }))}
+                                    maxLength={200}
+                                />
+                            </div>
+                            <button type="submit" disabled={webhookLoading || !webhookForm.url.trim()} className="btn-primary flex items-center gap-2 text-sm">
+                                {webhookLoading ? <RefreshCw size={14} className="animate-spin" /> : <Plus size={14} />}
+                                {webhookLoading ? 'Registering…' : 'Register Webhook'}
+                            </button>
+                        </form>
+                    </div>
+
+                    {/* Existing webhooks */}
+                    <div className="glass-card p-6">
+                        <h3 className="text-white font-semibold mb-4">Active Webhooks</h3>
+                        {webhooks.length === 0
+                            ? <p className="text-xs text-slate-500">No webhooks yet. Register one above.</p>
+                            : <div className="space-y-4">
+                                {webhooks.map(w => (
+                                    <div key={w.id} className="border border-white/[0.06] rounded-xl p-4 space-y-3">
+                                        {/* Header row */}
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <Globe size={13} className="text-slate-400 shrink-0" />
+                                                    <p className="text-sm text-white font-medium truncate">{w.url}</p>
+                                                </div>
+                                                {w.description && <p className="text-xs text-slate-500 mt-0.5 ml-5">{w.description}</p>}
+                                                <div className="flex flex-wrap gap-1 mt-2 ml-5">
+                                                    {w.events.map(e => (
+                                                        <span key={e} className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(82,113,245,0.12)', color: '#7a9bfa' }}>{e}</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <button
+                                                    onClick={() => handleTestWebhook(w.id)}
+                                                    disabled={testingWebhook === w.id}
+                                                    className="btn-ghost flex items-center gap-1 text-xs px-3 py-1.5"
+                                                    title="Fire a test event">
+                                                    {testingWebhook === w.id
+                                                        ? <RefreshCw size={12} className="animate-spin" />
+                                                        : <Zap size={12} />}
+                                                    Test
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteWebhook(w.id)}
+                                                    className="btn-ghost text-red-400 hover:text-red-300 flex items-center gap-1 text-xs px-3 py-1.5">
+                                                    <Trash2 size={12} /> Delete
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Test result */}
+                                        {testResult[w.id] && (
+                                            <div className="ml-5 flex items-center gap-2 text-xs">
+                                                {testResult[w.id].success
+                                                    ? <CheckCircle size={12} className="text-emerald-400" />
+                                                    : <span style={{ color: '#f87171', fontSize: 12 }}>✕</span>}
+                                                <span style={{ color: testResult[w.id].success ? '#34d399' : '#f87171' }}>
+                                                    {testResult[w.id].success ? 'Test delivered' : 'Delivery failed'}
+                                                    {testResult[w.id].http_status ? ` (HTTP ${testResult[w.id].http_status})` : ''}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Inbound URL */}
+                                        <div className="ml-5">
+                                            <p className="text-xs text-slate-500 mb-1">Inbound trigger URL — POST here to start a job</p>
+                                            <div className="flex items-center gap-2">
+                                                <code className="flex-1 text-xs font-mono text-slate-400 truncate" style={{ background: 'rgba(255,255,255,0.04)', padding: '4px 8px', borderRadius: 6 }}>
+                                                    {w.inbound_url}
+                                                </code>
+                                                <button
+                                                    onClick={() => copyInboundUrl(w.id, w.inbound_url)}
+                                                    className="btn-ghost flex items-center gap-1 text-xs px-2 py-1 shrink-0">
+                                                    {copiedInbound === w.id ? <CheckCircle size={11} className="text-emerald-400" /> : <Copy size={11} />}
+                                                    {copiedInbound === w.id ? 'Copied' : 'Copy'}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Stats + delivery log toggle */}
+                                        <div className="ml-5 flex items-center justify-between">
+                                            <p className="text-xs text-slate-600">
+                                                {w.delivery_count} deliveries
+                                                {w.last_delivery ? ` · Last: ${new Date(w.last_delivery).toLocaleString()}` : ''}
+                                            </p>
+                                            <button
+                                                onClick={() => toggleDeliveries(w.id)}
+                                                className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200"
+                                                style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                                                {expandedDeliveries === w.id ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                                                Delivery log
+                                            </button>
+                                        </div>
+
+                                        {/* Delivery log */}
+                                        {expandedDeliveries === w.id && (
+                                            <div className="ml-5 space-y-1">
+                                                {(deliveries[w.id] || []).length === 0
+                                                    ? <p className="text-xs text-slate-600">No deliveries recorded yet.</p>
+                                                    : [...(deliveries[w.id] || [])].reverse().map(d => (
+                                                        <div key={d.id} className="flex items-center gap-3 py-1.5 border-b border-white/[0.04] text-xs">
+                                                            <span style={{ color: d.status === 'success' ? '#34d399' : '#f87171', width: 48, flexShrink: 0 }}>
+                                                                {d.status === 'success' ? '✓' : '✕'} {d.http_status || '—'}
+                                                            </span>
+                                                            <span className="text-slate-400 shrink-0">{d.event}</span>
+                                                            <span className="text-slate-600 truncate">{new Date(d.attempted_at).toLocaleString()}</span>
+                                                            {d.response && (
+                                                                <span className="text-slate-700 truncate hidden md:block">{d.response}</span>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        }
+                    </div>
+
+                    {/* Docs callout */}
+                    <div className="glass-card p-5">
+                        <h3 className="text-white font-semibold mb-1 text-sm">Webhook Signature Verification</h3>
+                        <p className="text-xs text-slate-500 mb-3">Every outbound request includes <code className="text-slate-400">X-OrQuanta-Signature: sha256=&lt;hex&gt;</code> and <code className="text-slate-400">X-OrQuanta-Event</code> headers. Verify with HMAC-SHA256.</p>
+                        <a href="/docs#/webhooks" target="_blank" rel="noopener noreferrer" className="btn-ghost text-sm inline-flex items-center gap-2">
+                            <ExternalLink size={13} /> Webhook API docs
                         </a>
                     </div>
                 </div>

@@ -202,6 +202,8 @@ v4/frontend/
 
 App.jsx contains everything in one file: auth context, all page components (Dashboard, Goals, Jobs, Agents, Metrics, Audit, Settings, Pricing), sidebar, `useLiveSavings()` hook.
 
+ProfilePage.jsx — Settings page: Profile tab, Security tab (password change), API Keys tab (live sk-orq-* key management), Notifications tab.
+
 ---
 
 ## Agent Architecture
@@ -262,6 +264,12 @@ All routers and main.py must use `get_xyz()` — never instantiate directly.
 | `ADMIN_PASSWORD` | no | `""` | Skip seed if not set |
 | `CORS_ORIGINS` | no | prod default | Comma-separated allowed origins |
 | `ORQUANTA_DEMO_MODE` | no | `false` | Enable demo scenario engine |
+| `GOOGLE_CLIENT_ID` | no | `""` | Google OAuth2 — enables /auth/google login |
+| `GOOGLE_CLIENT_SECRET` | no | `""` | Google OAuth2 client secret |
+| `GITHUB_CLIENT_ID` | no | `""` | GitHub OAuth2 — enables /auth/github login |
+| `GITHUB_CLIENT_SECRET` | no | `""` | GitHub OAuth2 client secret |
+| `APP_URL` | no | `https://orquanta.com` | Base URL used in OAuth redirects + webhook inbound URLs |
+| `WEBHOOK_SIGNING_SECRET` | no | random per-process | HMAC-SHA256 key for outbound webhook signatures |
 
 Production CORS default: `https://orquanta.com,https://orquanta-app.pages.dev`  
 Development CORS: `*`
@@ -275,6 +283,8 @@ Development CORS: `*`
 - **Roles:** `user` (default), `admin` (set via DB UPDATE)
 - **Login rate limit:** 5 failures/60s → 429 soft block; 10 failures/300s → hard block
 - **DB backend:** Neon PostgreSQL in production, SQLite fallback for local dev
+- **OAuth:** Google + GitHub PKCE-style flows in `v4/api/routers/oauth.py` — HMAC-signed state param, 5-min window, creates account on first login. Routes: `GET /auth/google/login`, `GET /auth/google/callback`, `GET /auth/github/login`, `GET /auth/github/callback`.
+- **API Keys:** `sk-orq-<prefix8>-<random24>` format, SHA-256 hashed in DB, shown once at creation. Max 10 keys/user. Auth middleware detects `sk-orq-` prefix and calls `lookup_api_key()` instead of JWT decode. Routes: `POST/GET /api/v1/api-keys`, `DELETE /api/v1/api-keys/{id}`.
 
 Auth middleware: `v4/api/middleware/auth.py`  
 - `get_current_user()` — FastAPI dependency, raises 401 if invalid token  
@@ -397,13 +407,15 @@ git: log v4/agents/llm_reasoning_engine.py
 
 | Item | Status | Notes |
 |---|---|---|
-| Goals/Jobs in-memory only | Active | Restart loses all data. Needs PostgreSQL persistence. |
+| Goals/Jobs in-memory only | **RESOLVED** | PostgreSQL persistence via `v4/database/persistence.py`; in-flight state marked failed on restart |
 | Stripe unconfigured | Active | `STRIPE_SECRET_KEY` not set — billing in warning mode |
 | Oracle Cloud ARM64 | Planned | Scripts at `infra/oracle/` — replace Render free tier |
-| Google/GitHub OAuth | v1.1 | Placeholder "SSO coming soon" in login page; `authlib` already installed |
+| Google/GitHub OAuth | **RESOLVED** | Live in `v4/api/routers/oauth.py`; set `GOOGLE_CLIENT_ID/SECRET` + `GITHUB_CLIENT_ID/SECRET` in Render |
+| API Keys UI | **RESOLVED** | Live API key management in ProfilePage Settings tab |
 | Redis/Celery | Optional | Use `docker-compose -f docker-compose.dev.yml up -d` to run locally; caching uses in-memory dict otherwise |
 | SQLAlchemy/asyncpg | Unused | requirements.txt has async ORM but auth.py uses psycopg2 direct. Dead weight. |
 | TurboQuant vLLM | Commented out | Python 3.12+ only; commented in requirements.txt |
+| Webhooks UI | Pending | Backend fully functional; no frontend management page yet (CRUD + delivery log) |
 
 ---
 

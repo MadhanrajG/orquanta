@@ -3,7 +3,7 @@ import { useState, useEffect, createContext, useContext, Component } from 'react
 import {
     LayoutDashboard, Target, Server, DollarSign,
     ScrollText, Cpu, Zap, LogOut, Menu, X, AlertTriangle, Leaf, Gift, BarChart2,
-    Settings, HelpCircle, Loader2, CreditCard, Globe, Brain, Wand2, Crown
+    Settings, HelpCircle, Loader2, CreditCard, Globe, Brain, Wand2, Crown, Clock
 } from 'lucide-react'
 import Dashboard from './pages/Dashboard.jsx'
 import GoalSubmit from './pages/GoalSubmit.jsx'
@@ -15,6 +15,7 @@ import AuditLog from './pages/AuditLog.jsx'
 import FreeTier from './pages/FreeTier.jsx'
 import LivePricing from './pages/LivePricing.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
+import SchedulesPage from './pages/SchedulesPage.jsx'
 import BillingPage from './pages/BillingPage.jsx'
 import NemoClawPage from './pages/NemoClawPage.jsx'
 import UIXAgentPage from './pages/UIXAgentPage.jsx'
@@ -379,7 +380,8 @@ const NAV_GROUPS = [
       { to: '/',         icon: LayoutDashboard, label: 'Dashboard',     exact: true },
       { to: '/goals',    icon: Target,          label: 'Submit Goal' },
       { to: '/agents',   icon: Zap,             label: 'Agent Monitor',  badge: { text: 'LIVE', cls: 'nav-badge-cyan' }, dot: true },
-      { to: '/jobs',     icon: Server,          label: 'Job Manager' },
+      { to: '/jobs',      icon: Server,          label: 'Job Manager' },
+      { to: '/schedules', icon: Clock,           label: 'Schedules' },
     ]
   },
   {
@@ -596,6 +598,7 @@ function AppLayout() {
                         <Route path="/goals" element={<GoalSubmit />} />
                         <Route path="/agents" element={<AgentMonitor />} />
                         <Route path="/jobs" element={<JobManager />} />
+                        <Route path="/schedules" element={<SchedulesPage />} />
                         <Route path="/costs" element={<CostAnalytics />} />
                         <Route path="/audit" element={<AuditLog />} />
                         <Route path="/carbon" element={<CarbonTrackerPage />} />
