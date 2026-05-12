@@ -17,9 +17,9 @@ export const BRAND = {
  description:
  "The first Agentic AI Cloud GPU platform that autonomously orchestrates, " +
  "optimizes and heals your GPU workloads across AWS, GCP, Azure and CoreWeave.",
- email: "orquanta.founder@gmail.com",
+ email: "hello@orquanta.com",
  website: "https://orquanta.com",
- apiBase: process.env.REACT_APP_API_URL || "http://localhost:8000",
+ apiBase: "",
  docsUrl: "https://docs.orquanta.com",
  githubUrl: "https://github.com/orquanta",
  discordUrl: "https://discord.gg/orquanta",
@@ -28,52 +28,52 @@ export const BRAND = {
 
 export const COLORS = {
  // ─── Brand Colors ───────────────────────────────────────────
- primary: "#00D4FF", // Quantum Blue - CTAs, links, active states
+ primary: "#0091FF", // Quantum Blue - CTAs, links, active states
  secondary: "#7B2FFF", // Deep Purple - gradients, highlights
 
  // ─── Backgrounds ────────────────────────────────────────────
- background: "#0A0B14", // Near Black - page background
- surface: "#0F1624", // Dark Navy - cards, modals
- surfaceAlt: "#131D2E", // Slightly lighter surface
- border: "#1E2A3A", // Card borders, dividers
+ background: "#FFFFFF", // White - page background
+ surface: "#F8FAFC", // Light Gray - cards, modals
+ surfaceAlt: "#F1F5F9", // Slightly darker surface
+ border: "#E2E8F0", // Card borders, dividers
 
  // ─── Semantic Colors ─────────────────────────────────────────
- success: "#00FF88", // Emerald - job complete, healthy status
- warning: "#FFB800", // Amber - cost alerts, spend warnings
- error: "#FF4444", // Alert Red - failures, critical
- info: "#00D4FF", // Same as primary for info banners
+ success: "#10B981", // Emerald - job complete, healthy status
+ warning: "#F59E0B", // Amber - cost alerts, spend warnings
+ error: "#EF4444", // Alert Red - failures, critical
+ info: "#0091FF", // Same as primary for info banners
 
  // ─── Text ────────────────────────────────────────────────────
- textPrimary: "#E8EAF6",
- textSecondary: "#8892A4",
- textMuted: "#4A5568",
- textInverse: "#0A0B14",
+ textPrimary: "#0F172A",
+ textSecondary: "#475569",
+ textMuted: "#94A3B8",
+ textInverse: "#FFFFFF",
 
  // ─── GPU Provider Colors (for charts) ────────────────────────
  aws: "#FF9900",
  gcp: "#4285F4",
  azure: "#0078D4",
- coreweave: "#00D4FF",
+ coreweave: "#0091FF",
 };
 
 export const GRADIENTS = {
- primary: "linear-gradient(135deg, #00D4FF 0%, #7B2FFF 100%)",
- primaryReverse: "linear-gradient(135deg, #7B2FFF 0%, #00D4FF 100%)",
- hero: "linear-gradient(135deg, #00D4FF 0%, #7B2FFF 50%, #0A0B14 100%)",
- card: "linear-gradient(145deg, #0F1624 0%, #131D2E 100%)",
- success: "linear-gradient(135deg, #00FF88 0%, #00D4FF 100%)",
- danger: "linear-gradient(135deg, #FF4444 0%, #FF9900 100%)",
- surface: "linear-gradient(180deg, #0F1624 0%, #0A0B14 100%)",
+ primary: "linear-gradient(135deg, #0091FF 0%, #7B2FFF 100%)",
+ primaryReverse: "linear-gradient(135deg, #7B2FFF 0%, #0091FF 100%)",
+ hero: "linear-gradient(135deg, #0091FF 0%, #7B2FFF 50%, #F8FAFC 100%)",
+ card: "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)",
+ success: "linear-gradient(135deg, #10B981 0%, #0091FF 100%)",
+ danger: "linear-gradient(135deg, #EF4444 0%, #F59E0B 100%)",
+ surface: "linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%)",
 };
 
 export const SHADOWS = {
- primary: "0 0 40px rgba(0, 212, 255, 0.15)",
- primaryStrong: "0 0 80px rgba(0, 212, 255, 0.25)",
- purple: "0 0 40px rgba(123, 47, 255, 0.15)",
- card: "0 4px 24px rgba(0, 0, 0, 0.4)",
- cardHover: "0 8px 40px rgba(0, 212, 255, 0.12)",
- success: "0 0 30px rgba(0, 255, 136, 0.15)",
- error: "0 0 30px rgba(255, 68, 68, 0.15)",
+ primary: "0 4px 24px rgba(0, 145, 255, 0.12)",
+ primaryStrong: "0 8px 40px rgba(0, 145, 255, 0.18)",
+ purple: "0 4px 24px rgba(123, 47, 255, 0.12)",
+ card: "0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04)",
+ cardHover: "0 4px 24px rgba(0, 145, 255, 0.08)",
+ success: "0 4px 16px rgba(16, 185, 129, 0.12)",
+ error: "0 4px 16px rgba(239, 68, 68, 0.12)",
 };
 
 export const TYPOGRAPHY = {

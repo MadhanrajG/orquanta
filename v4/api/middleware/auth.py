@@ -15,7 +15,16 @@ from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorization
 
 logger = logging.getLogger("orquanta.auth")
 
-JWT_SECRET = os.getenv("JWT_SECRET_KEY") or os.getenv("JWT_SECRET", "orquanta-dev-secret-change-in-production-please")
+_JWT_SECRET_RAW = os.getenv("JWT_SECRET_KEY", "") or os.getenv("JWT_SECRET", "")
+if not _JWT_SECRET_RAW:
+    if os.getenv("ENV", "production") == "production":
+        raise RuntimeError(
+            "FATAL: JWT_SECRET_KEY must be set in production. Refusing to start. "
+            "Set JWT_SECRET_KEY in your Render/Railway environment variables."
+        )
+    _JWT_SECRET_RAW = "dev-secret-local-only"
+    logger.warning("JWT_SECRET_KEY not set — using ephemeral dev secret (non-production mode)")
+JWT_SECRET = _JWT_SECRET_RAW
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_HOURS = int(os.getenv("JWT_EXPIRE_HOURS", "24"))
 LEGACY_API_KEY = os.getenv("ORQUANTA_API_KEY", "dev-key-change-in-production")

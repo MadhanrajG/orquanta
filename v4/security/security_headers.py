@@ -32,7 +32,8 @@ API_KEY_SALT = os.getenv("API_KEY_SALT", "orquanta-api-key-salt-change-in-prod")
 ALLOWED_ORIGINS = [
     o.strip() for o in os.getenv(
         "CORS_ORIGINS",
-        "http://localhost:3000,http://localhost:5173,http://localhost:8000"
+        "https://orquanta.com,https://www.orquanta.com,"
+        "https://orquanta-app.pages.dev"
     ).split(",") if o.strip()
 ]
 
@@ -47,11 +48,11 @@ def make_security_headers_middleware():
     class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         _CSP = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'; "   # Needed for Vite dev
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
             "font-src 'self' https://fonts.gstatic.com; "
-            "img-src 'self' data: blob:; "
-            "connect-src 'self' ws: wss:; "
+            "img-src 'self' data: blob: https://fastapi.tiangolo.com; "
+            "connect-src 'self' ws: wss: https://orquanta.com https://www.orquanta.com; "
             "frame-ancestors 'none'; "
             "base-uri 'self'; "
             "form-action 'self';"

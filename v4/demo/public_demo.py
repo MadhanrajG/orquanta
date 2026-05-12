@@ -356,7 +356,7 @@ def _build_demo_page() -> str:
  <p>Start for free &mdash; 14-day trial, no credit card required.</p>
  <div class="cta-row">
  <a href="/app" class="btn-primary">Start Free Trial &rarr;</a>
- <a href="mailto:orquanta.founder@gmail.com" class="btn-outline">Talk to Founder</a>
+ <a href="mailto:hello@orquanta.com" class="btn-outline">Talk to Sales</a>
  </div>
 </div>
 
@@ -364,7 +364,7 @@ def _build_demo_page() -> str:
  <div class="footer-links">
  <a href="/app">Dashboard</a>
  <a href="/demo">Live Demo</a>
- <a href="mailto:orquanta.founder@gmail.com">Contact</a>
+ <a href="mailto:hello@orquanta.com">Contact</a>
  <a href="/docs" target="_blank" rel="noopener">API Docs</a>
  </div>
  <div>&copy; 2026 OrQuanta AI &mdash; Orchestrate. Optimize. Evolve.</div>

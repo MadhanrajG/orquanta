@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, createContext, useContext, Component } from 'react'
 import {
     LayoutDashboard, Target, Server, DollarSign,
@@ -36,9 +36,9 @@ class ErrorBoundary extends Component {
     }
     render() {
         if (this.state.hasError) return (
-            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#050608', color: '#e2e8f0', flexDirection: 'column', gap: 16, padding: 24 }}>
+            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC', color: '#0F172A', flexDirection: 'column', gap: 16, padding: 24 }}>
                 <AlertTriangle size={40} color="#f59e0b" />
-                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', color: 'white' }}>Something went wrong</h2>
+                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', color: '#0F172A' }}>Something went wrong</h2>
                 <p style={{ color: '#94a3b8', fontSize: 14, maxWidth: 400, textAlign: 'center' }}>
                     An unexpected error occurred. Please refresh the page or contact support.
                 </p>
@@ -137,6 +137,7 @@ function AuthProvider({ children }) {
         setToken(null); setUser(null)
         localStorage.removeItem('orquanta_token')
         localStorage.removeItem('orquanta_user')
+        window.location.href = '/'
     }
 
     return (
@@ -201,8 +202,8 @@ function LoginPage() {
                             </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', marginBottom: '6px' }}>
-                            <div style={{ width: 40, height: 40, background: 'linear-gradient(135deg,rgba(0,212,255,0.15),rgba(123,47,255,0.15))', border: '1px solid rgba(0,212,255,0.3)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Cpu size={20} color="#00D4FF" />
+                            <div style={{ width: 40, height: 40, background: 'linear-gradient(135deg,rgba(0,145,255,0.1),rgba(123,47,255,0.1))', border: '1px solid rgba(0,145,255,0.2)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Cpu size={20} color="#0091FF" />
                             </div>
                             <div style={{ textAlign: 'left' }}>
                                 <div className="logo-text">OrQuanta</div>
@@ -210,7 +211,7 @@ function LoginPage() {
                             </div>
                         </div>
                     </div>
-                    <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 4, marginBottom: 24, border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.03)', borderRadius: 10, padding: 4, marginBottom: 24, border: '1px solid rgba(0,0,0,0.08)' }}>
                         {[['login', 'Sign In'], ['register', 'Create Account']].map(([m, label]) => (
                             <button key={m} onClick={() => switchMode(m)} style={{
                                 flex: 1, padding: '8px 0', borderRadius: 7, border: 'none', cursor: 'pointer',
@@ -261,15 +262,15 @@ function LoginPage() {
 
                     {/* OAuth SSO buttons */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0 12px' }}>
-                        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+                        <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
                         <span style={{ color: '#64748b', fontSize: 12 }}>or continue with</span>
-                        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+                        <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
                     </div>
                     <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
                         <a href="/auth/google/login" style={{
                             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            gap: 8, padding: '10px 0', borderRadius: 8, border: '1px solid rgba(255,255,255,0.12)',
-                            background: 'rgba(255,255,255,0.04)', color: '#e2e8f0', fontSize: 13,
+                            gap: 8, padding: '10px 0', borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)',
+                            background: 'rgba(0,0,0,0.02)', color: '#334155', fontSize: 13,
                             textDecoration: 'none', fontWeight: 500,
                         }}>
                             <svg width="15" height="15" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
@@ -277,16 +278,16 @@ function LoginPage() {
                         </a>
                         <a href="/auth/github/login" style={{
                             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            gap: 8, padding: '10px 0', borderRadius: 8, border: '1px solid rgba(255,255,255,0.12)',
-                            background: 'rgba(255,255,255,0.04)', color: '#e2e8f0', fontSize: 13,
+                            gap: 8, padding: '10px 0', borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)',
+                            background: 'rgba(0,0,0,0.02)', color: '#334155', fontSize: 13,
                             textDecoration: 'none', fontWeight: 500,
                         }}>
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="#e2e8f0"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="#334155"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
                             GitHub
                         </a>
                     </div>
 
-                    <div style={{ marginTop: 4, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
+                    <div style={{ marginTop: 4, paddingTop: 16, borderTop: '1px solid rgba(0,0,0,0.06)', textAlign: 'center' }}>
                         <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
                             Want to explore first?{' '}
                             <button
@@ -319,7 +320,7 @@ function CarbonTrackerPage() {
             <div className="glass-card p-8 text-center relative overflow-hidden">
                 <div className="absolute inset-0 opacity-5" style={{ background: 'radial-gradient(ellipse at 50% 0%, #00FF88, transparent 70%)' }} />
                 <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}><Leaf size={52} color="#00FF88" /></div>
-                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', marginBottom: 12, color: 'white' }}>Carbon-Aware Scheduling</h2>
+                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', marginBottom: 12, color: '#0F172A' }}>Carbon-Aware Scheduling</h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: 28, maxWidth: 480, margin: '0 auto 28px' }}>
                     OrQuanta will automatically detect real-time carbon intensity per region
                     and shift your GPU jobs to the lowest-carbon available locations.
@@ -449,11 +450,11 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '18px 14px 12px', borderBottom: '1px solid var(--border)', minHeight: 64 }}>
                     <div style={{
                         width: 32, height: 32, minWidth: 32,
-                        background: 'linear-gradient(135deg,#00D4FF20,#7B2FFF20)',
-                        border: '1px solid rgba(0,212,255,0.3)',
+                        background: 'linear-gradient(135deg,#0091FF20,#7B2FFF20)',
+                        border: '1px solid rgba(0,145,255,0.2)',
                         borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
                     }}>
-                        <Cpu size={16} color="#00D4FF" />
+                        <Cpu size={16} color="#0091FF" />
                     </div>
                     {!collapsed && (
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -537,6 +538,25 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
 
 
 /* ── Protected App Layout ── */
+const ROUTE_TITLES = {
+    '/': 'Dashboard',
+    '/goals': 'Submit Goal',
+    '/agents': 'Agent Monitor',
+    '/jobs': 'Job Manager',
+    '/schedules': 'Schedules',
+    '/costs': 'Cost Analytics',
+    '/audit': 'Audit Log',
+    '/carbon': 'Carbon Tracker',
+    '/billing': 'Billing & Plans',
+    '/free': 'Free GPU',
+    '/pricing': 'Live Pricing',
+    '/settings': 'Settings',
+    '/vero': 'Vero',
+    '/nemoclaw': 'NemoClaw',
+    '/uix': 'UIXAgent',
+    '/help': 'Help Center',
+}
+
 function AppLayout() {
     const [collapsed, setCollapsed] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
@@ -544,7 +564,14 @@ function AppLayout() {
         () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
     )
     const navigate = useNavigate()
+    const location = useLocation()
     const { paletteOpen, setPaletteOpen, shortcutsOpen, setShortcutsOpen } = useCommandPalette(navigate)
+
+    // Per-route document.title
+    useEffect(() => {
+        const page = ROUTE_TITLES[location.pathname] || 'Dashboard'
+        document.title = `OrQuanta — ${page}`
+    }, [location.pathname])
 
     // matchMedia keeps sidebar correct across zoom levels — window.innerWidth is zoom-sensitive
     useEffect(() => {

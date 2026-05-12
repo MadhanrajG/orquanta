@@ -120,8 +120,12 @@ def validate_env(strict: bool = False) -> dict[str, Any]:
     use_real = os.getenv("USE_REAL_PROVIDERS", "false").lower() == "true"
 
     if use_real and not has_any_provider:
-        logger.critical("  ❌ USE_REAL_PROVIDERS=true but NO provider API keys set!")
+        msg = "USE_REAL_PROVIDERS=true but NO provider API keys set! Set RUNPOD_API_KEY."
+        logger.critical(f"  [FATAL] {msg}")
         criticals.append("no_providers")
+        # Hard fail in production - don't start with real mode and no keys
+        if os.getenv("ENV", "production").lower() == "production":
+            raise SystemExit(f"FATAL: {msg}")
     elif not has_any_provider and not demo_mode:
         logger.warning("  ⚠️  No provider API keys set — running in MOCK mode")
         logger.warning("     Set RUNPOD_API_KEY to enable real GPU provisioning")
@@ -164,6 +168,17 @@ def validate_env(strict: bool = False) -> dict[str, Any]:
             logger.warning("Critical config missing — starting in degraded mode.")
         elif criticals:
             logger.warning("Critical config missing — starting in degraded mode (dev/test)")
+
+    # ── APP_URL production check ──────────────────────────────────────────
+    app_url = os.getenv("APP_URL", "")
+    env_mode = os.getenv("ENV", "production").lower()
+    if env_mode == "production":
+        if not app_url or "localhost" in app_url or "127.0.0.1" in app_url:
+            logger.warning(
+                "  ⚠️  [WARN] APP_URL is not set to a production URL — "
+                "webhooks, OAuth redirects, and email links will be broken. "
+                "Set APP_URL=https://orquanta.com in your environment."
+            )
 
     logger.info("=" * 60)
 
