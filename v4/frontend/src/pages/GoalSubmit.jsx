@@ -75,11 +75,11 @@ function AISuggestionChips({ goal, onChipClick }) {
 /* ─── Agent execution steps ───────────────────────────────────────────── */
 const AGENTS = [
  {
- key:'orchestrator', icon:'', name:'OrMind Orchestrator', color:'#00D4FF',
+ key:'orchestrator', icon:'', name:'OrMind Orchestrator', color:'#0091FF',
  thoughts: ['Parsing natural language goal...','Building execution DAG...','Confidence: 0.91']
  },
  {
- key:'cost', icon:'', name:'Cost Optimizer', color:'#FFB800',
+ key:'cost', icon:'', name:'Cost Optimizer', color:'#F59E0B',
  thoughts: ['Comparing 5 providers...','Lambda Labs A100 @ $1.99/hr wins','Saving $2.11/hr vs AWS']
  },
  {
@@ -87,7 +87,7 @@ const AGENTS = [
  thoughts: ['No queue backlog...','EDF priority assigned...','Provisioning now']
  },
  {
- key:'healing', icon:'', name:'Healing Agent', color:'#00FF88',
+ key:'healing', icon:'', name:'Healing Agent', color:'#10B981',
  thoughts: ['1Hz telemetry armed...','Anomaly baseline set...','Monitoring active']
  },
  {
@@ -126,14 +126,14 @@ function CostPreview({ goal }) {
  return (
  <div className="animate-fade-in rounded-2xl p-5 mt-4"
  style={{
- background:'rgba(0,212,255,0.08)',
- border:'1px solid rgba(0,212,255,0.25)',
- boxShadow:'0 0 24px rgba(0,212,255,0.06)'
+ background:'rgba(0,145,255,0.08)',
+ border:'1px solid rgba(0,145,255,0.25)',
+ boxShadow:'0 0 24px rgba(0,145,255,0.06)'
  }}>
  <div className="flex items-center gap-2 mb-4">
  <span className="text-sm font-semibold text-cyan-400">AI Estimate</span>
  <span className="text-xs px-2 py-0.5 rounded-full"
- style={{ background:'rgba(0,212,255,0.15)', color:'#7dd3fc', border:'1px solid rgba(0,212,255,0.2)' }}>
+ style={{ background:'rgba(0,145,255,0.15)', color:'#7dd3fc', border:'1px solid rgba(0,145,255,0.2)' }}>
  {est.confidence}% confidence
  </span>
  </div>
@@ -146,11 +146,11 @@ function CostPreview({ goal }) {
  ].map(item => (
  <div key={item.label} className="rounded-xl p-3 text-center"
  style={{
- background: item.highlight ?'rgba(0,255,136,0.12)' :'rgba(255,255,255,0.07)',
- border: item.highlight ?'1px solid rgba(0,255,136,0.25)' :'1px solid rgba(255,255,255,0.1)',
+ background: item.highlight ?'rgba(0,255,136,0.12)' :'rgba(0,0,0,0.06)',
+ border: item.highlight ?'1px solid rgba(0,255,136,0.25)' :'1px solid rgba(0,0,0,0.06)',
  }}>
  <div className="text-lg mb-1">{item.icon}</div>
- <div className="text-sm font-bold" style={{ color: item.highlight ?'#00FF88' :'white' }}>{item.value}</div>
+ <div className="text-sm font-bold" style={{ color: item.highlight ?'#10B981' :'white' }}>{item.value}</div>
  <div className="text-xs mt-0.5" style={{ color:'#94a3b8' }}>{item.label}</div>
  </div>
  ))}
@@ -183,8 +183,8 @@ function AgentTheater({ phase, activeAgent }) {
  <div key={agent.key}
  className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all duration-500 w-28"
  style={{
- background: isDone ? `${agent.color}12` : isActive ? `${agent.color}1A` :'rgba(255,255,255,0.03)',
- border: `1px solid ${isDone || isActive ? agent.color +'35' :'rgba(255,255,255,0.06)'}`,
+ background: isDone ? `${agent.color}12` : isActive ? `${agent.color}1A` :'rgba(0,0,0,0.02)',
+ border: `1px solid ${isDone || isActive ? agent.color +'35' :'rgba(0,0,0,0.06)'}`,
  transform: isActive ?'scale(1.08)' :'scale(1)',
  boxShadow: isActive ? `0 0 24px ${agent.color}30` :'none',
  }}>
@@ -212,7 +212,7 @@ function AgentTheater({ phase, activeAgent }) {
  {/* Live thought stream */}
  {activeAgent < AGENTS.length && (
  <div className="mt-4 rounded-xl p-4"
- style={{ background:'rgba(0,0,0,0.3)', border:'1px solid rgba(255,255,255,0.06)', fontFamily:'JetBrains Mono, monospace' }}>
+ style={{ background:'rgba(0,0,0,0.3)', border:'1px solid rgba(0,0,0,0.06)', fontFamily:'JetBrains Mono, monospace' }}>
  <div className="text-xs text-slate-500 mb-2">// agent reasoning stream</div>
  {phase ==='running' ? (
  <div className="text-xs text-green-400 animate-pulse"> Task running on Lambda Labs A100 - monitoring active</div>
@@ -237,8 +237,8 @@ function AgentTheater({ phase, activeAgent }) {
  <div className="h-full rounded-full transition-all duration-700"
  style={{
  width: `${Math.min(100, ((phase ==='running' ? AGENTS.length : activeAgent) / AGENTS.length) * 100)}%`,
- background:'linear-gradient(90deg, #00D4FF, #7B2FFF)',
- boxShadow:'0 0 8px rgba(0,212,255,0.5)',
+ background:'linear-gradient(90deg, #0091FF, #7B2FFF)',
+ boxShadow:'0 0 8px rgba(0,145,255,0.5)',
  }} />
  </div>
  </div>
@@ -302,7 +302,7 @@ export default function GoalSubmit() {
  const res = await fetch(`${API}/api/v1/goals`, {
  method:'POST',
  headers: {'Content-Type':'application/json', Authorization: `Bearer ${token}` },
- body: JSON.stringify({ goal, priority:'normal' }),
+ body: JSON.stringify({ raw_text: goal, priority: 0.5 }),
  })
  const data = res.ok ? await res.json() : {}
  const goalJobId = data.job_id || data.goal_id || null
@@ -348,7 +348,7 @@ export default function GoalSubmit() {
  </div>
 
  {/* Main input card */}
- <div className="glass-card p-6" style={{ boxShadow:'0 0 60px rgba(0,212,255,0.06)' }}>
+ <div className="glass-card p-6" style={{ boxShadow:'0 0 60px rgba(0,145,255,0.06)' }}>
  <form onSubmit={handleSubmit}>
  <div className="relative">
  <div className="absolute left-4 top-4 text-cyan-400 opacity-60">
@@ -366,12 +366,12 @@ export default function GoalSubmit() {
  style={{
  paddingLeft:'2.75rem', paddingTop:'1rem', paddingRight:'1rem', paddingBottom:'3.5rem',
  background:'rgba(0,0,0,0.3)',
- border: `1px solid ${phase !=='idle' ?'rgba(0,212,255,0.3)' :'rgba(255,255,255,0.08)'}`,
+ border: `1px solid ${phase !=='idle' ?'rgba(0,145,255,0.3)' :'rgba(0,0,0,0.08)'}`,
  outline:'none',
  fontSize:'15px',
  }}
- onFocus={e => e.target.style.borderColor ='rgba(0,212,255,0.4)'}
- onBlur={e => phase ==='idle' && (e.target.style.borderColor ='rgba(255,255,255,0.08)')}
+ onFocus={e => e.target.style.borderColor ='rgba(0,145,255,0.4)'}
+ onBlur={e => phase ==='idle' && (e.target.style.borderColor ='rgba(0,0,0,0.08)')}
  onKeyDown={e => { if (e.key ==='Enter' && (e.metaKey || e.ctrlKey)) handleSubmit() }}
  />
 
@@ -386,10 +386,10 @@ export default function GoalSubmit() {
  className="flex items-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold transition-all"
  style={{
  background: goal.trim() && phase ==='idle'
- ?'linear-gradient(135deg, #00D4FF, #7B2FFF)'
- :'rgba(255,255,255,0.06)',
+ ?'linear-gradient(135deg, #0091FF, #7B2FFF)'
+ :'rgba(0,0,0,0.06)',
  color: goal.trim() && phase ==='idle' ?'white' :'#64748b',
- boxShadow: goal.trim() && phase ==='idle' ?'0 0 20px rgba(0,212,255,0.25)' :'none',
+ boxShadow: goal.trim() && phase ==='idle' ?'0 0 20px rgba(0,145,255,0.25)' :'none',
  }}>
  {phase ==='planning' ? <Loader size={14} className="animate-spin" /> : <Send size={14} />}
  {phase ==='idle' ?'Launch' : phase ==='planning' ?'Planning...' :'Running'}
@@ -433,12 +433,12 @@ export default function GoalSubmit() {
  <button
  onClick={() => navigate('/jobs')}
  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-white"
- style={{ background:'rgba(0,212,255,0.12)', border:'1px solid rgba(0,212,255,0.25)' }}>
+ style={{ background:'rgba(0,145,255,0.12)', border:'1px solid rgba(0,145,255,0.25)' }}>
  View in Job Manager <ChevronRight size={14} />
  </button>
  <button onClick={handleReset}
  className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400"
- style={{ background:'rgba(255,255,255,0.05)' }}>
+ style={{ background:'rgba(0,0,0,0.04)' }}>
  Submit Another
  </button>
  </div>
@@ -452,34 +452,34 @@ export default function GoalSubmit() {
  <div>
  {/* Section header - clearly visible */}
  <div className="flex items-center gap-3 mb-4">
- <div className="h-px flex-1" style={{ background:'rgba(255,255,255,0.08)' }} />
+ <div className="h-px flex-1" style={{ background:'rgba(0,0,0,0.08)' }} />
  <div className="flex items-center gap-2 px-3 py-1 rounded-full"
- style={{ background:'rgba(0,212,255,0.10)', border:'1px solid rgba(0,212,255,0.2)' }}>
+ style={{ background:'rgba(0,145,255,0.10)', border:'1px solid rgba(0,145,255,0.2)' }}>
  <span className="text-xs font-semibold text-cyan-400"> Quick Start Templates</span>
  <span className="text-xs rounded-full px-1.5 py-0.5 font-bold"
- style={{ background:'rgba(0,212,255,0.2)', color:'#7dd3fc' }}>4</span>
+ style={{ background:'rgba(0,145,255,0.2)', color:'#7dd3fc' }}>4</span>
  </div>
- <div className="h-px flex-1" style={{ background:'rgba(255,255,255,0.08)' }} />
+ <div className="h-px flex-1" style={{ background:'rgba(0,0,0,0.08)' }} />
  </div>
 
  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
  {[
- { icon:'', title:'Fine-tune LLaMA 3 8B', sub:'Custom dataset . ~$39 . 20hrs', goal:'Fine-tune LLaMA 3 8B on my customer support dataset, keep cost under $50', color:'#00D4FF' },
+ { icon:'', title:'Fine-tune LLaMA 3 8B', sub:'Custom dataset . ~$39 . 20hrs', goal:'Fine-tune LLaMA 3 8B on my customer support dataset, keep cost under $50', color:'#0091FF' },
  { icon:'', title:'Stable Diffusion Batch', sub:'500 images . ~$8 . 2hrs', goal:'Generate 500 product images with Stable Diffusion XL, 1024x1024', color:'#7B2FFF' },
- { icon:'', title:'Whisper Transcription', sub:'10 hours audio . ~$5 . 1hr', goal:'Transcribe 10 hours of audio using Whisper Large v3', color:'#00FF88' },
- { icon:'', title:'Hyperparameter Sweep', sub:'32 trials . ~$22 . 6hrs', goal:'Run hyperparameter sweep 32 trials for my PyTorch model on A10 GPUs', color:'#FFB800' },
+ { icon:'', title:'Whisper Transcription', sub:'10 hours audio . ~$5 . 1hr', goal:'Transcribe 10 hours of audio using Whisper Large v3', color:'#10B981' },
+ { icon:'', title:'Hyperparameter Sweep', sub:'32 trials . ~$22 . 6hrs', goal:'Run hyperparameter sweep 32 trials for my PyTorch model on A10 GPUs', color:'#F59E0B' },
  ].map(t => (
  <button key={t.title} onClick={() => { setGoal(t.goal); textRef.current?.focus() }}
  disabled={phase !=='idle'}
  className="text-left p-4 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 group"
  style={{
- background:'rgba(255,255,255,0.06)',
+ background:'rgba(0,0,0,0.06)',
  border: `1px solid rgba(255,255,255,0.12)`,
  borderLeft: `3px solid ${t.color}`,
  boxShadow:'0 2px 8px rgba(0,0,0,0.3)',
  }}
  onMouseEnter={e => { e.currentTarget.style.background ='rgba(255,255,255,0.10)'; e.currentTarget.style.boxShadow = `0 4px 20px ${t.color}20` }}
- onMouseLeave={e => { e.currentTarget.style.background ='rgba(255,255,255,0.06)'; e.currentTarget.style.boxShadow ='0 2px 8px rgba(0,0,0,0.3)' }}
+ onMouseLeave={e => { e.currentTarget.style.background ='rgba(0,0,0,0.06)'; e.currentTarget.style.boxShadow ='0 2px 8px rgba(0,0,0,0.3)' }}
  >
  <div className="flex items-center gap-3">
  <span className="text-2xl flex-shrink-0" style={{ filter: `drop-shadow(0 0 6px ${t.color}80)` }}>{t.icon}</span>
@@ -493,6 +493,103 @@ export default function GoalSubmit() {
  ))}
  </div>
  </div>
+
+ {/* Goal History */}
+ <GoalHistory token={token} refreshKey={phase} />
+ </div>
+ )
+}
+
+/* ─── Goal History Table ───────────────────────────────────────────────── */
+function GoalHistory({ token, refreshKey }) {
+ const [goals, setGoals] = useState([])
+ const [loading, setLoading] = useState(true)
+ const [expanded, setExpanded] = useState(null)
+
+ useEffect(() => {
+ if (!token) return
+ setLoading(true)
+ fetch(`${API}/api/v1/goals`, {
+  headers: { Authorization: `Bearer ${token}` },
+ })
+  .then(r => r.ok ? r.json() : { goals: [] })
+  .then(data => setGoals((data.goals || []).slice(0, 20)))
+  .catch(() => setGoals([]))
+  .finally(() => setLoading(false))
+ }, [token, refreshKey])
+
+ if (loading) return null
+ if (goals.length === 0) return (
+ <div className="glass-card p-6 text-center" style={{ borderStyle: 'dashed', borderColor: 'rgba(0,145,255,0.15)' }}>
+  <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.5 }}>📋</div>
+  <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>No goals submitted yet</p>
+  <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Submit your first goal above and agents will start working immediately.</p>
+ </div>
+ )
+
+ const statusColor = (s) => {
+ if (s === 'completed') return { bg: 'rgba(0,255,136,0.10)', color: '#00FF88', border: 'rgba(0,255,136,0.25)' }
+ if (s === 'running' || s === 'accepted') return { bg: 'rgba(0,145,255,0.10)', color: '#0091FF', border: 'rgba(0,145,255,0.25)' }
+ if (s === 'failed') return { bg: 'rgba(255,68,68,0.10)', color: '#FF4444', border: 'rgba(255,68,68,0.25)' }
+ return { bg: 'rgba(148,163,184,0.10)', color: '#94a3b8', border: 'rgba(148,163,184,0.2)' }
+ }
+
+ return (
+ <div>
+  <div className="flex items-center gap-3 mb-4">
+  <div className="h-px flex-1" style={{ background:'rgba(0,0,0,0.08)' }} />
+  <div className="flex items-center gap-2 px-3 py-1 rounded-full"
+   style={{ background:'rgba(0,145,255,0.10)', border:'1px solid rgba(0,145,255,0.2)' }}>
+   <span className="text-xs font-semibold text-cyan-400">📜 Goal History</span>
+   <span className="text-xs rounded-full px-1.5 py-0.5 font-bold"
+   style={{ background:'rgba(0,145,255,0.2)', color:'#7dd3fc' }}>{goals.length}</span>
+  </div>
+  <div className="h-px flex-1" style={{ background:'rgba(0,0,0,0.08)' }} />
+  </div>
+
+  <div className="space-y-2">
+  {goals.map(g => {
+   const sc = statusColor(g.status)
+   const ts = g.created_at ? new Date(g.created_at).toLocaleString() : ''
+   const isOpen = expanded === g.goal_id
+   return (
+   <div key={g.goal_id}
+    onClick={() => setExpanded(isOpen ? null : g.goal_id)}
+    className="glass-card p-4 cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
+    style={{ borderLeft: `3px solid ${sc.color}` }}>
+    <div className="flex items-center justify-between gap-3">
+    <div className="flex-1 min-w-0">
+     <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+     {(g.raw_text || '').slice(0, 80)}{(g.raw_text || '').length > 80 ? '…' : ''}
+     </p>
+     <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{ts}</p>
+    </div>
+    <div className="flex items-center gap-3 flex-shrink-0">
+     {g.cost_incurred_usd > 0 && (
+     <span className="text-xs font-mono font-semibold" style={{ color: '#00FF88' }}>
+      ${g.cost_incurred_usd.toFixed(2)}
+     </span>
+     )}
+     <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+     style={{ background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>
+     {g.status}
+     </span>
+    </div>
+    </div>
+    {isOpen && (
+    <div className="mt-3 pt-3 text-xs space-y-1" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+     <p style={{ color: 'var(--text-secondary)' }}>{g.raw_text}</p>
+     <div className="flex gap-4 mt-2" style={{ color: 'var(--text-muted)' }}>
+     <span>Tasks: {(g.tasks || []).length}</span>
+     <span>Steps: {g.reasoning_steps || 0}</span>
+     <span>ID: {g.goal_id?.slice(0, 12)}…</span>
+     </div>
+    </div>
+    )}
+   </div>
+   )
+  })}
+  </div>
  </div>
  )
 }

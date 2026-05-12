@@ -7,9 +7,11 @@ authentication, Prometheus metrics exposure, and WebSocket stream.
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import time
+import uuid
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -53,6 +55,10 @@ logging.basicConfig(
 logger = logging.getLogger("orquanta.api")
 
 VERSION = "1.0.0"
+_APP_START_TIME = time.monotonic()
+_ERROR_COUNTER: dict[str, int] = {"last_hour": 0, "total": 0}
+_GOAL_COUNTER: dict[str, int] = {"submitted_today": 0}
+_JOB_COUNTER: dict[str, int] = {"completed_today": 0, "failed_today": 0}
 _ENV = os.getenv("ENV", "production")
 _DEFAULT_ORIGINS = "https://orquanta.com,https://www.orquanta.com,https://orquanta-app.pages.dev"
 ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", _DEFAULT_ORIGINS).split(",")
@@ -377,6 +383,49 @@ app.add_middleware(PrometheusMiddleware)
 
 # Register LAST → runs OUTERMOST (executes before anything else, wraps all responses)
 app.add_middleware(SecurityHeadersMiddleware)
+
+
+# ─── Structured Request Logging Middleware ─────────────────────────────────────
+_req_logger = logging.getLogger("orquanta.requests")
+
+
+@app.middleware("http")
+async def structured_request_logging(request: Request, call_next):
+    """Log every request as structured JSON for Render log search."""
+    request_id = request.headers.get("x-request-id", uuid.uuid4().hex[:12])
+    request.state.request_id = request_id
+    t0 = time.monotonic()
+    response = None
+    try:
+        response = await call_next(request)
+        return response
+    except Exception:
+        _ERROR_COUNTER["last_hour"] += 1
+        _ERROR_COUNTER["total"] += 1
+        raise
+    finally:
+        duration_ms = round((time.monotonic() - t0) * 1000, 1)
+        status_code = response.status_code if response else 500
+        path = request.url.path
+        # Skip noisy health/metrics pings from structured logs
+        if path not in ("/health", "/metrics"):
+            log_entry = {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "request_id": request_id,
+                "method": request.method,
+                "path": path,
+                "status": status_code,
+                "duration_ms": duration_ms,
+            }
+            if status_code >= 400:
+                _req_logger.warning(json.dumps(log_entry))
+                if status_code >= 500:
+                    _ERROR_COUNTER["last_hour"] += 1
+                    _ERROR_COUNTER["total"] += 1
+            else:
+                _req_logger.info(json.dumps(log_entry))
+        if response:
+            response.headers["X-Request-ID"] = request_id
 
 
 # Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Global exception handler Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
@@ -911,14 +960,22 @@ async def prometheus_metrics():
     return get_metrics_response()
 
 
-@app.get("/health", tags=["System"], response_model=HealthResponse, summary="Health check")
+@app.get("/health", tags=["System"], summary="Health check")
 async def health():
-    """System health check - no auth required."""
-    return HealthResponse(
-        status="healthy",
-        version=VERSION,
-        timestamp=datetime.now(timezone.utc).isoformat(),
-        components={
+    """System health check with operational metrics - no auth required."""
+    from .websocket.agent_stream import manager as _ws_manager
+    uptime = round(time.monotonic() - _APP_START_TIME, 1)
+    return {
+        "status": "healthy",
+        "version": VERSION,
+        "uptime_seconds": uptime,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "errors_last_hour": _ERROR_COUNTER["last_hour"],
+        "goals_submitted_today": _GOAL_COUNTER["submitted_today"],
+        "jobs_completed_today": _JOB_COUNTER["completed_today"],
+        "jobs_failed_today": _JOB_COUNTER["failed_today"],
+        "active_websocket_connections": _ws_manager.client_count,
+        "components": {
             "api": "ok",
             "orchestrator": "ok",
             "scheduler": "ok",
@@ -926,7 +983,7 @@ async def health():
             "cost_optimizer": "ok",
             "forecast": "ok",
         },
-    )
+    }
 
 
 @app.get("/", include_in_schema=False)
