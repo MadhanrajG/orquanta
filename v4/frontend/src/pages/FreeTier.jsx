@@ -1,4 +1,4 @@
-import { useState, useEffect } from'react'
+﻿import { useState, useEffect } from'react'
 import { Zap, Download, ExternalLink, CheckCircle, Clock, Cpu, DollarSign, AlertTriangle } from'lucide-react'
 
 const API =''
@@ -17,19 +17,19 @@ const FREE_OPTIONS = [
  id:'colab', icon:'', name:'Google Colab',
  gpu:'T4 16GB', hours:'~12 hrs/day',
  desc:'Generate a notebook Open in Colab Run All. Zero setup.',
- badge:'Most Popular', badgeColor:'#FFB800', cost:'$0.00',
+ badge:'Most Popular', badgeColor:'#F59E0B', cost:'$0.00',
  },
  {
  id:'kaggle', icon:'', name:'Kaggle Kernels',
  gpu:'T4 / P100 16GB', hours:'30 hrs/week',
  desc:'Full automation. OrQuanta submits & monitors via Kaggle API.',
- badge:'Most Automated', badgeColor:'#00D4FF', cost:'$0.00',
+ badge:'Most Automated', badgeColor:'#0091FF', cost:'$0.00',
  },
  {
  id:'lambda', icon:'', name:'Lambda Labs',
  gpu:'A10 / A100', hours:'$10 free credits',
  desc:'New users get $10 credits. Real A100 GPU, full API control.',
- badge:'Best Hardware', badgeColor:'#00FF88', cost:'$0 to start',
+ badge:'Best Hardware', badgeColor:'#10B981', cost:'$0 to start',
  },
 ]
 
@@ -74,7 +74,7 @@ export default function FreeTierPage() {
  <div className="space-y-6 animate-fade-in">
  {/* Header */}
  <div>
- <h1 className="text-2xl font-bold text-white" style={{ display:'flex', alignItems:'center', gap: 10 }}>
+ <h1 className="text-2xl font-bold text-gray-900" style={{ display:'flex', alignItems:'center', gap: 10 }}>
  <span style={{ fontSize: 28 }}></span> Free GPU Tier
  </h1>
  <p className="text-slate-400 text-sm mt-1">
@@ -95,13 +95,13 @@ export default function FreeTierPage() {
  {opt.badge}
  </div>
  <div style={{ fontSize: 28, marginBottom: 8 }}>{opt.icon}</div>
- <div style={{ fontWeight: 700, fontSize: 15, color:'white', marginBottom: 4 }}>{opt.name}</div>
+ <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', marginBottom: 4 }}>{opt.name}</div>
  <div style={{ display:'flex', gap: 12, marginBottom: 8 }}>
- <span style={{ fontSize: 12, color:'#00D4FF' }}> {opt.gpu}</span>
- <span style={{ fontSize: 12, color:'#00FF88' }}> {opt.hours}</span>
+ <span style={{ fontSize: 12, color:'#0091FF' }}> {opt.gpu}</span>
+ <span style={{ fontSize: 12, color:'#10B981' }}> {opt.hours}</span>
  </div>
  <p style={{ fontSize: 13, color:'var(--text-muted)', lineHeight: 1.5, marginBottom: 10 }}>{opt.desc}</p>
- <div style={{ fontWeight: 700, color:'#00FF88', fontSize: 15 }}>{opt.cost}</div>
+ <div style={{ fontWeight: 700, color:'#10B981', fontSize: 15 }}>{opt.cost}</div>
  </div>
  ))}
  </div>
@@ -113,7 +113,7 @@ export default function FreeTierPage() {
  <button key={tab} onClick={() => setActiveTab(tab)} style={{
  padding:'8px 18px', borderRadius: 8, border:'none', cursor:'pointer',
  fontSize: 13, fontWeight: 600, transition:'all 0.2s',
- background: activeTab === tab ?'linear-gradient(135deg,#3a52eb,#5a72fb)' :'rgba(255,255,255,0.05)',
+ background: activeTab === tab ?'linear-gradient(135deg,#3a52eb,#5a72fb)' :'rgba(0,0,0,0.04)',
  color: activeTab === tab ?'#fff' :'var(--text-muted)',
  }}>{label}</button>
  ))}
@@ -121,7 +121,7 @@ export default function FreeTierPage() {
 
  {activeTab ==='generate' && (
  <div>
- <h2 style={{ fontWeight: 700, fontSize: 18, color:'white', marginBottom: 6 }}>
+ <h2 style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', marginBottom: 6 }}>
  Generate a Free GPU Notebook
  </h2>
  <p style={{ color:'var(--text-muted)', fontSize: 14, marginBottom: 20 }}>
@@ -134,8 +134,8 @@ export default function FreeTierPage() {
  {TEMPLATES.map(t => (
  <button key={t.label} onClick={() => setGoal(t.goal)}
  style={{
- padding:'5px 12px', borderRadius: 20, border:'1px solid rgba(0,212,255,0.25)',
- background:'rgba(0,212,255,0.06)', color:'#7a9bfa', fontSize: 12,
+ padding:'5px 12px', borderRadius: 20, border:'1px solid rgba(0,145,255,0.25)',
+ background:'rgba(0,145,255,0.06)', color:'#7a9bfa', fontSize: 12,
  cursor:'pointer', fontWeight: 500
  }}>
  {t.label}
@@ -149,7 +149,7 @@ export default function FreeTierPage() {
  placeholder="e.g. Fine-tune LLaMA 3 8B on my product FAQ dataset using LoRA..."
  style={{
  width:'100%', minHeight: 100, background:'rgba(0,0,0,0.3)',
- border:'1px solid rgba(0,212,255,0.2)', borderRadius: 8,
+ border:'1px solid rgba(0,145,255,0.2)', borderRadius: 8,
  color:'#E8EAF6', fontSize: 14, padding: 14, marginBottom: 16,
  fontFamily:'Inter, sans-serif', resize:'vertical', outline:'none',
  boxSizing:'border-box'
@@ -179,8 +179,8 @@ export default function FreeTierPage() {
  border:'1px solid rgba(0,255,136,0.2)', borderRadius: 12
  }}>
  <div style={{ display:'flex', alignItems:'center', gap: 10, marginBottom: 16 }}>
- <CheckCircle size={20} color="#00FF88" />
- <span style={{ fontWeight: 700, color:'#00FF88', fontSize: 16 }}>
+ <CheckCircle size={20} color="#10B981" />
+ <span style={{ fontWeight: 700, color:'#10B981', fontSize: 16 }}>
  Notebook Ready - {result.cell_count} cells generated
  </span>
  <span style={{
@@ -194,8 +194,8 @@ export default function FreeTierPage() {
 
  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12, marginBottom: 20 }}>
  {[
- ['Model', result.model_id?.split('/')[1] || result.model_id,'#00D4FF'],
- ['Cost','$0.00 (Free!)','#00FF88'],
+ ['Model', result.model_id?.split('/')[1] || result.model_id,'#0091FF'],
+ ['Cost','$0.00 (Free!)','#10B981'],
  ['GPU','T4 16GB (Colab/Kaggle)','#fff'],
  ['File', result.filename,'#A78BFA'],
  ].map(([label, val, color]) => (
@@ -218,7 +218,7 @@ export default function FreeTierPage() {
  <a href="https://colab.research.google.com" target="_blank" rel="noopener noreferrer"
  style={{
  display:'flex', alignItems:'center', gap: 8, padding:'10px 20px',
- background:'rgba(255,183,0,0.12)', color:'#FFB800',
+ background:'rgba(255,183,0,0.12)', color:'#F59E0B',
  border:'1px solid rgba(255,183,0,0.3)', borderRadius: 8, textDecoration:'none',
  fontWeight: 700, fontSize: 14
  }}>
@@ -227,8 +227,8 @@ export default function FreeTierPage() {
  <a href="https://www.kaggle.com/code" target="_blank" rel="noopener noreferrer"
  style={{
  display:'flex', alignItems:'center', gap: 8, padding:'10px 20px',
- background:'rgba(0,212,255,0.08)', color:'#00D4FF',
- border:'1px solid rgba(0,212,255,0.25)', borderRadius: 8, textDecoration:'none',
+ background:'rgba(0,145,255,0.08)', color:'#0091FF',
+ border:'1px solid rgba(0,145,255,0.25)', borderRadius: 8, textDecoration:'none',
  fontWeight: 700, fontSize: 14
  }}>
  <ExternalLink size={15} /> Open Kaggle 
@@ -252,7 +252,7 @@ export default function FreeTierPage() {
 
  {activeTab ==='kaggle' && (
  <div>
- <h2 style={{ fontWeight: 700, fontSize: 18, color:'white', marginBottom: 6 }}>
+ <h2 style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)', marginBottom: 6 }}>
  Auto-Run on Kaggle (Full Automation)
  </h2>
  <p style={{ color:'var(--text-muted)', fontSize: 14, marginBottom: 20 }}>
@@ -263,7 +263,7 @@ export default function FreeTierPage() {
  background:'rgba(255,183,0,0.06)', border:'1px solid rgba(255,183,0,0.2)',
  borderRadius: 8, padding: 16, marginBottom: 20
  }}>
- <div style={{ fontWeight: 700, color:'#FFB800', marginBottom: 8 }}> Setup (5 minutes once):</div>
+ <div style={{ fontWeight: 700, color:'#F59E0B', marginBottom: 8 }}> Setup (5 minutes once):</div>
  {[
 '1. Sign up at kaggle.com (free)',
 '2. Go to kaggle.com/settings/account scroll to API section',
@@ -281,8 +281,8 @@ export default function FreeTierPage() {
  </a>
  <a href="https://www.kaggle.com/settings/account" target="_blank" rel="noopener noreferrer"
  style={{
- textAlign:'center', padding:'12px 24px', borderRadius: 8, border:'1px solid rgba(0,212,255,0.3)',
- color:'#00D4FF', textDecoration:'none', fontWeight: 600, fontSize: 14
+ textAlign:'center', padding:'12px 24px', borderRadius: 8, border:'1px solid rgba(0,145,255,0.3)',
+ color:'#0091FF', textDecoration:'none', fontWeight: 600, fontSize: 14
  }}>
  Get Kaggle API Token 
  </a>
@@ -296,3 +296,5 @@ export default function FreeTierPage() {
  </div>
  )
 }
+
+

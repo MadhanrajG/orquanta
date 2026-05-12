@@ -1,4 +1,4 @@
-/**
+﻿/**
  * OrQuanta - Live GPU Pricing Page
  * Shows real-time GPU spot prices from Lambda Labs, RunPod, Vast.ai, and AWS
  * Data sourced from /api/v1/pricing (refreshed every 60s server-side)
@@ -10,9 +10,9 @@ const API = import.meta.env.VITE_API_URL ||''
 
 const PROVIDER_INFO = {
  lambda: { label:'Lambda Labs', color:'#A78BFA', dot:'#7B2FFF', url:'https://cloud.lambdalabs.com' },
- runpod: { label:'RunPod', color:'#00D4FF', dot:'#0099bb', url:'https://www.runpod.io' },
- vastai: { label:'Vast.ai', color:'#00FF88', dot:'#00bb66', url:'https://vast.ai' },
- aws: { label:'AWS', color:'#FFB800', dot:'#cc9200', url:'https://aws.amazon.com/ec2/pricing' },
+ runpod: { label:'RunPod', color:'#0091FF', dot:'#0099bb', url:'https://www.runpod.io' },
+ vastai: { label:'Vast.ai', color:'#10B981', dot:'#00bb66', url:'https://vast.ai' },
+ aws: { label:'AWS', color:'#F59E0B', dot:'#cc9200', url:'https://aws.amazon.com/ec2/pricing' },
 }
 
 const GPU_CLASSES = ['All','A10','A100','H100','RTX 4090','RTX 3090','T4','V100']
@@ -60,7 +60,7 @@ export default function LivePricing() {
  {/* Header */}
  <div className="flex items-start justify-between flex-wrap gap-4">
  <div>
- <h1 className="text-2xl font-bold text-white" style={{ display:'flex', alignItems:'center', gap: 10 }}>
+ <h1 className="text-2xl font-bold text-gray-900" style={{ display:'flex', alignItems:'center', gap: 10 }}>
  <span style={{ fontSize: 24 }}></span> Live GPU Pricing
  </h1>
  <p className="text-slate-400 text-sm mt-1">
@@ -75,8 +75,8 @@ export default function LivePricing() {
  <button onClick={fetchData} disabled={loading}
  style={{
  display:'flex', alignItems:'center', gap: 6, padding:'8px 16px',
- background:'rgba(0,212,255,0.1)', border:'1px solid rgba(0,212,255,0.25)',
- borderRadius: 8, color:'#00D4FF', cursor:'pointer', fontSize: 13, fontWeight: 600
+ background:'rgba(0,145,255,0.1)', border:'1px solid rgba(0,145,255,0.25)',
+ borderRadius: 8, color:'#0091FF', cursor:'pointer', fontSize: 13, fontWeight: 600
  }}>
  <RefreshCw size={14} className={loading ?'animate-spin' :''} />
  {loading ?'Refreshing...' :'Refresh Prices'}
@@ -98,7 +98,7 @@ export default function LivePricing() {
  }}>
  <span style={{
  width: 7, height: 7, borderRadius:'50%',
- background: isLive ?'#00FF88' : info.status ==='fallback' ?'#FFB800' :'#FF4444',
+ background: isLive ?'#10B981' : info.status ==='fallback' ?'#F59E0B' :'#EF4444',
  display:'inline-block'
  }} />
  <span style={{ fontSize: 12, fontWeight: 600, color: pi.color ||'#fff' }}>
@@ -119,7 +119,7 @@ export default function LivePricing() {
  <button key={v} onClick={() => setView(v)} style={{
  padding:'8px 18px', borderRadius: 8, border:'none', cursor:'pointer',
  fontSize: 13, fontWeight: 600,
- background: view === v ?'linear-gradient(135deg,#3a52eb,#5a72fb)' :'rgba(255,255,255,0.05)',
+ background: view === v ?'linear-gradient(135deg,#3a52eb,#5a72fb)' :'rgba(0,0,0,0.04)',
  color: view === v ?'#fff' :'var(--text-muted)',
  }}>{label}</button>
  ))}
@@ -132,8 +132,8 @@ export default function LivePricing() {
  const pi = PROVIDER_INFO[best.provider] || {}
  return (
  <div key={gpuClass} className="glass-card p-5">
- <div style={{ fontWeight: 700, color:'white', marginBottom: 4, fontSize: 14 }}>{gpuClass}</div>
- <div style={{ fontSize: 26, fontWeight: 800, color:'#00FF88', marginBottom: 4 }}>
+ <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4, fontSize: 14 }}>{gpuClass}</div>
+ <div style={{ fontSize: 26, fontWeight: 800, color:'#10B981', marginBottom: 4 }}>
  {best.price_per_hr_fmt}
  </div>
  <div style={{ display:'flex', gap: 8, alignItems:'center', marginBottom: 8 }}>
@@ -143,7 +143,7 @@ export default function LivePricing() {
  {data.savings_vs_aws_pct > 0 && (
  <div style={{
  display:'flex', alignItems:'center', gap: 4,
- color:'#00FF88', fontSize: 12, fontWeight: 600
+ color:'#10B981', fontSize: 12, fontWeight: 600
  }}>
  <TrendingDown size={12} />
  {data.savings_vs_aws_pct}% cheaper than AWS
@@ -168,7 +168,7 @@ export default function LivePricing() {
  <select value={filter.gpu} onChange={e => setFilter(p => ({ ...p, gpu: e.target.value }))}
  style={{
  padding:'5px 10px', borderRadius: 6, background:'rgba(0,0,0,0.4)',
- border:'1px solid rgba(255,255,255,0.1)', color:'#E8EAF6', fontSize: 13
+ border:'1px solid rgba(0,0,0,0.06)', color:'#E8EAF6', fontSize: 13
  }}>
  {GPU_CLASSES.map(g => <option key={g} value={g}>{g}</option>)}
  </select>
@@ -176,20 +176,20 @@ export default function LivePricing() {
  onChange={e => setFilter(p => ({ ...p, maxPrice: e.target.value }))}
  style={{
  width: 100, padding:'5px 10px', borderRadius: 6,
- background:'rgba(0,0,0,0.4)', border:'1px solid rgba(255,255,255,0.1)',
+ background:'rgba(0,0,0,0.4)', border:'1px solid rgba(0,0,0,0.06)',
  color:'#E8EAF6', fontSize: 13
  }} />
  <input type="number" placeholder="Min VRAM GB" value={filter.minVram}
  onChange={e => setFilter(p => ({ ...p, minVram: e.target.value }))}
  style={{
  width: 120, padding:'5px 10px', borderRadius: 6,
- background:'rgba(0,0,0,0.4)', border:'1px solid rgba(255,255,255,0.1)',
+ background:'rgba(0,0,0,0.4)', border:'1px solid rgba(0,0,0,0.06)',
  color:'#E8EAF6', fontSize: 13
  }} />
  <select value={filter.provider} onChange={e => setFilter(p => ({ ...p, provider: e.target.value }))}
  style={{
  padding:'5px 10px', borderRadius: 6, background:'rgba(0,0,0,0.4)',
- border:'1px solid rgba(255,255,255,0.1)', color:'#E8EAF6', fontSize: 13
+ border:'1px solid rgba(0,0,0,0.06)', color:'#E8EAF6', fontSize: 13
  }}>
  <option value="">All Providers</option>
  {Object.entries(PROVIDER_INFO).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
@@ -213,7 +213,7 @@ export default function LivePricing() {
  <div style={{ overflowX:'auto' }}>
  <table style={{ width:'100%', borderCollapse:'collapse', fontSize: 13 }}>
  <thead>
- <tr style={{ borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+ <tr style={{ borderBottom:'1px solid rgba(0,0,0,0.06)' }}>
  {['Provider','GPU','VRAM','Count','Region','Price / hr','8hr Cost','Tags',''].map(h => (
  <th key={h} style={{
  padding:'10px 14px', textAlign:'left',
@@ -228,11 +228,11 @@ export default function LivePricing() {
  <tbody>
  {loading ? (
  Array.from({ length: 6 }).map((_, i) => (
- <tr key={i} style={{ borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
+ <tr key={i} style={{ borderBottom:'1px solid rgba(0,0,0,0.03)' }}>
  {Array.from({ length: 9 }).map((__, j) => (
  <td key={j} style={{ padding:'12px 14px' }}>
  <div style={{
- height: 14, background:'rgba(255,255,255,0.06)',
+ height: 14, background:'rgba(0,0,0,0.06)',
  borderRadius: 4, width: j === 1 ? 120 : 60,
  animation:'pulse 1.5s infinite'
  }} />
@@ -252,8 +252,8 @@ export default function LivePricing() {
  return (
  <tr key={`${l.provider}-${l.instance_id}-${i}`}
  style={{
- borderBottom:'1px solid rgba(255,255,255,0.04)',
- background: i % 2 === 0 ?'transparent' :'rgba(255,255,255,0.01)',
+ borderBottom:'1px solid rgba(0,0,0,0.03)',
+ background: i % 2 === 0 ?'transparent' :'rgba(0,0,0,0.01)',
  opacity: isAws ? 0.6 : 1
  }}>
  <td style={{ padding:'12px 14px' }}>
@@ -268,17 +268,17 @@ export default function LivePricing() {
  </div>
  </td>
  <td style={{ padding:'12px 14px', color:'#E8EAF6', fontWeight: 600 }}>{l.gpu_model}</td>
- <td style={{ padding:'12px 14px', color:'#00D4FF' }}>{l.vram_gb}GB</td>
+ <td style={{ padding:'12px 14px', color:'#0091FF' }}>{l.vram_gb}GB</td>
  <td style={{ padding:'12px 14px', color:'#94a3b8' }}>x{l.gpu_count}</td>
  <td style={{ padding:'12px 14px', color:'#64748b', fontSize: 11 }}>{l.region}</td>
  <td style={{ padding:'12px 14px' }}>
  <span style={{
  fontWeight: 800, fontSize: 15,
- color: isAws ?'#FFB800' :'#00FF88'
+ color: isAws ?'#F59E0B' :'#10B981'
  }}>
  {l.price_per_hr_fmt}
  </span>
- {isAws && <span style={{ fontSize: 10, color:'#FFB800', marginLeft: 4 }}>ref</span>}
+ {isAws && <span style={{ fontSize: 10, color:'#F59E0B', marginLeft: 4 }}>ref</span>}
  </td>
  <td style={{ padding:'12px 14px', color:'#94a3b8', fontSize: 12 }}>{l.cost_8hr_fmt}</td>
  <td style={{ padding:'12px 14px' }}>
@@ -286,8 +286,8 @@ export default function LivePricing() {
  {(l.tags || []).slice(0, 2).map(t => (
  <span key={t} style={{
  fontSize: 10, padding:'1px 6px',
- borderRadius: 999, background:'rgba(255,255,255,0.06)',
- color:'#64748b', border:'1px solid rgba(255,255,255,0.08)'
+ borderRadius: 999, background:'rgba(0,0,0,0.06)',
+ color:'#64748b', border:'1px solid rgba(0,0,0,0.08)'
  }}>
  {t}
  </span>
@@ -322,3 +322,5 @@ export default function LivePricing() {
  </div>
  )
 }
+
+

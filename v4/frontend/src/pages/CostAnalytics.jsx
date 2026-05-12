@@ -1,4 +1,4 @@
-import { useState, useEffect } from'react'
+﻿import { useState, useEffect } from'react'
 import { DollarSign, TrendingDown, Cloud, RefreshCw } from'lucide-react'
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, RadarChart, Radar, PolarGrid, PolarAngleAxis } from'recharts'
 import { useAuth } from'../App.jsx'
@@ -63,7 +63,7 @@ export default function CostAnalytics() {
  return (
  <div className="space-y-6 animate-fade-in">
  <div>
- <h1 className="text-2xl font-bold text-white">Cost Analytics</h1>
+ <h1 className="text-2xl font-bold text-gray-900">Cost Analytics</h1>
  <p className="text-slate-400 text-sm mt-0.5">Real-time cost intelligence across all GPU providers</p>
  </div>
 
@@ -75,11 +75,11 @@ export default function CostAnalytics() {
  { label:'Cheapest H100/hr', value: cheapest ? `$${cheapest.current_price_usd_hr.toFixed(2)}` :'-', icon: Cloud, color:'purple' },
  { label:'Savings vs On-Demand', value: savings, icon: DollarSign, color:'amber' },
  ].map(({ label, value, icon: Icon, color }) => {
- const clr = { brand:'text-brand-400 bg-brand-500/10', green:'text-emerald-400 bg-emerald-500/10', purple:'text-purple-400 bg-purple-500/10', amber:'text-amber-400 bg-amber-500/10' }[color]
+ const clr = { brand:'text-brand-400 bg-brand-500/10', green:'text-emerald-400 bg-emerald-500/10', purple:'text-purple-600 bg-purple-500/10', amber:'text-amber-600 bg-amber-500/10' }[color]
  return (
  <div key={label} className="glass-card p-5">
  <div className={`inline-flex p-2 rounded-lg ${clr} mb-3`}><Icon size={16} /></div>
- <p className="text-2xl font-bold text-white">{value}</p>
+ <p className="text-2xl font-bold text-gray-900">{value}</p>
  <p className="text-xs text-slate-500 mt-0.5">{label}</p>
  </div>
  )
@@ -90,7 +90,7 @@ export default function CostAnalytics() {
  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
  {/* Daily Cost */}
  <div className="glass-card p-5">
- <h3 className="font-semibold text-white mb-4">Daily Spend (30-day)</h3>
+ <h3 className="font-semibold text-gray-900 mb-4">Daily Spend (30-day)</h3>
  <ResponsiveContainer width="100%" height={200}>
  <AreaChart data={costHistory}>
  <defs>
@@ -101,7 +101,7 @@ export default function CostAnalytics() {
  </defs>
  <XAxis dataKey="day" hide />
  <YAxis hide />
- <Tooltip contentStyle={{ background:'#0f1120', border:'1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 12 }} formatter={v => [`$${v}`,'Daily']} />
+ <Tooltip contentStyle={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.08)', borderRadius: 8, fontSize: 12 }} formatter={v => [`$${v}`,'Daily']} />
  <Area type="monotone" dataKey="daily" stroke="#10b981" strokeWidth={2} fill="url(#cost)" />
  </AreaChart>
  </ResponsiveContainer>
@@ -109,12 +109,12 @@ export default function CostAnalytics() {
 
  {/* Provider Comparison */}
  <div className="glass-card p-5">
- <h3 className="font-semibold text-white mb-4">Spot Prices by Provider ($/hr)</h3>
+ <h3 className="font-semibold text-gray-900 mb-4">Spot Prices by Provider ($/hr)</h3>
  <ResponsiveContainer width="100%" height={200}>
  <BarChart data={providerData}>
  <XAxis dataKey="provider" tick={{ fill:'#94a3b8', fontSize: 11 }} />
  <YAxis tick={{ fill:'#94a3b8', fontSize: 11 }} />
- <Tooltip contentStyle={{ background:'#0f1120', border:'1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 12 }} formatter={v => [`$${v}/hr`,'']} />
+ <Tooltip contentStyle={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.08)', borderRadius: 8, fontSize: 12 }} formatter={v => [`$${v}/hr`,'']} />
  <Legend iconSize={8} wrapperStyle={{ fontSize: 11 }} />
  <Bar dataKey="H100" fill="#7c3aed" radius={[3, 3, 0, 0]} />
  <Bar dataKey="A100" fill="#5271f5" radius={[3, 3, 0, 0]} />
@@ -127,10 +127,10 @@ export default function CostAnalytics() {
  {/* Provider radar + spot price table */}
  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
  <div className="glass-card p-5">
- <h3 className="font-semibold text-white mb-4">Provider Capability Radar</h3>
+ <h3 className="font-semibold text-gray-900 mb-4">Provider Capability Radar</h3>
  <ResponsiveContainer width="100%" height={220}>
  <RadarChart data={providerRadar}>
- <PolarGrid stroke="rgba(255,255,255,0.06)" />
+ <PolarGrid stroke="rgba(0,0,0,0.06)" />
  <PolarAngleAxis dataKey="metric" tick={{ fill:'#94a3b8', fontSize: 11 }} />
  <Radar name="CoreWeave" dataKey="CoreWeave" stroke="#10b981" fill="#10b981" fillOpacity={0.15} />
  <Radar name="AWS" dataKey="AWS" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.1} />
@@ -141,7 +141,7 @@ export default function CostAnalytics() {
 
  {/* Live spot prices H100 */}
  <div className="glass-card p-5">
- <h3 className="font-semibold text-white mb-4">H100 Live Spot Prices</h3>
+ <h3 className="font-semibold text-gray-900 mb-4">H100 Live Spot Prices</h3>
  <div className="space-y-2">
  {(prices?.prices || [
  { provider:'coreweave', region:'us-east1', current_price_usd_hr: 3.89, availability:'high' },
@@ -151,21 +151,21 @@ export default function CostAnalytics() {
  ]).map((p, i) => (
  <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
  style={{
- background: i === 0 ?'rgba(16,185,129,0.08)' :'rgba(255,255,255,0.06)',
- border: i === 0 ?'1px solid rgba(16,185,129,0.2)' :'1px solid rgba(255,255,255,0.1)',
+ background: i === 0 ?'rgba(16,185,129,0.08)' :'rgba(0,0,0,0.06)',
+ border: i === 0 ?'1px solid rgba(16,185,129,0.2)' :'1px solid rgba(0,0,0,0.06)',
  }}>
  {i === 0 && <span className="badge badge-green text-xs">Best</span>}
  {i > 0 && <span className="text-xs font-semibold w-8 text-center" style={{ color:'#64748b' }}>#{i + 1}</span>}
- <span className="text-sm text-slate-300 flex-1">{p.provider} - {p.region}</span>
+ <span className="text-sm text-slate-600 flex-1">{p.provider} - {p.region}</span>
  <span className={`badge ${p.availability ==='high' ?'badge-green' : p.availability ==='medium' ?'badge-yellow' :'badge-red'}`}>{p.availability}</span>
- <span className="text-sm font-bold text-white">${(p.current_price_usd_hr ?? 0).toFixed(2)}<span className="text-xs text-slate-400">/hr</span></span>
+ <span className="text-sm font-bold text-gray-900">${(p.current_price_usd_hr ?? 0).toFixed(2)}<span className="text-xs text-slate-400">/hr</span></span>
  </div>
  ))}
  </div>
  {forecast && (
  <div className="mt-4 pt-3 border-t border-white/[0.06]">
  <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-2">24h Demand Forecast</p>
- <p className="text-sm text-slate-300">{forecast.recommendation ==='pre-provision' ?' Recommend pre-provisioning - demand spike predicted' :
+ <p className="text-sm text-slate-600">{forecast.recommendation ==='pre-provision' ?' Recommend pre-provisioning - demand spike predicted' :
  forecast.recommendation ==='scale-down' ?' Scale down - demand trending lower' :' Hold current capacity'}</p>
  </div>
  )}
@@ -174,3 +174,6 @@ export default function CostAnalytics() {
  </div>
  )
 }
+
+
+

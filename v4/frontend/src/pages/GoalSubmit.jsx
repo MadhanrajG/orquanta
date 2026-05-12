@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+﻿import { useState, useEffect, useRef, useMemo } from 'react'
 import { Send, Mic, Loader, ChevronRight, Cpu, Zap, DollarSign, Clock, CheckCircle, AlertCircle, Sparkles } from 'lucide-react'
 import { useAuth } from'../App.jsx'
 
@@ -6,7 +6,7 @@ import { useNavigate, useLocation } from'react-router-dom'
 
 const API = import.meta.env.VITE_API_URL ||''
 
-/* ─── Placeholder cycling ─────────────────────────────────────────────── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Placeholder cycling Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
 const PLACEHOLDERS = [
 'Train Llama 3 8B on my dataset - budget $50',
 'Run 500 Stable Diffusion jobs across Lambda Labs',
@@ -16,7 +16,7 @@ const PLACEHOLDERS = [
 'Run hyperparameter sweep - 32 trials, A10 GPUs',
 ]
 
-/* ─── AI Smart Suggestion Chips ──────────────────────────────────────────── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ AI Smart Suggestion Chips Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
 const AI_SUGGESTIONS = [
  // Model family
  { trigger: /llama|llm/i,        chips: ['Fine-tune LLaMA 3 8B on my dataset under $50', 'Benchmark LLaMA 3 70B on my eval set', 'Quantize LLaMA 3 to GGUF for local inference'] },
@@ -27,7 +27,7 @@ const AI_SUGGESTIONS = [
  { trigger: /mistral|mixtral/i,  chips: ['Benchmark Mistral 7B on my test set', 'Fine-tune Mixtral 8x7B on custom instructions', 'GGUF quantize Mixtral for edge deployment'] },
  { trigger: /gpt|openai/i,       chips: ['Batch inference 10k prompts with GPT-4o mini', 'Distill GPT-4 responses into a smaller local model'] },
  // Budget-driven
- { trigger: /\$5|cheap|budget|low.?cost/i, chips: ['Run inference on 1k samples — keep it under $5', 'Cheapest GPU for 2-hour PyTorch training job', 'Optimize my training to fit a $10 budget'] },
+ { trigger: /\$5|cheap|budget|low.?cost/i, chips: ['Run inference on 1k samples Ã¢â‚¬â€ keep it under $5', 'Cheapest GPU for 2-hour PyTorch training job', 'Optimize my training to fit a $10 budget'] },
  // Task-driven
  { trigger: /classify|sentiment|nlp/i, chips: ['Fine-tune BERT for sentiment classification', 'Train a text classifier on my labelled dataset'] },
  // Default suggestions (shown when goal is short but non-empty)
@@ -72,7 +72,7 @@ function AISuggestionChips({ goal, onChipClick }) {
 }
 
 
-/* ─── Agent execution steps ───────────────────────────────────────────── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Agent execution steps Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
 const AGENTS = [
  {
  key:'orchestrator', icon:'', name:'OrMind Orchestrator', color:'#0091FF',
@@ -96,7 +96,7 @@ const AGENTS = [
  },
 ]
 
-/* ─── Cost Estimator (live preview) ──────────────────────────────────────*/
+/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Cost Estimator (live preview) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬*/
 function CostPreview({ goal }) {
  const [est, setEst] = useState(null)
  useEffect(() => {
@@ -131,7 +131,7 @@ function CostPreview({ goal }) {
  boxShadow:'0 0 24px rgba(0,145,255,0.06)'
  }}>
  <div className="flex items-center gap-2 mb-4">
- <span className="text-sm font-semibold text-cyan-400">AI Estimate</span>
+ <span className="text-sm font-semibold text-blue-600">AI Estimate</span>
  <span className="text-xs px-2 py-0.5 rounded-full"
  style={{ background:'rgba(0,145,255,0.15)', color:'#7dd3fc', border:'1px solid rgba(0,145,255,0.2)' }}>
  {est.confidence}% confidence
@@ -158,14 +158,14 @@ function CostPreview({ goal }) {
  {est.saved_vs_aws > 0 && (
  <div className="mt-3 text-center text-xs"
  style={{ color:'#94a3b8' }}>
- Saves <span className="text-green-400 font-semibold">${est.saved_vs_aws}</span> vs AWS on-demand
+ Saves <span className="text-emerald-600 font-semibold">${est.saved_vs_aws}</span> vs AWS on-demand
  </div>
  )}
  </div>
  )
 }
 
-/* ─── Agent Execution Theater ─────────────────────────────────────────── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Agent Execution Theater Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
 function AgentTheater({ phase, activeAgent }) {
  if (phase ==='idle') return null
  return (
@@ -215,7 +215,7 @@ function AgentTheater({ phase, activeAgent }) {
  style={{ background:'rgba(0,0,0,0.3)', border:'1px solid rgba(0,0,0,0.06)', fontFamily:'JetBrains Mono, monospace' }}>
  <div className="text-xs text-slate-500 mb-2">// agent reasoning stream</div>
  {phase ==='running' ? (
- <div className="text-xs text-green-400 animate-pulse"> Task running on Lambda Labs A100 - monitoring active</div>
+ <div className="text-xs text-emerald-600 animate-pulse"> Task running on Lambda Labs A100 - monitoring active</div>
  ) : (
  AGENTS[activeAgent]?.thoughts.slice(0, Math.min(3, activeAgent + 1)).map((t, i) => (
  <div key={i} className="text-xs mb-1"
@@ -246,7 +246,7 @@ function AgentTheater({ phase, activeAgent }) {
  )
 }
 
-/* ─── Main GoalSubmit ─────────────────────────────────────────────────── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Main GoalSubmit Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
 export default function GoalSubmit() {
  const { token } = useAuth()
  const navigate = useNavigate()
@@ -343,7 +343,7 @@ export default function GoalSubmit() {
  <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
  {/* Header */}
  <div>
- <h1 className="text-2xl font-bold text-white">Command Center</h1>
+ <h1 className="text-2xl font-bold text-gray-900">Command Center</h1>
  <p className="text-slate-500 text-sm mt-1">Tell OrQuanta what you need in plain English. 5 agents handle the rest.</p>
  </div>
 
@@ -351,7 +351,7 @@ export default function GoalSubmit() {
  <div className="glass-card p-6" style={{ boxShadow:'0 0 60px rgba(0,145,255,0.06)' }}>
  <form onSubmit={handleSubmit}>
  <div className="relative">
- <div className="absolute left-4 top-4 text-cyan-400 opacity-60">
+ <div className="absolute left-4 top-4 text-blue-600 opacity-60">
  <Cpu size={20} />
  </div>
  <textarea
@@ -362,10 +362,10 @@ export default function GoalSubmit() {
  disabled={phase !=='idle'}
  placeholder={PLACEHOLDERS[pIdx]}
  rows={4}
- className="w-full rounded-2xl resize-none text-white text-base leading-relaxed transition-all"
+ className="w-full rounded-2xl resize-none text-gray-900 text-base leading-relaxed transition-all"
  style={{
  paddingLeft:'2.75rem', paddingTop:'1rem', paddingRight:'1rem', paddingBottom:'3.5rem',
- background:'rgba(0,0,0,0.3)',
+ background:'#ffffff',
  border: `1px solid ${phase !=='idle' ?'rgba(0,145,255,0.3)' :'rgba(0,0,0,0.08)'}`,
  outline:'none',
  fontSize:'15px',
@@ -414,11 +414,11 @@ export default function GoalSubmit() {
  <div className="flex items-start gap-4">
  <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
  style={{ background:'rgba(0,255,136,0.15)', border:'1px solid rgba(0,255,136,0.3)' }}>
- <CheckCircle size={20} className="text-green-400" />
+ <CheckCircle size={20} className="text-emerald-600" />
  </div>
  <div className="flex-1">
  {/* FIX B02: Dynamic provider/GPU from real job result, not hardcoded */}
- <p className="font-semibold text-white mb-1">
+ <p className="font-semibold text-gray-900 mb-1">
  {jobResult?.provider
  ? `Job Running on ${jobResult.provider.charAt(0).toUpperCase() + jobResult.provider.slice(1)} ${jobResult.gpu_type ||'GPU'}`
  :'Job Running on GPU Cloud'}
@@ -432,13 +432,13 @@ export default function GoalSubmit() {
  {/* FIX B03: Broken hash nav replaced with React Router navigate */}
  <button
  onClick={() => navigate('/jobs')}
- className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-white"
+ className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-gray-900"
  style={{ background:'rgba(0,145,255,0.12)', border:'1px solid rgba(0,145,255,0.25)' }}>
  View in Job Manager <ChevronRight size={14} />
  </button>
  <button onClick={handleReset}
  className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400"
- style={{ background:'rgba(0,0,0,0.04)' }}>
+ style={{ background:'#f1f5f9' }}>
  Submit Another
  </button>
  </div>
@@ -452,14 +452,14 @@ export default function GoalSubmit() {
  <div>
  {/* Section header - clearly visible */}
  <div className="flex items-center gap-3 mb-4">
- <div className="h-px flex-1" style={{ background:'rgba(0,0,0,0.08)' }} />
+ <div className="h-px flex-1" style={{ background:'var(--bg-tertiary)' }} />
  <div className="flex items-center gap-2 px-3 py-1 rounded-full"
  style={{ background:'rgba(0,145,255,0.10)', border:'1px solid rgba(0,145,255,0.2)' }}>
- <span className="text-xs font-semibold text-cyan-400"> Quick Start Templates</span>
+ <span className="text-xs font-semibold text-blue-600"> Quick Start Templates</span>
  <span className="text-xs rounded-full px-1.5 py-0.5 font-bold"
  style={{ background:'rgba(0,145,255,0.2)', color:'#7dd3fc' }}>4</span>
  </div>
- <div className="h-px flex-1" style={{ background:'rgba(0,0,0,0.08)' }} />
+ <div className="h-px flex-1" style={{ background:'var(--bg-tertiary)' }} />
  </div>
 
  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -473,10 +473,10 @@ export default function GoalSubmit() {
  disabled={phase !=='idle'}
  className="text-left p-4 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 group"
  style={{
- background:'rgba(0,0,0,0.06)',
+ background:'#f8fafc',
  border: `1px solid rgba(255,255,255,0.12)`,
  borderLeft: `3px solid ${t.color}`,
- boxShadow:'0 2px 8px rgba(0,0,0,0.3)',
+ boxShadow:'0 1px 3px rgba(0,0,0,0.06)',
  }}
  onMouseEnter={e => { e.currentTarget.style.background ='rgba(255,255,255,0.10)'; e.currentTarget.style.boxShadow = `0 4px 20px ${t.color}20` }}
  onMouseLeave={e => { e.currentTarget.style.background ='rgba(0,0,0,0.06)'; e.currentTarget.style.boxShadow ='0 2px 8px rgba(0,0,0,0.3)' }}
@@ -484,7 +484,7 @@ export default function GoalSubmit() {
  <div className="flex items-center gap-3">
  <span className="text-2xl flex-shrink-0" style={{ filter: `drop-shadow(0 0 6px ${t.color}80)` }}>{t.icon}</span>
  <div className="flex-1 min-w-0">
- <p className="text-sm font-semibold text-white group-hover:text-cyan-300 transition-colors">{t.title}</p>
+ <p className="text-sm font-semibold text-gray-900 group-hover:text-blue-500 transition-colors">{t.title}</p>
  <p className="text-xs mt-0.5" style={{ color:'#94a3b8' }}>{t.sub}</p>
  </div>
  <ChevronRight size={14} style={{ color: t.color, opacity: 0.7, flexShrink: 0 }} className="group-hover:opacity-100 transition-opacity" />
@@ -500,7 +500,7 @@ export default function GoalSubmit() {
  )
 }
 
-/* ─── Goal History Table ───────────────────────────────────────────────── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Goal History Table Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */
 function GoalHistory({ token, refreshKey }) {
  const [goals, setGoals] = useState([])
  const [loading, setLoading] = useState(true)
@@ -521,7 +521,7 @@ function GoalHistory({ token, refreshKey }) {
  if (loading) return null
  if (goals.length === 0) return (
  <div className="glass-card p-6 text-center" style={{ borderStyle: 'dashed', borderColor: 'rgba(0,145,255,0.15)' }}>
-  <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.5 }}>📋</div>
+  <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.5 }}>Ã°Å¸â€œâ€¹</div>
   <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>No goals submitted yet</p>
   <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Submit your first goal above and agents will start working immediately.</p>
  </div>
@@ -537,14 +537,14 @@ function GoalHistory({ token, refreshKey }) {
  return (
  <div>
   <div className="flex items-center gap-3 mb-4">
-  <div className="h-px flex-1" style={{ background:'rgba(0,0,0,0.08)' }} />
+  <div className="h-px flex-1" style={{ background:'var(--bg-tertiary)' }} />
   <div className="flex items-center gap-2 px-3 py-1 rounded-full"
    style={{ background:'rgba(0,145,255,0.10)', border:'1px solid rgba(0,145,255,0.2)' }}>
-   <span className="text-xs font-semibold text-cyan-400">📜 Goal History</span>
+   <span className="text-xs font-semibold text-blue-600">Ã°Å¸â€œÅ“ Goal History</span>
    <span className="text-xs rounded-full px-1.5 py-0.5 font-bold"
    style={{ background:'rgba(0,145,255,0.2)', color:'#7dd3fc' }}>{goals.length}</span>
   </div>
-  <div className="h-px flex-1" style={{ background:'rgba(0,0,0,0.08)' }} />
+  <div className="h-px flex-1" style={{ background:'var(--bg-tertiary)' }} />
   </div>
 
   <div className="space-y-2">
@@ -560,7 +560,7 @@ function GoalHistory({ token, refreshKey }) {
     <div className="flex items-center justify-between gap-3">
     <div className="flex-1 min-w-0">
      <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-     {(g.raw_text || '').slice(0, 80)}{(g.raw_text || '').length > 80 ? '…' : ''}
+     {(g.raw_text || '').slice(0, 80)}{(g.raw_text || '').length > 80 ? 'Ã¢â‚¬Â¦' : ''}
      </p>
      <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{ts}</p>
     </div>
@@ -582,7 +582,7 @@ function GoalHistory({ token, refreshKey }) {
      <div className="flex gap-4 mt-2" style={{ color: 'var(--text-muted)' }}>
      <span>Tasks: {(g.tasks || []).length}</span>
      <span>Steps: {g.reasoning_steps || 0}</span>
-     <span>ID: {g.goal_id?.slice(0, 12)}…</span>
+     <span>ID: {g.goal_id?.slice(0, 12)}Ã¢â‚¬Â¦</span>
      </div>
     </div>
     )}
@@ -593,3 +593,6 @@ function GoalHistory({ token, refreshKey }) {
  </div>
  )
 }
+
+
+

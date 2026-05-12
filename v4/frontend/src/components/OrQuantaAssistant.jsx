@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from'react'
+﻿import { useState, useEffect, useRef, useCallback } from'react'
 import { MessageSquare, X, Minimize2, Send, Loader, Sparkles, Brain } from'lucide-react'
 import { useAuth } from'../App.jsx'
 
 const API = import.meta.env.VITE_API_URL ||''
 
-/* ─── Smart context-aware responses ──────────────────────────────────── */
+/* â”€â”€â”€ Smart context-aware responses â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const DEMO_RESPONSES = {
  utilization:'Your GPU utilization is averaging 81% across active instances on Lambda Labs. The A100 cluster is particularly efficient at 88%. I recommend checking the idle instances in us-east-1 - two appear underutilized.',
  cost:'Your projected spend this month is **$1,240** based on current usage patterns, down 23% from last month. OrQuanta has saved you **$1,247** vs AWS on-demand pricing so far. The biggest saving: migrating 3 jobs from AWS ($4.10/hr) to Lambda Labs ($1.99/hr).',
@@ -24,7 +24,7 @@ function getResponse(msg) {
  return DEMO_RESPONSES.default
 }
 
-/* ─── Message ─────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function Message({ role, content, streaming }) {
  // Convert basic markdown to JSX
  const renderContent = (text) => {
@@ -35,12 +35,12 @@ function Message({ role, content, streaming }) {
  <div key={i} className={i > 0 && line ==='' ?'h-2' :''}>
  {parts.map((part, j) => {
  if (part.startsWith('**') && part.endsWith('**'))
- return <strong key={j} className="font-semibold text-white">{part.slice(2, -2)}</strong>
+ return <strong key={j} className="font-semibold text-gray-900">{part.slice(2, -2)}</strong>
  if (part.startsWith('`') && part.endsWith('`'))
  return <code key={j} className="px-1.5 py-0.5 rounded text-xs font-mono"
- style={{ background:'rgba(0,212,255,0.1)', color:'#00D4FF' }}>{part.slice(1, -1)}</code>
+ style={{ background:'rgba(0,145,255,0.1)', color:'#0091FF' }}>{part.slice(1, -1)}</code>
  if (part.startsWith('-'))
- return <div key={j} className="flex gap-2 mt-1"><span className="text-cyan-400">-</span><span>{part.slice(1)}</span></div>
+ return <div key={j} className="flex gap-2 mt-1"><span className="text-blue-600">-</span><span>{part.slice(1)}</span></div>
  return <span key={j}>{part}</span>
  })}
  </div>
@@ -51,16 +51,16 @@ function Message({ role, content, streaming }) {
  return (
  <div className={`flex gap-3 ${role ==='user' ?'flex-row-reverse' :''} mb-3`}>
  <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-sm mt-0.5"
- style={{ background: role ==='user' ?'rgba(123,47,255,0.2)' :'rgba(0,212,255,0.15)' }}>
+ style={{ background: role ==='user' ?'rgba(123,47,255,0.2)' :'rgba(0,145,255,0.15)' }}>
  {role ==='user' ?'' :''}
  </div>
  <div className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed
  ${role ==='user'
- ?'text-white rounded-tr-sm'
- :'text-slate-300 rounded-tl-sm'}`}
+ ?'text-gray-900 rounded-tr-sm'
+ :'text-slate-600 rounded-tl-sm'}`}
  style={{
- background: role ==='user' ?'rgba(123,47,255,0.2)' :'rgba(255,255,255,0.05)',
- border: `1px solid ${role ==='user' ?'rgba(123,47,255,0.3)' :'rgba(255,255,255,0.08)'}`,
+ background: role ==='user' ?'rgba(123,47,255,0.2)' :'rgba(0,0,0,0.04)',
+ border: `1px solid ${role ==='user' ?'rgba(123,47,255,0.3)' :'rgba(0,0,0,0.08)'}`,
  }}>
  {renderContent(content)}
  {streaming && <span className="inline-block w-1.5 h-3.5 bg-cyan-400 ml-0.5 animate-pulse rounded-sm" />}
@@ -69,7 +69,7 @@ function Message({ role, content, streaming }) {
  )
 }
 
-/* ─── Quick actions ────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Quick actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const QUICK_ACTIONS = [
  "What's my GPU utilization?",
  "Projected spend this month?",
@@ -77,7 +77,7 @@ const QUICK_ACTIONS = [
  "Should I switch to spot now?",
 ]
 
-/* ─── Main Assistant Component ────────────────────────────────────────── */
+/* â”€â”€â”€ Main Assistant Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export default function OrQuantaAssistant() {
  const [open, setOpen] = useState(false)
  const [messages, setMessages] = useState([
@@ -150,18 +150,18 @@ export default function OrQuantaAssistant() {
 
  return (
  <>
- {/* ── Floating toggle button ── */}
+ {/* â”€â”€ Floating toggle button â”€â”€ */}
  <div className="fixed bottom-6 right-6 z-50">
  {!open && (
  <button onClick={() => setOpen(true)} id="assistant-toggle"
  className="relative w-14 h-14 rounded-2xl flex items-center justify-center shadow-2xl transition-all hover:scale-110 active:scale-95"
- style={{ background:'linear-gradient(135deg, #00D4FF, #7B2FFF)', boxShadow:'0 0 30px rgba(0,212,255,0.4), 0 8px 32px rgba(0,0,0,0.4)' }}>
- <Brain size={24} className="text-white" />
+ style={{ background:'linear-gradient(135deg, #0091FF, #7B2FFF)', boxShadow:'0 0 30px rgba(0,145,255,0.4), 0 8px 32px rgba(0,0,0,0.4)' }}>
+ <Brain size={24} className="text-gray-900" />
  {/* Pulse ring */}
  <span className="absolute inset-0 rounded-2xl animate-ping opacity-20"
- style={{ background:'linear-gradient(135deg, #00D4FF, #7B2FFF)' }} />
+ style={{ background:'linear-gradient(135deg, #0091FF, #7B2FFF)' }} />
  {unread > 0 && (
- <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold">
+ <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-gray-900 text-xs flex items-center justify-center font-bold">
  {unread}
  </span>
  )}
@@ -169,38 +169,37 @@ export default function OrQuantaAssistant() {
  )}
  </div>
 
- {/* ── Chat panel ── */}
+ {/* â”€â”€ Chat panel â”€â”€ */}
  {open && (
  <div className="fixed bottom-6 right-6 z-50 w-96 flex flex-col animate-slide-up shadow-2xl"
  style={{
  height: 520,
  borderRadius: 20,
  background:'rgba(10,11,20,0.95)',
- border:'1px solid rgba(0,212,255,0.15)',
- backdropFilter:'blur(20px)',
- boxShadow:'0 0 60px rgba(0,212,255,0.1), 0 32px 64px rgba(0,0,0,0.6)',
+ border:'1px solid rgba(0,145,255,0.15)',
+ boxShadow:'0 0 60px rgba(0,145,255,0.1), 0 32px 64px rgba(0,0,0,0.6)',
  }}>
 
  {/* Header */}
- <div className="flex items-center gap-3 px-4 py-3.5 border-b" style={{ borderColor:'rgba(255,255,255,0.07)' }}>
+ <div className="flex items-center gap-3 px-4 py-3.5 border-b" style={{ borderColor:'rgba(0,0,0,0.06)' }}>
  <div className="w-8 h-8 rounded-xl flex items-center justify-center"
- style={{ background:'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(123,47,255,0.2))', border:'1px solid rgba(0,212,255,0.2)' }}>
- <Brain size={16} className="text-cyan-400" />
+ style={{ background:'linear-gradient(135deg, rgba(0,145,255,0.2), rgba(123,47,255,0.2))', border:'1px solid rgba(0,145,255,0.2)' }}>
+ <Brain size={16} className="text-blue-600" />
  </div>
  <div className="flex-1">
- <div className="text-sm font-semibold text-white">OrQuanta Assistant</div>
+ <div className="text-sm font-semibold text-gray-900">OrQuanta Assistant</div>
  <div className="flex items-center gap-1.5">
  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
- <span className="text-xs text-green-400">Live platform context</span>
+ <span className="text-xs text-emerald-600">Live platform context</span>
  </div>
  </div>
- <button onClick={() => setOpen(false)} className="text-slate-500 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5">
+ <button onClick={() => setOpen(false)} className="text-slate-500 hover:text-gray-900 transition-colors p-1 rounded-lg hover:bg-white/5">
  <X size={16} />
  </button>
  </div>
 
  {/* Messages */}
- <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4" style={{ scrollbarWidth:'thin', scrollbarColor:'rgba(255,255,255,0.1) transparent' }}>
+ <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4" style={{ scrollbarWidth:'thin', scrollbarColor:'rgba(0,0,0,0.06) transparent' }}>
  {messages.map((msg, i) => (
  <Message key={i} {...msg} />
  ))}
@@ -219,8 +218,8 @@ export default function OrQuantaAssistant() {
  <div className="px-4 pb-2 flex flex-wrap gap-1.5">
  {QUICK_ACTIONS.map(q => (
  <button key={q} onClick={() => sendMessage(q)}
- className="text-xs px-2.5 py-1 rounded-lg text-slate-400 transition-all hover:text-cyan-400"
- style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)' }}>
+ className="text-xs px-2.5 py-1 rounded-lg text-slate-400 transition-all hover:text-blue-600"
+ style={{ background:'rgba(0,0,0,0.04)', border:'1px solid rgba(0,0,0,0.08)' }}>
  {q}
  </button>
  ))}
@@ -230,18 +229,18 @@ export default function OrQuantaAssistant() {
  {/* Input */}
  <div className="px-3 pb-3">
  <div className="flex items-center gap-2 rounded-xl px-3 py-2"
- style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)' }}>
+ style={{ background:'rgba(0,0,0,0.04)', border:'1px solid rgba(0,0,0,0.06)' }}>
  <input ref={inputRef} id="assistant-input"
  value={input}
  onChange={e => setInput(e.target.value)}
  onKeyDown={handleKey}
  placeholder="Ask about your GPU infrastructure..."
- className="flex-1 bg-transparent text-sm text-white placeholder-slate-600 outline-none"
+ className="flex-1 bg-transparent text-sm text-gray-900 placeholder-slate-600 outline-none"
  />
  <button onClick={() => sendMessage()} disabled={!input.trim() || loading}
  className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
  style={{
- background: input.trim() && !loading ?'linear-gradient(135deg, #00D4FF, #7B2FFF)' :'rgba(255,255,255,0.06)',
+ background: input.trim() && !loading ?'linear-gradient(135deg, #0091FF, #7B2FFF)' :'rgba(0,0,0,0.06)',
  color: input.trim() && !loading ?'white' :'#475569',
  }}>
  {loading ? <Loader size={13} className="animate-spin" /> : <Send size={13} />}
@@ -253,3 +252,7 @@ export default function OrQuantaAssistant() {
  </>
  )
 }
+
+
+
+

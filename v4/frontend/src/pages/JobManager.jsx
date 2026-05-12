@@ -1,4 +1,4 @@
-import { useState, useEffect } from'react'
+﻿import { useState, useEffect } from'react'
 import { Plus, RefreshCw, X, Server, Clock, CheckCircle, AlertCircle, Circle } from'lucide-react'
 import { useAuth } from'../App.jsx'
 
@@ -9,7 +9,7 @@ const STATUS_BADGE = {
  failed:'badge-red', cancelled:'badge-gray', pending:'badge-gray',
 }
 
-const GPU_COLORS = { H100:'text-purple-400', A100:'text-brand-400', T4:'text-emerald-400', A10G:'text-amber-400' }
+const GPU_COLORS = { H100:'text-purple-600', A100:'text-brand-400', T4:'text-emerald-400', A10G:'text-amber-600' }
 
 export default function JobManager() {
  const { token } = useAuth()
@@ -51,7 +51,7 @@ export default function JobManager() {
  <div className="space-y-6 animate-fade-in">
  <div className="flex items-center justify-between">
  <div>
- <h1 className="text-2xl font-bold text-white">Job Manager</h1>
+ <h1 className="text-2xl font-bold text-gray-900">Job Manager</h1>
  <p className="text-slate-400 text-sm mt-0.5">GPU job queue with {queueStatus.queued_jobs ?? 0} jobs queued</p>
  </div>
  <button id="new-job-btn" onClick={() => setShowForm(true)} className="btn-primary flex items-center gap-2">
@@ -68,7 +68,7 @@ export default function JobManager() {
  { label:'Running', value: jobs.filter(j => j.status ==='running').length },
  ].map(({ label, value }) => (
  <div key={label} className="glass-card p-4 text-center">
- <p className="text-xl font-bold text-white">{value}</p>
+ <p className="text-xl font-bold text-gray-900">{value}</p>
  <p className="text-xs text-slate-500 mt-0.5">{label}</p>
  </div>
  ))}
@@ -106,7 +106,7 @@ export default function JobManager() {
  ) : jobs.map(job => (
  <tr key={job.job_id} className="table-row">
  <td className="px-4 py-3 font-mono text-xs text-slate-400">{job.job_id}</td>
- <td className="px-4 py-3 text-slate-300 max-w-[200px] truncate">{job.intent}</td>
+ <td className="px-4 py-3 text-slate-600 max-w-[200px] truncate">{job.intent}</td>
  <td className="px-4 py-3">
  <span className={`font-semibold text-xs ${GPU_COLORS[job.gpu_type] ||'text-slate-400'}`}>
  {job.gpu_count}x{job.gpu_type}
@@ -123,7 +123,7 @@ export default function JobManager() {
  </td>
  <td className="px-4 py-3">
  {['queued','running','pending'].includes(job.status) && (
- <button onClick={() => cancelJob(job.job_id)} className="text-slate-600 hover:text-red-400 transition-colors" title="Cancel">
+ <button onClick={() => cancelJob(job.job_id)} className="text-slate-600 hover:text-red-600 transition-colors" title="Cancel">
  <X size={14} />
  </button>
  )}
@@ -136,15 +136,15 @@ export default function JobManager() {
 
  {/* New Job Modal */}
  {showForm && (
- <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+ <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
  <div className="glass-card p-6 w-full max-w-lg animate-slide-up">
  <div className="flex items-center justify-between mb-5">
- <h3 className="font-semibold text-white">Create GPU Job</h3>
- <button onClick={() => setShowForm(false)} className="text-slate-500 hover:text-white"><X size={18} /></button>
+ <h3 className="font-semibold text-gray-900">Create GPU Job</h3>
+ <button onClick={() => setShowForm(false)} className="text-slate-500 hover:text-gray-900"><X size={18} /></button>
  </div>
  <form id="job-form" onSubmit={handleSubmit} className="space-y-4">
  <div>
- <label className="block text-sm font-medium text-slate-300 mb-1.5">Intent / Description</label>
+ <label className="block text-sm font-medium text-slate-600 mb-1.5">Intent / Description</label>
  <textarea className="input-field min-h-[80px] resize-none" placeholder="e.g. Train ResNet-50 on ImageNet"
  value={form.intent} onChange={e => setForm(f => ({ ...f, intent: e.target.value }))} required />
  </div>
@@ -184,3 +184,7 @@ export default function JobManager() {
  </div>
  )
 }
+
+
+
+

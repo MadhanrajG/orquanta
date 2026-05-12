@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
     Cpu, Zap, DollarSign, Shield, ArrowRight, ArrowLeft,
@@ -8,42 +8,42 @@ import {
 const GOAL_TEMPLATES = [
     {
         id: 'llama',
-        icon: '🦙',
+        icon: 'ðŸ¦™',
         title: 'Fine-tune LLaMA 3',
         desc: 'Custom dataset, budget $50',
         goal: 'Fine-tune LLaMA 3 8B on my custom dataset using A100 GPUs, keep cost under $50',
     },
     {
         id: 'whisper',
-        icon: '🎙️',
+        icon: 'ðŸŽ™ï¸',
         title: 'Batch Transcription',
         desc: 'Whisper Large v3, 10 hrs audio',
         goal: 'Transcribe 10 hours of audio files using Whisper Large v3, optimize for cost',
     },
     {
         id: 'sdxl',
-        icon: '🎨',
+        icon: 'ðŸŽ¨',
         title: 'Image Generation',
         desc: 'SDXL 1024px, 1000 images',
         goal: 'Generate 1000 product images at 1024px using SDXL, budget $15',
     },
     {
         id: 'embeddings',
-        icon: '🔍',
+        icon: 'ðŸ”',
         title: 'Embedding Pipeline',
         desc: 'Vector embeddings at scale',
         goal: 'Generate 1M text embeddings for semantic search using the cheapest available GPU',
     },
     {
         id: 'sweep',
-        icon: '📊',
+        icon: 'ðŸ“Š',
         title: 'Hyperparameter Sweep',
         desc: '32 trials, A10 GPUs',
         goal: 'Run a 32-trial hyperparameter sweep on A10 GPUs, distributed across cheapest providers',
     },
     {
         id: 'custom',
-        icon: '✏️',
+        icon: 'âœï¸',
         title: 'Custom Goal',
         desc: 'Describe your own task',
         goal: '',
@@ -76,10 +76,10 @@ function ProgressDots({ step }) {
 
 function Step1Welcome({ onNext, onSkip }) {
     const VALUE_PROPS = [
-        { icon: DollarSign, color: '#00FF88', title: '67% cheaper than AWS', desc: 'H100 from $2.49/hr vs $12.29/hr on-demand' },
-        { icon: Zap, color: '#00D4FF', title: '5 AI agents orchestrate', desc: 'Auto-routing, healing, cost optimization' },
-        { icon: BarChart2, color: '#A78BFA', title: 'Natural language goals', desc: 'Describe what you want — agents handle the rest' },
-        { icon: Shield, color: '#FFB800', title: 'Full audit trail', desc: 'Every agent action logged and reviewable' },
+        { icon: DollarSign, color: '#10B981', title: '67% cheaper than AWS', desc: 'H100 from $2.49/hr vs $12.29/hr on-demand' },
+        { icon: Zap, color: '#0091FF', title: '5 AI agents orchestrate', desc: 'Auto-routing, healing, cost optimization' },
+        { icon: BarChart2, color: '#A78BFA', title: 'Natural language goals', desc: 'Describe what you want â€” agents handle the rest' },
+        { icon: Shield, color: '#F59E0B', title: 'Full audit trail', desc: 'Every agent action logged and reviewable' },
     ]
 
     return (
@@ -93,11 +93,11 @@ function Step1Welcome({ onNext, onSkip }) {
                 }}>
                     <Cpu size={30} color="#7a9bfa" />
                 </div>
-                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', color: 'white', marginBottom: 8 }}>
+                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', color: 'var(--text-primary)', marginBottom: 8 }}>
                     Welcome to OrQuanta
                 </h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.6, maxWidth: 380, margin: '0 auto' }}>
-                    Your autonomous GPU cloud. Submit a goal in plain English — 5 AI agents
+                    Your autonomous GPU cloud. Submit a goal in plain English â€” 5 AI agents
                     route, provision, and optimize your workload automatically.
                 </p>
             </div>
@@ -105,13 +105,13 @@ function Step1Welcome({ onNext, onSkip }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 28 }}>
                 {VALUE_PROPS.map(({ icon: Icon, color, title, desc }) => (
                     <div key={title} style={{
-                        background: 'rgba(255,255,255,0.035)',
-                        border: '1px solid rgba(255,255,255,0.08)',
+                        background: 'rgba(0,0,0,0.03)',
+                        border: '1px solid rgba(0,0,0,0.08)',
                         borderRadius: 12, padding: '14px 14px',
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                             <Icon size={16} color={color} />
-                            <span style={{ fontSize: 13, fontWeight: 600, color: 'white' }}>{title}</span>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{title}</span>
                         </div>
                         <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>{desc}</p>
                     </div>
@@ -144,7 +144,7 @@ function Step2Goal({ onNext, onBack }) {
     return (
         <div className="animate-fade-in">
             <div style={{ textAlign: 'center', marginBottom: 22 }}>
-                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', color: 'white', marginBottom: 6 }}>
+                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', color: 'var(--text-primary)', marginBottom: 6 }}>
                     What do you want to run?
                 </h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
@@ -160,10 +160,10 @@ function Step2Goal({ onNext, onBack }) {
                         style={{
                             background: selected?.id === t.id
                                 ? 'linear-gradient(135deg,rgba(58,82,235,0.22),rgba(167,139,250,0.18))'
-                                : 'rgba(255,255,255,0.035)',
+                                : 'rgba(0,0,0,0.03)',
                             border: selected?.id === t.id
                                 ? '1px solid rgba(122,155,250,0.5)'
-                                : '1px solid rgba(255,255,255,0.08)',
+                                : '1px solid rgba(0,0,0,0.08)',
                             borderRadius: 11, padding: '12px 12px', cursor: 'pointer',
                             textAlign: 'left', transition: 'all 0.15s ease', position: 'relative',
                         }}
@@ -179,7 +179,7 @@ function Step2Goal({ onNext, onBack }) {
                             </div>
                         )}
                         <div style={{ fontSize: 20, marginBottom: 4 }}>{t.icon}</div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'white', marginBottom: 2 }}>{t.title}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{t.title}</div>
                         <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t.desc}</div>
                     </button>
                 ))}
@@ -193,7 +193,7 @@ function Step2Goal({ onNext, onBack }) {
                     autoFocus
                     style={{
                         width: '100%', minHeight: 80, padding: '10px 12px',
-                        background: 'rgba(255,255,255,0.05)',
+                        background: 'rgba(0,0,0,0.04)',
                         border: '1px solid rgba(255,255,255,0.15)',
                         borderRadius: 10, color: '#e2e8f0', fontSize: 13,
                         resize: 'vertical', outline: 'none', boxSizing: 'border-box',
@@ -223,7 +223,7 @@ function Step3Budget({ goal, onFinish, onBack }) {
 
     const handleFinish = async () => {
         setLoading(true)
-        // Small delay for UX — wizard feels deliberate, not instant
+        // Small delay for UX â€” wizard feels deliberate, not instant
         await new Promise(r => setTimeout(r, 500))
         onFinish(goal, budget, notify)
     }
@@ -231,8 +231,8 @@ function Step3Budget({ goal, onFinish, onBack }) {
     return (
         <div className="animate-fade-in">
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <div style={{ fontSize: 36, marginBottom: 10 }}>💰</div>
-                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', color: 'white', marginBottom: 6 }}>
+                <div style={{ fontSize: 36, marginBottom: 10 }}>ðŸ’°</div>
+                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', color: 'var(--text-primary)', marginBottom: 6 }}>
                     Set your spending limit
                 </h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
@@ -242,7 +242,7 @@ function Step3Budget({ goal, onFinish, onBack }) {
 
             <div style={{ marginBottom: 20 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, justifyContent: 'center', marginBottom: 12 }}>
-                    <span style={{ fontSize: 40, fontWeight: 700, color: 'white', fontFamily: 'var(--font-mono)' }}>${budget}</span>
+                    <span style={{ fontSize: 40, fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>${budget}</span>
                     <span style={{ color: 'var(--text-muted)', fontSize: 14 }}>max spend</span>
                 </div>
 
@@ -261,8 +261,8 @@ function Step3Budget({ goal, onFinish, onBack }) {
                             style={{
                                 padding: '5px 14px', borderRadius: 99, border: '1px solid',
                                 fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
-                                borderColor: budget === p ? 'rgba(122,155,250,0.6)' : 'rgba(255,255,255,0.1)',
-                                background: budget === p ? 'rgba(122,155,250,0.15)' : 'rgba(255,255,255,0.04)',
+                                borderColor: budget === p ? 'rgba(122,155,250,0.6)' : 'rgba(0,0,0,0.06)',
+                                background: budget === p ? 'rgba(122,155,250,0.15)' : 'rgba(0,0,0,0.03)',
                                 color: budget === p ? '#7a9bfa' : 'var(--text-muted)',
                             }}
                         >${p}</button>
@@ -273,11 +273,11 @@ function Step3Budget({ goal, onFinish, onBack }) {
             <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 padding: '12px 14px', borderRadius: 10, marginBottom: 22,
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'rgba(0,0,0,0.03)',
+                border: '1px solid rgba(0,0,0,0.08)',
             }}>
                 <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'white', marginBottom: 2 }}>Email alerts at 80% spend</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Email alerts at 80% spend</div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Get notified before hitting your limit</div>
                 </div>
                 <button
@@ -305,7 +305,7 @@ function Step3Budget({ goal, onFinish, onBack }) {
                 <button onClick={handleFinish} disabled={loading} className="btn btn-primary" style={{ flex: 1, padding: '12px 0', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                     {loading ? (
                         <>
-                            <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                            <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopcolor: 'var(--text-primary)', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
                             Setting up...
                         </>
                     ) : (
@@ -344,14 +344,13 @@ export default function OnboardingWizard() {
         <div style={{
             position: 'fixed', inset: 0, zIndex: 200,
             background: 'rgba(5,6,8,0.85)',
-            backdropFilter: 'blur(8px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: 20,
         }}>
             <div style={{
                 width: '100%', maxWidth: 480,
                 background: 'var(--surface-800)',
-                border: '1px solid rgba(255,255,255,0.1)',
+                border: '1px solid rgba(0,0,0,0.06)',
                 borderRadius: 20,
                 padding: '28px 28px 24px',
                 position: 'relative',
@@ -361,7 +360,7 @@ export default function OnboardingWizard() {
                     onClick={dismiss}
                     style={{
                         position: 'absolute', top: 16, right: 16,
-                        background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.06)',
                         borderRadius: 8, width: 30, height: 30,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         color: 'var(--text-muted)', cursor: 'pointer',
@@ -379,3 +378,5 @@ export default function OnboardingWizard() {
         </div>
     )
 }
+
+

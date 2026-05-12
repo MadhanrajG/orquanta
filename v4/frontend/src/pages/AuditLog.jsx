@@ -1,4 +1,4 @@
-import { useState, useEffect } from'react'
+﻿import { useState, useEffect } from'react'
 import { ScrollText, RefreshCw, Filter, CheckCircle, AlertCircle, Clock } from'lucide-react'
 import { useAuth } from'../App.jsx'
 
@@ -41,19 +41,19 @@ export default function AuditLog() {
  }, [agentFilter, token])
 
  const outcomeIcon = o => o ==='success' ? <CheckCircle size={13} className="text-emerald-400" /> :
- o?.startsWith('error') ? <AlertCircle size={13} className="text-red-400" /> :
- <Clock size={13} className="text-amber-400" />
+ o?.startsWith('error') ? <AlertCircle size={13} className="text-red-600" /> :
+ <Clock size={13} className="text-amber-600" />
 
  const agentColor = name => ({
- master_orchestrator:'text-purple-400', scheduler_agent:'text-brand-400',
- cost_optimizer_agent:'text-emerald-400', healing_agent:'text-amber-400',
- forecast_agent:'text-cyan-400',
+ master_orchestrator:'text-purple-600', scheduler_agent:'text-brand-400',
+ cost_optimizer_agent:'text-emerald-400', healing_agent:'text-amber-600',
+ forecast_agent:'text-blue-600',
  }[name] ||'text-slate-400')
 
  return (
  <div className="space-y-6 animate-fade-in">
  <div>
- <h1 className="text-2xl font-bold text-white">Audit Log</h1>
+ <h1 className="text-2xl font-bold text-gray-900">Audit Log</h1>
  <p className="text-slate-400 text-sm mt-0.5">Complete decision trail - every agent action logged</p>
  </div>
 
@@ -67,7 +67,7 @@ export default function AuditLog() {
  { label:'Today Spend', value: `$${(stats.daily_spend_usd ?? 0).toFixed(2)}` },
  ].map(({ label, value }) => (
  <div key={label} className="glass-card p-4 text-center">
- <p className="text-xl font-bold text-white">{value}</p>
+ <p className="text-xl font-bold text-gray-900">{value}</p>
  <p className="text-xs text-slate-500 mt-0.5">{label}</p>
  </div>
  ))}
@@ -82,7 +82,7 @@ export default function AuditLog() {
  <button key={a} onClick={() => setAgentFilter(a)}
  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
  style={{
- background: agentFilter === a ?'rgba(82,113,245,0.15)' :'rgba(255,255,255,0.06)',
+ background: agentFilter === a ?'rgba(82,113,245,0.15)' :'rgba(0,0,0,0.06)',
  color: agentFilter === a ?'#7a9bfa' :'#94a3b8',
  border: agentFilter === a ?'1px solid rgba(82,113,245,0.3)' :'1px solid rgba(255,255,255,0.12)',
  }}>
@@ -98,7 +98,7 @@ export default function AuditLog() {
  {/* Audit table */}
  <div className="glass-card overflow-hidden">
  <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.06]">
- <span className="text-sm font-medium text-slate-300">
+ <span className="text-sm font-medium text-slate-600">
  {total > 0 ? `${entries.length} of ${total} entries` :'No entries yet'}
  </span>
  <span className="text-xs text-slate-500">Latest first</span>
@@ -146,3 +146,6 @@ export default function AuditLog() {
  </div>
  )
 }
+
+
+

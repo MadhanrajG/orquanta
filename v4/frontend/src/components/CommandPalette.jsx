@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from'react'
+﻿import { useState, useEffect, useCallback } from'react'
 
-/* ─── Command Palette + Keyboard Shortcuts ─────────────────────────────
+/* â”€â”€â”€ Command Palette + Keyboard Shortcuts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  - Cmd/Ctrl+K open command palette
  - ? show keyboard shortcuts help
  - G D go to Dashboard
@@ -8,7 +8,7 @@ import { useState, useEffect, useCallback } from'react'
  - G A go to Agents
  - G C go to Costs
  - Escape close any overlay
-──────────────────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 const COMMANDS = [
  { id:'dash', label:'Go to Dashboard', icon:'', shortcut:'G D', action:'nav://' },
@@ -63,26 +63,26 @@ const SHORTCUT_HELP = [
 function Kbd({ children }) {
  return (
  <kbd className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono"
- style={{ background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)', color:'#CBD5E1' }}>
+ style={{ background:'rgba(0,0,0,0.08)', border:'1px solid rgba(255,255,255,0.15)', color:'#CBD5E1' }}>
  {children}
  </kbd>
  )
 }
 
-/* ─── Keyboard Shortcuts Modal ─────────────────────────────────────────── */
+/* â”€â”€â”€ Keyboard Shortcuts Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function ShortcutsModal({ onClose }) {
  return (
  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={onClose}>
- <div className="absolute inset-0" style={{ background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)' }} />
+ <div className="absolute inset-0" style={{ background:'rgba(0,0,0,0.7)', }} />
  <div className="relative w-full max-w-xl rounded-2xl overflow-hidden animate-fade-in"
- style={{ background:'#0A0B14', border:'1px solid rgba(0,212,255,0.15)', boxShadow:'0 0 60px rgba(0,212,255,0.1), 0 32px 64px rgba(0,0,0,0.6)' }}
+ style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.08)', boxShadow:'0 8px 40px rgba(0,0,0,0.08), 0 32px 64px rgba(0,0,0,0.04)' }}
  onClick={e => e.stopPropagation()}>
- <div className="px-6 py-4 border-b flex items-center justify-between" style={{ borderColor:'rgba(255,255,255,0.07)' }}>
+ <div className="px-6 py-4 border-b flex items-center justify-between" style={{ borderColor:'rgba(0,0,0,0.06)' }}>
  <div className="flex items-center gap-2">
  <span className="text-lg"></span>
- <h3 className="font-semibold text-white">Keyboard Shortcuts</h3>
+ <h3 className="font-semibold text-gray-900">Keyboard Shortcuts</h3>
  </div>
- <button onClick={onClose} className="text-xs text-slate-500 hover:text-white"><Kbd>Esc</Kbd></button>
+ <button onClick={onClose} className="text-xs text-slate-500 hover:text-gray-900"><Kbd>Esc</Kbd></button>
  </div>
  <div className="p-6 grid grid-cols-2 gap-6 max-h-96 overflow-y-auto">
  {SHORTCUT_HELP.map(group => (
@@ -106,7 +106,7 @@ function ShortcutsModal({ onClose }) {
  )
 }
 
-/* ─── Cmd+K Command Palette ────────────────────────────────────────────── */
+/* â”€â”€â”€ Cmd+K Command Palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function CommandPalette({ onClose, onNavigate }) {
  const [query, setQuery] = useState('')
  const [selected, setSelected] = useState(0)
@@ -146,19 +146,19 @@ function CommandPalette({ onClose, onNavigate }) {
 
  return (
  <div className="fixed inset-0 z-[100] flex items-start justify-center pt-24 px-4" onClick={onClose}>
- <div className="absolute inset-0" style={{ background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)' }} />
+ <div className="absolute inset-0" style={{ background:'rgba(0,0,0,0.7)', }} />
  <div className="relative w-full max-w-lg rounded-2xl overflow-hidden animate-slide-up"
- style={{ background:'#0A0B14', border:'1px solid rgba(0,212,255,0.2)', boxShadow:'0 0 60px rgba(0,212,255,0.12), 0 32px 64px rgba(0,0,0,0.6)' }}
+ style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.08)', boxShadow:'0 8px 40px rgba(0,0,0,0.08), 0 32px 64px rgba(0,0,0,0.04)' }}
  onClick={e => e.stopPropagation()}>
  {/* Input */}
- <div className="flex items-center gap-3 px-4 py-3.5 border-b" style={{ borderColor:'rgba(255,255,255,0.08)' }}>
+ <div className="flex items-center gap-3 px-4 py-3.5 border-b" style={{ borderColor:'rgba(0,0,0,0.08)' }}>
  <span className="text-slate-500"></span>
  <input ref={inputRef} id="palette-input"
  value={query} onChange={e => setQuery(e.target.value)} onKeyDown={handleKey}
  placeholder="Search commands, pages, actions..."
- className="flex-1 bg-transparent text-white text-sm outline-none placeholder-slate-600"
+ className="flex-1 bg-transparent text-gray-900 text-sm outline-none placeholder-slate-600"
  />
- {query && <button onClick={() => setQuery('')} className="text-xs text-slate-600 hover:text-white">Clear</button>}
+ {query && <button onClick={() => setQuery('')} className="text-xs text-slate-600 hover:text-gray-900">Clear</button>}
  </div>
 
  {/* Results */}
@@ -170,8 +170,8 @@ function CommandPalette({ onClose, onNavigate }) {
  <button key={cmd.id} id={`palette-cmd-${cmd.id}`}
  className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all"
  style={{
- background: i === selected ?'rgba(0,212,255,0.08)' :'transparent',
- borderLeft: i === selected ?'2px solid #00D4FF' :'2px solid transparent',
+ background: i === selected ?'rgba(0,145,255,0.08)' :'transparent',
+ borderLeft: i === selected ?'2px solid #0091FF' :'2px solid transparent',
  }}
  onClick={() => execute(cmd)}
  onMouseEnter={() => setSelected(i)}>
@@ -186,7 +186,7 @@ function CommandPalette({ onClose, onNavigate }) {
  ))
  )}
  </div>
- <div className="px-4 py-2.5 border-t flex items-center gap-4 text-xs text-slate-600" style={{ borderColor:'rgba(255,255,255,0.06)' }}>
+ <div className="px-4 py-2.5 border-t flex items-center gap-4 text-xs text-slate-600" style={{ borderColor:'rgba(0,0,0,0.06)' }}>
  <span><Kbd></Kbd> navigate</span>
  <span><Kbd></Kbd> run</span>
  <span><Kbd>Esc</Kbd> close</span>
@@ -196,7 +196,7 @@ function CommandPalette({ onClose, onNavigate }) {
  )
 }
 
-/* ─── Main Hook + Provider ────────────────────────────────────────────── */
+/* â”€â”€â”€ Main Hook + Provider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 import { useRef } from'react'
 
 export function useCommandPalette(navigate) {
@@ -243,3 +243,5 @@ export function useCommandPalette(navigate) {
 }
 
 export { CommandPalette, ShortcutsModal, Kbd }
+
+

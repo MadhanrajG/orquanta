@@ -67,15 +67,15 @@ export default function AgentHealthCard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     {isEmergencyStop
                         ? <AlertTriangle size={16} color="#ef4444" />
-                        : <ShieldCheck size={16} color="#00FF88" />
+                        : <ShieldCheck size={16} color="#10B981" />
                     }
-                    <span style={{ fontWeight: 700, fontSize: 13, color: isEmergencyStop ? '#ef4444' : '#00FF88' }}>
+                    <span style={{ fontWeight: 700, fontSize: 13, color: isEmergencyStop ? '#ef4444' : '#10B981' }}>
                         {isEmergencyStop ? '🛑 Emergency Stop Active' : '✅ NeMo Guardrails Active'}
                     </span>
                 </div>
                 <span style={{
-                    fontSize: 11, color: '#64748b', background: 'rgba(255,255,255,0.04)',
-                    padding: '2px 10px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.08)'
+                    fontSize: 11, color: '#64748b', background: 'rgba(0,0,0,0.03)',
+                    padding: '2px 10px', borderRadius: 999, border: '1px solid rgba(0,0,0,0.08)'
                 }}>
                     PolicyRails v{policy.version || '1.0'}
                 </span>
@@ -92,34 +92,34 @@ export default function AgentHealthCard() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
                 {/* Daily Spend */}
-                <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ background: 'rgba(0,0,0,0.02)', borderRadius: 10, padding: '10px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                        <DollarSign size={12} color="#FFB800" />
+                        <DollarSign size={12} color="#F59E0B" />
                         <span style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1 }}>Daily Spend</span>
                     </div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: '#FFB800' }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#F59E0B' }}>
                         ${(gov.daily_spend_usd || 0).toFixed(2)}
                     </div>
                     <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
                         of ${(policy.budget_rails?.daily_spend_cap_usd || 5000).toLocaleString()} cap
                     </div>
-                    <div style={{ marginTop: 6, height: 4, borderRadius: 999, background: 'rgba(255,255,255,0.06)' }}>
+                    <div style={{ marginTop: 6, height: 4, borderRadius: 999, background: 'rgba(0,0,0,0.06)' }}>
                         <div style={{
                             height: '100%', borderRadius: 999,
                             width: `${Math.min(spendPct, 100)}%`,
-                            background: spendPct > 80 ? '#ef4444' : spendPct > 50 ? '#FFB800' : '#00FF88',
+                            background: spendPct > 80 ? '#ef4444' : spendPct > 50 ? '#F59E0B' : '#10B981',
                             transition: 'width 0.5s ease'
                         }} />
                     </div>
                 </div>
 
                 {/* Actions Logged */}
-                <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ background: 'rgba(0,0,0,0.02)', borderRadius: 10, padding: '10px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                        <Activity size={12} color="#00D4FF" />
+                        <Activity size={12} color="#0091FF" />
                         <span style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1 }}>Actions Logged</span>
                     </div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: '#00D4FF' }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#0091FF' }}>
                         {gov.total_actions_logged || 0}
                     </div>
                     <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
@@ -128,7 +128,7 @@ export default function AgentHealthCard() {
                 </div>
 
                 {/* Auto-approve threshold */}
-                <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ background: 'rgba(0,0,0,0.02)', borderRadius: 10, padding: '10px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                         <ShieldCheck size={12} color="#7B2FFF" />
                         <span style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1 }}>Auto-Approve</span>
@@ -140,7 +140,7 @@ export default function AgentHealthCard() {
                 </div>
 
                 {/* Blocked Actions */}
-                <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ background: 'rgba(0,0,0,0.02)', borderRadius: 10, padding: '10px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                         <AlertTriangle size={12} color="#F472B6" />
                         <span style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1 }}>Blocked Actions</span>

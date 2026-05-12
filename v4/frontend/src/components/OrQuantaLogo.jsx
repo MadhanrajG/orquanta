@@ -4,7 +4,7 @@ import React, { useState } from'react';
  * OrQuantaLogo - SVG Logo Component
  * ===================================
  * Stylized OQ monogram with quantum orbit ring.
- * Gradient: Quantum Blue (#00D4FF) Deep Purple (#7B2FFF)
+ * Gradient: Quantum Blue (#0091FF) Deep Purple (#7B2FFF)
  *
  * Props:
  * size -'sm'|'md'|'lg'|'xl' (default:'md')
@@ -63,14 +63,14 @@ const OrQuantaLogo = ({
  <defs>
  {/* Primary gradient: Quantum Blue Deep Purple */}
  <linearGradient id={`${gradId}-main`} x1="0%" y1="0%" x2="100%" y2="100%">
- <stop offset="0%" stopColor="#00D4FF" />
+ <stop offset="0%" stopColor="#0091FF" />
  <stop offset="100%" stopColor="#7B2FFF" />
  </linearGradient>
  {/* Orbit ring gradient */}
  <linearGradient id={`${gradId}-ring`} x1="0%" y1="0%" x2="100%" y2="100%">
- <stop offset="0%" stopColor="#00D4FF" stopOpacity="0.8" />
+ <stop offset="0%" stopColor="#0091FF" stopOpacity="0.8" />
  <stop offset="50%" stopColor="#7B2FFF" stopOpacity="0.4" />
- <stop offset="100%" stopColor="#00D4FF" stopOpacity="0.1" />
+ <stop offset="100%" stopColor="#0091FF" stopOpacity="0.1" />
  </linearGradient>
  {/* Background circle gradient */}
  <radialGradient id={`${gradId}-bg`} cx="50%" cy="50%" r="50%">
@@ -101,7 +101,7 @@ const OrQuantaLogo = ({
  <circle
  cx="62" cy="34"
  r="3"
- fill="#00D4FF"
+ fill="#0091FF"
  opacity="0.9"
  filter={`url(#${gradId}-glow)`}
  />
@@ -160,7 +160,7 @@ const OrQuantaLogo = ({
  fontWeight: 700,
  fontSize,
  letterSpacing,
- background:'linear-gradient(135deg, #00D4FF 0%, #7B2FFF 100%)',
+ background:'linear-gradient(135deg, #0091FF 0%, #7B2FFF 100%)',
  WebkitBackgroundClip:'text',
  WebkitTextFillColor:'transparent',
  backgroundClip:'text',

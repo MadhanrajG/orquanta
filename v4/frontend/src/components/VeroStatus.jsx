@@ -28,14 +28,14 @@ export default function VeroStatus() {
         return () => clearInterval(t)
     }, [token])
 
-    const statusColor = data?.vero_status === 'nominal' ? '#00FF88'
-        : data?.vero_status === 'alert' ? '#FFB800'
+    const statusColor = data?.vero_status === 'nominal' ? '#10B981'
+        : data?.vero_status === 'alert' ? '#F59E0B'
         : data?.vero_status === 'critical' ? '#ef4444'
         : '#64748b'
 
     return (
         <div style={{
-            background: 'linear-gradient(135deg, rgba(123,47,255,0.12), rgba(0,212,255,0.08))',
+            background: 'linear-gradient(135deg, rgba(123,47,255,0.12), rgba(0,145,255,0.08))',
             border: `1px solid ${statusColor}30`,
             borderRadius: 16, padding: '16px 20px',
             display: 'flex', alignItems: 'center', gap: 16,
@@ -51,7 +51,7 @@ export default function VeroStatus() {
             {/* Crown icon */}
             <div style={{
                 width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-                background: `linear-gradient(135deg, #7B2FFF25, #00D4FF15)`,
+                background: `linear-gradient(135deg, #7B2FFF25, #0091FF15)`,
                 border: `1px solid ${statusColor}40`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 boxShadow: `0 0 16px ${statusColor}25`,
@@ -62,7 +62,7 @@ export default function VeroStatus() {
             {/* Vero label */}
             <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                    <span style={{ fontWeight: 700, fontSize: 13, color: 'white', letterSpacing: 1 }}>
+                    <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)', letterSpacing: 1 }}>
                         VERO
                     </span>
                     <span style={{
@@ -90,13 +90,13 @@ export default function VeroStatus() {
             {/* KPI chips */}
             <div style={{ display: 'flex', gap: 12, flexShrink: 0 }}>
                 <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#00FF88' }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#10B981' }}>
                         {data ? `${data.agent_summary?.healthy ?? '—'}/5` : '—'}
                     </div>
                     <div style={{ fontSize: 10, color: '#64748b', marginTop: 1 }}>Agents</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#00D4FF' }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#0091FF' }}>
                         {data?.user_intelligence?.active_sessions ?? '—'}
                     </div>
                     <div style={{ fontSize: 10, color: '#64748b', marginTop: 1 }}>Online</div>

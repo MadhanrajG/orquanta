@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { User, Key, Bell, Shield, Save, Eye, EyeOff, Copy, RefreshCw, CheckCircle, Plus, Trash2, Globe, Zap, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react'
 import { useAuth } from '../App.jsx'
 
@@ -46,8 +46,8 @@ export default function ProfilePage() {
     const [webhookLoading, setWebhookLoading] = useState(false)
     const [webhookError, setWebhookError] = useState('')
     const [testingWebhook, setTestingWebhook] = useState(null)   // id being tested
-    const [testResult, setTestResult] = useState({})             // id → {success, http_status}
-    const [deliveries, setDeliveries] = useState({})             // id → delivery[]
+    const [testResult, setTestResult] = useState({})             // id â†’ {success, http_status}
+    const [deliveries, setDeliveries] = useState({})             // id â†’ delivery[]
     const [expandedDeliveries, setExpandedDeliveries] = useState(null)  // id or null
     const [copiedInbound, setCopiedInbound] = useState(null)     // id whose inbound URL was copied
 
@@ -209,7 +209,7 @@ export default function ProfilePage() {
                 setError(err.detail || err.error || 'Failed to save profile')
             }
         } catch {
-            // Network error — still show success in demo/local mode
+            // Network error â€” still show success in demo/local mode
             setSaved(true); setTimeout(() => setSaved(false), 2500)
         } finally { setSaving(false) }
     }
@@ -233,7 +233,7 @@ export default function ProfilePage() {
                 const err = await res.json().catch(() => ({}))
                 setError(err.detail || err.error || 'Current password is incorrect')
             }
-        } catch (err) { setError('Network error — please try again') }
+        } catch (err) { setError('Network error â€” please try again') }
         finally { setSaving(false) }
     }
 
@@ -251,7 +251,7 @@ export default function ProfilePage() {
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ preferences: notifState }),
             })
-        } catch { /* graceful — preferences saved locally */ }
+        } catch { /* graceful â€” preferences saved locally */ }
         finally {
             setSaving(false)
             setNotifSaved(true)
@@ -270,7 +270,7 @@ export default function ProfilePage() {
     return (
         <div className="space-y-6 animate-fade-in" style={{ maxWidth: 720 }}>
             <div>
-                <h1 className="text-2xl font-bold text-white">Settings</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
                 <p className="text-slate-400 text-sm mt-0.5">Manage your account, security, and API access</p>
             </div>
 
@@ -294,7 +294,7 @@ export default function ProfilePage() {
             {/* Error / Success */}
             {error && (
                 <div className="glass-card p-3 border border-red-500/30 bg-red-500/10">
-                    <p className="text-sm text-red-400">{error}</p>
+                    <p className="text-sm text-red-600">{error}</p>
                 </div>
             )}
             {(saved || notifSaved) && (
@@ -312,18 +312,18 @@ export default function ProfilePage() {
                             {user?.email?.[0]?.toUpperCase() || 'A'}
                         </div>
                         <div>
-                            <p className="text-white font-semibold">{user?.email || 'admin@orquanta.com'}</p>
+                            <p className="text-gray-900 font-semibold">{user?.email || 'admin@orquanta.com'}</p>
                             <p className="text-xs text-slate-500 mt-0.5">OrQuanta Member</p>
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Full Name</label>
+                        <label className="block text-sm font-medium text-slate-600 mb-1.5">Full Name</label>
                         <input className="input-field" placeholder="Your full name"
                             value={profileForm.full_name}
                             onChange={e => setProfileForm(f => ({ ...f, full_name: e.target.value }))} />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Email Address</label>
+                        <label className="block text-sm font-medium text-slate-600 mb-1.5">Email Address</label>
                         <input className="input-field" type="email" placeholder="you@example.com"
                             value={profileForm.email}
                             onChange={e => setProfileForm(f => ({ ...f, email: e.target.value }))} />
@@ -338,14 +338,14 @@ export default function ProfilePage() {
             {/* Security Tab */}
             {tab === 'security' && (
                 <form onSubmit={handleChangePassword} className="glass-card p-6 space-y-5">
-                    <h3 className="text-white font-semibold">Change Password</h3>
+                    <h3 className="text-gray-900 font-semibold">Change Password</h3>
                     {[
                         { label: 'Current Password', field: 'current', autoComplete: 'current-password' },
                         { label: 'New Password', field: 'next', autoComplete: 'new-password' },
                         { label: 'Confirm New Password', field: 'confirm', autoComplete: 'new-password' },
                     ].map(({ label, field, autoComplete }) => (
                         <div key={field}>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">{label}</label>
+                            <label className="block text-sm font-medium text-slate-600 mb-1.5">{label}</label>
                             <div className="relative">
                                 <input className="input-field pr-10"
                                     type={showPass ? 'text' : 'password'}
@@ -378,7 +378,7 @@ export default function ProfilePage() {
                     {/* One-time key reveal */}
                     {createdKey && (
                         <div className="glass-card p-5 border border-emerald-500/30" style={{ background: 'rgba(16,185,129,0.05)' }}>
-                            <p className="text-emerald-400 font-semibold text-sm mb-1">API key created — copy it now</p>
+                            <p className="text-emerald-400 font-semibold text-sm mb-1">API key created â€” copy it now</p>
                             <p className="text-xs text-slate-500 mb-3">This key will not be shown again. Store it securely.</p>
                             <div className="flex items-center gap-2">
                                 <code className="flex-1 input-field font-mono text-xs py-2 text-emerald-300 overflow-hidden text-ellipsis whitespace-nowrap">
@@ -389,15 +389,15 @@ export default function ProfilePage() {
                                     {keyCopied ? 'Copied!' : 'Copy'}
                                 </button>
                             </div>
-                            <button onClick={() => setCreatedKey(null)} className="text-xs text-slate-500 mt-3 hover:text-slate-300">
-                                I've saved it — dismiss
+                            <button onClick={() => setCreatedKey(null)} className="text-xs text-slate-500 mt-3 hover:text-slate-600">
+                                I've saved it â€” dismiss
                             </button>
                         </div>
                     )}
 
                     {/* Create new key */}
                     <div className="glass-card p-6">
-                        <h3 className="text-white font-semibold mb-1">Create API Key</h3>
+                        <h3 className="text-gray-900 font-semibold mb-1">Create API Key</h3>
                         <p className="text-xs text-slate-500 mb-4">Keys use format <code className="text-slate-400">sk-orq-...</code> and work anywhere a Bearer JWT does.</p>
                         <form onSubmit={handleCreateKey} className="flex gap-2">
                             <input
@@ -409,29 +409,29 @@ export default function ProfilePage() {
                             />
                             <button type="submit" disabled={keyLoading || !newKeyName.trim()} className="btn btn-primary flex items-center gap-1.5 text-sm px-4 py-2">
                                 <Plus size={14} />
-                                {keyLoading ? 'Creating…' : 'Create'}
+                                {keyLoading ? 'Creatingâ€¦' : 'Create'}
                             </button>
                         </form>
                     </div>
 
                     {/* Existing keys */}
                     <div className="glass-card p-6">
-                        <h3 className="text-white font-semibold mb-4">Active Keys</h3>
+                        <h3 className="text-gray-900 font-semibold mb-4">Active Keys</h3>
                         {apiKeys.length === 0
                             ? <p className="text-xs text-slate-500">No API keys yet. Create one above.</p>
                             : <div className="space-y-3">
                                 {apiKeys.map(k => (
                                     <div key={k.key_id} className="flex items-center justify-between py-2 border-b border-white/[0.04]">
                                         <div>
-                                            <p className="text-sm text-white font-medium">{k.name}</p>
-                                            <p className="text-xs text-slate-500 font-mono mt-0.5">{k.key_prefix}…</p>
+                                            <p className="text-sm text-gray-900 font-medium">{k.name}</p>
+                                            <p className="text-xs text-slate-500 font-mono mt-0.5">{k.key_prefix}â€¦</p>
                                             <p className="text-xs text-slate-600 mt-0.5">
                                                 Created {new Date(k.created_at).toLocaleDateString()}
-                                                {k.last_used ? ` · Last used ${new Date(k.last_used).toLocaleDateString()}` : ' · Never used'}
+                                                {k.last_used ? ` Â· Last used ${new Date(k.last_used).toLocaleDateString()}` : ' Â· Never used'}
                                             </p>
                                         </div>
                                         <button onClick={() => handleRevokeKey(k.key_id)}
-                                            className="btn-ghost text-red-400 hover:text-red-300 flex items-center gap-1 text-xs px-3 py-1.5">
+                                            className="btn-ghost text-red-600 hover:text-red-300 flex items-center gap-1 text-xs px-3 py-1.5">
                                             <Trash2 size={13} /> Revoke
                                         </button>
                                     </div>
@@ -441,7 +441,7 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="glass-card p-5">
-                        <h3 className="text-white font-semibold mb-2 text-sm">API Documentation</h3>
+                        <h3 className="text-gray-900 font-semibold mb-2 text-sm">API Documentation</h3>
                         <p className="text-xs text-slate-500 mb-3">Full REST API with WebSocket streaming support.</p>
                         <a href="/docs" target="_blank" rel="noopener noreferrer" className="btn-ghost text-sm inline-flex items-center gap-2">
                             Open Swagger Docs
@@ -455,17 +455,17 @@ export default function ProfilePage() {
                 <div className="space-y-4">
                     {webhookError && (
                         <div className="glass-card p-3 border border-red-500/30 bg-red-500/10">
-                            <p className="text-sm text-red-400">{webhookError}</p>
+                            <p className="text-sm text-red-600">{webhookError}</p>
                         </div>
                     )}
 
                     {/* Create webhook */}
                     <div className="glass-card p-6">
-                        <h3 className="text-white font-semibold mb-1">Register Webhook</h3>
+                        <h3 className="text-gray-900 font-semibold mb-1">Register Webhook</h3>
                         <p className="text-xs text-slate-500 mb-4">OrQuanta will POST a signed JSON payload to your URL on the selected events.</p>
                         <form onSubmit={handleCreateWebhook} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Target URL</label>
+                                <label className="block text-sm font-medium text-slate-600 mb-1.5">Target URL</label>
                                 <input
                                     className="input-field text-sm"
                                     placeholder="https://your-server.com/webhooks/orquanta"
@@ -475,7 +475,7 @@ export default function ProfilePage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Events</label>
+                                <label className="block text-sm font-medium text-slate-600 mb-2">Events</label>
                                 <div className="flex flex-wrap gap-2">
                                     {WEBHOOK_EVENTS.map(evt => (
                                         <button
@@ -484,8 +484,8 @@ export default function ProfilePage() {
                                             onClick={() => toggleWebhookEvent(evt)}
                                             className="text-xs px-3 py-1.5 rounded-full border transition-all"
                                             style={{
-                                                background: webhookForm.events.includes(evt) ? 'rgba(82,113,245,0.2)' : 'rgba(255,255,255,0.04)',
-                                                borderColor: webhookForm.events.includes(evt) ? 'rgba(82,113,245,0.6)' : 'rgba(255,255,255,0.1)',
+                                                background: webhookForm.events.includes(evt) ? 'rgba(82,113,245,0.2)' : 'rgba(0,0,0,0.03)',
+                                                borderColor: webhookForm.events.includes(evt) ? 'rgba(82,113,245,0.6)' : 'rgba(0,0,0,0.06)',
                                                 color: webhookForm.events.includes(evt) ? '#7a9bfa' : '#94a3b8',
                                                 cursor: 'pointer',
                                             }}>
@@ -495,7 +495,7 @@ export default function ProfilePage() {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Description <span className="text-slate-600">(optional)</span></label>
+                                <label className="block text-sm font-medium text-slate-600 mb-1.5">Description <span className="text-slate-600">(optional)</span></label>
                                 <input
                                     className="input-field text-sm"
                                     placeholder="e.g. Notify Slack on job completion"
@@ -506,14 +506,14 @@ export default function ProfilePage() {
                             </div>
                             <button type="submit" disabled={webhookLoading || !webhookForm.url.trim()} className="btn-primary flex items-center gap-2 text-sm">
                                 {webhookLoading ? <RefreshCw size={14} className="animate-spin" /> : <Plus size={14} />}
-                                {webhookLoading ? 'Registering…' : 'Register Webhook'}
+                                {webhookLoading ? 'Registeringâ€¦' : 'Register Webhook'}
                             </button>
                         </form>
                     </div>
 
                     {/* Existing webhooks */}
                     <div className="glass-card p-6">
-                        <h3 className="text-white font-semibold mb-4">Active Webhooks</h3>
+                        <h3 className="text-gray-900 font-semibold mb-4">Active Webhooks</h3>
                         {webhooks.length === 0
                             ? <p className="text-xs text-slate-500">No webhooks yet. Register one above.</p>
                             : <div className="space-y-4">
@@ -524,7 +524,7 @@ export default function ProfilePage() {
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex items-center gap-2">
                                                     <Globe size={13} className="text-slate-400 shrink-0" />
-                                                    <p className="text-sm text-white font-medium truncate">{w.url}</p>
+                                                    <p className="text-sm text-gray-900 font-medium truncate">{w.url}</p>
                                                 </div>
                                                 {w.description && <p className="text-xs text-slate-500 mt-0.5 ml-5">{w.description}</p>}
                                                 <div className="flex flex-wrap gap-1 mt-2 ml-5">
@@ -546,7 +546,7 @@ export default function ProfilePage() {
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteWebhook(w.id)}
-                                                    className="btn-ghost text-red-400 hover:text-red-300 flex items-center gap-1 text-xs px-3 py-1.5">
+                                                    className="btn-ghost text-red-600 hover:text-red-300 flex items-center gap-1 text-xs px-3 py-1.5">
                                                     <Trash2 size={12} /> Delete
                                                 </button>
                                             </div>
@@ -557,7 +557,7 @@ export default function ProfilePage() {
                                             <div className="ml-5 flex items-center gap-2 text-xs">
                                                 {testResult[w.id].success
                                                     ? <CheckCircle size={12} className="text-emerald-400" />
-                                                    : <span style={{ color: '#f87171', fontSize: 12 }}>✕</span>}
+                                                    : <span style={{ color: '#f87171', fontSize: 12 }}>âœ•</span>}
                                                 <span style={{ color: testResult[w.id].success ? '#34d399' : '#f87171' }}>
                                                     {testResult[w.id].success ? 'Test delivered' : 'Delivery failed'}
                                                     {testResult[w.id].http_status ? ` (HTTP ${testResult[w.id].http_status})` : ''}
@@ -567,9 +567,9 @@ export default function ProfilePage() {
 
                                         {/* Inbound URL */}
                                         <div className="ml-5">
-                                            <p className="text-xs text-slate-500 mb-1">Inbound trigger URL — POST here to start a job</p>
+                                            <p className="text-xs text-slate-500 mb-1">Inbound trigger URL â€” POST here to start a job</p>
                                             <div className="flex items-center gap-2">
-                                                <code className="flex-1 text-xs font-mono text-slate-400 truncate" style={{ background: 'rgba(255,255,255,0.04)', padding: '4px 8px', borderRadius: 6 }}>
+                                                <code className="flex-1 text-xs font-mono text-slate-400 truncate" style={{ background: 'rgba(0,0,0,0.03)', padding: '4px 8px', borderRadius: 6 }}>
                                                     {w.inbound_url}
                                                 </code>
                                                 <button
@@ -585,7 +585,7 @@ export default function ProfilePage() {
                                         <div className="ml-5 flex items-center justify-between">
                                             <p className="text-xs text-slate-600">
                                                 {w.delivery_count} deliveries
-                                                {w.last_delivery ? ` · Last: ${new Date(w.last_delivery).toLocaleString()}` : ''}
+                                                {w.last_delivery ? ` Â· Last: ${new Date(w.last_delivery).toLocaleString()}` : ''}
                                             </p>
                                             <button
                                                 onClick={() => toggleDeliveries(w.id)}
@@ -604,7 +604,7 @@ export default function ProfilePage() {
                                                     : [...(deliveries[w.id] || [])].reverse().map(d => (
                                                         <div key={d.id} className="flex items-center gap-3 py-1.5 border-b border-white/[0.04] text-xs">
                                                             <span style={{ color: d.status === 'success' ? '#34d399' : '#f87171', width: 48, flexShrink: 0 }}>
-                                                                {d.status === 'success' ? '✓' : '✕'} {d.http_status || '—'}
+                                                                {d.status === 'success' ? 'âœ“' : 'âœ•'} {d.http_status || 'â€”'}
                                                             </span>
                                                             <span className="text-slate-400 shrink-0">{d.event}</span>
                                                             <span className="text-slate-600 truncate">{new Date(d.attempted_at).toLocaleString()}</span>
@@ -623,7 +623,7 @@ export default function ProfilePage() {
 
                     {/* Docs callout */}
                     <div className="glass-card p-5">
-                        <h3 className="text-white font-semibold mb-1 text-sm">Webhook Signature Verification</h3>
+                        <h3 className="text-gray-900 font-semibold mb-1 text-sm">Webhook Signature Verification</h3>
                         <p className="text-xs text-slate-500 mb-3">Every outbound request includes <code className="text-slate-400">X-OrQuanta-Signature: sha256=&lt;hex&gt;</code> and <code className="text-slate-400">X-OrQuanta-Event</code> headers. Verify with HMAC-SHA256.</p>
                         <a href="/docs#/webhooks" target="_blank" rel="noopener noreferrer" className="btn-ghost text-sm inline-flex items-center gap-2">
                             <ExternalLink size={13} /> Webhook API docs
@@ -632,14 +632,14 @@ export default function ProfilePage() {
                 </div>
             )}
 
-            {/* Notifications Tab — Bug 7 Fix */}
+            {/* Notifications Tab â€” Bug 7 Fix */}
             {tab === 'notifications' && (
                 <div className="glass-card p-6 space-y-5">
-                    <h3 className="text-white font-semibold">Notification Preferences</h3>
+                    <h3 className="text-gray-900 font-semibold">Notification Preferences</h3>
                     {NOTIFICATION_ITEMS.map(({ id, label, desc }) => (
                         <div key={id} className="flex items-center justify-between py-2 border-b border-white/[0.04]">
                             <div>
-                                <p className="text-sm text-white font-medium">{label}</p>
+                                <p className="text-sm text-gray-900 font-medium">{label}</p>
                                 <p className="text-xs text-slate-500 mt-0.5">{desc}</p>
                             </div>
                             {/* Proper toggle with visible thumb */}
@@ -690,3 +690,6 @@ export default function ProfilePage() {
         </div>
     )
 }
+
+
+

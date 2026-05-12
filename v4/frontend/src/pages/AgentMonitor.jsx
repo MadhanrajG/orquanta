@@ -1,15 +1,15 @@
-import { useState, useEffect, useRef } from'react'
+﻿import { useState, useEffect, useRef } from'react'
 import { useAuth } from'../App.jsx'
 import AgentHealthCard from '../components/AgentHealthCard.jsx'
 
 const API = import.meta.env.VITE_API_URL ||''
 
-/* ─── Agent node positions (SVG viewBox 0 0 600 400) ─────────────────── */
+/* â”€â”€â”€ Agent node positions (SVG viewBox 0 0 600 400) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const AGENT_NODES = [
- { key:'master_orchestrator', label:'OrMind', sub:'Orchestrator', x: 300, y: 180, icon:'', color:'#00D4FF', size: 46 },
+ { key:'master_orchestrator', label:'OrMind', sub:'Orchestrator', x: 300, y: 180, icon:'', color:'#0091FF', size: 46 },
  { key:'scheduler_agent', label:'Scheduler', sub:'EDF Queue', x: 140, y: 100, icon:'', color:'#7B2FFF', size: 36 },
- { key:'cost_optimizer_agent', label:'Cost AI', sub:'Optimizer', x: 460, y: 100, icon:'', color:'#FFB800', size: 36 },
- { key:'healing_agent', label:'Healing', sub:'Self-Repair', x: 120, y: 290, icon:'', color:'#00FF88', size: 36 },
+ { key:'cost_optimizer_agent', label:'Cost AI', sub:'Optimizer', x: 460, y: 100, icon:'', color:'#F59E0B', size: 36 },
+ { key:'healing_agent', label:'Healing', sub:'Self-Repair', x: 120, y: 290, icon:'', color:'#10B981', size: 36 },
  { key:'forecast_agent', label:'Forecast', sub:'Demand AI', x: 480, y: 290, icon:'', color:'#F472B6', size: 36 },
 ]
 
@@ -20,7 +20,7 @@ const EDGES = [
  ['master_orchestrator','forecast_agent'],
 ]
 
-/* ─── Pulse line component ─────────────────────────────────────────────── */
+/* â”€â”€â”€ Pulse line component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function PulseLine({ x1, y1, x2, y2, color, active }) {
  const len = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
  return (
@@ -39,7 +39,7 @@ function PulseLine({ x1, y1, x2, y2, color, active }) {
  )
 }
 
-/* ─── Agent thought stream ─────────────────────────────────────────────── */
+/* â”€â”€â”€ Agent thought stream â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const ALL_THOUGHTS = {
  master_orchestrator: [
 'Goal received: "Fine-tune Mistral 7B, budget $50"',
@@ -107,11 +107,11 @@ function ThoughtStream({ agentKey, color }) {
  )
 }
 
-/* ─── Main Agent Monitor ───────────────────────────────────────────────── */
+/* â”€â”€â”€ Main Agent Monitor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export default function AgentMonitor() {
  const [activeNode, setActiveNode] = useState('master_orchestrator')
  const [activeEdges, setActiveEdges] = useState([])
- const agents = useApi('/agents/status')
+ const agents = useApi('/api/v1/agents')
 
  // Animate random edge activations
  useEffect(() => {
@@ -129,18 +129,18 @@ export default function AgentMonitor() {
  <div className="space-y-5 animate-fade-in">
  <AgentHealthCard />
  <div>
- <h1 className="text-xl font-bold text-white">Agent Monitor</h1>
+ <h1 className="text-xl font-bold text-gray-900">Agent Monitor</h1>
  <p className="text-slate-500 text-sm mt-1">Real-time neural network view of 5 active OrQuanta agents</p>
  </div>
 
  <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
- {/* ── Neural Network SVG ── */}
+ {/* â”€â”€ Neural Network SVG â”€â”€ */}
  <div className="xl:col-span-2 glass-card p-5">
  <div className="flex items-center justify-between mb-4">
- <span className="text-sm font-semibold text-white">Agent Network</span>
+ <span className="text-sm font-semibold text-gray-900">Agent Network</span>
  <div className="flex items-center gap-2">
  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
- <span className="text-xs text-green-400">5 agents active</span>
+ <span className="text-xs text-emerald-600">5 agents active</span>
  </div>
  </div>
  <div className="relative" style={{ paddingBottom:'65%' }}>
@@ -148,7 +148,7 @@ export default function AgentMonitor() {
  {/* Background grid */}
  <defs>
  <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
- <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+ <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(0,0,0,0.02)" strokeWidth="1" />
  </pattern>
  </defs>
  <rect width="600" height="400" fill="url(#grid)" />
@@ -198,7 +198,7 @@ export default function AgentMonitor() {
  {node.sub}
  </text>
  {/* Pulse dot */}
- <circle cx={node.x + node.size - 6} cy={node.y - node.size + 6} r={4} fill="#00FF88">
+ <circle cx={node.x + node.size - 6} cy={node.y - node.size + 6} r={4} fill="#10B981">
  <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" />
  </circle>
  </g>
@@ -209,7 +209,7 @@ export default function AgentMonitor() {
  <p className="text-xs text-center mt-2" style={{ color:'#94a3b8' }}>Click any agent node to see live reasoning</p>
  </div>
 
- {/* ── Agent detail panel ── */}
+ {/* â”€â”€ Agent detail panel â”€â”€ */}
  <div className="flex flex-col gap-4">
  {selectedNode && (
  <div className="glass-card p-5 flex-1"
@@ -220,7 +220,7 @@ export default function AgentMonitor() {
  {selectedNode.icon}
  </div>
  <div>
- <div className="font-semibold text-white">{selectedNode.label}</div>
+ <div className="font-semibold text-gray-900">{selectedNode.label}</div>
  <div className="text-xs" style={{ color: selectedNode.color }}>{selectedNode.sub} . Active</div>
  </div>
  </div>
@@ -237,7 +237,7 @@ export default function AgentMonitor() {
  ].map(stat => (
  <div key={stat.label} className="rounded-lg p-2.5 text-center"
  style={{ background: `${selectedNode.color}12`, border: `1px solid ${selectedNode.color}25` }}>
- <div className="text-sm font-bold text-white">{stat.value}</div>
+ <div className="text-sm font-bold text-gray-900">{stat.value}</div>
  <div className="text-xs" style={{ color:'#94a3b8' }}>{stat.label}</div>
  </div>
  ))}
@@ -273,7 +273,7 @@ export default function AgentMonitor() {
  )
 }
 
-/* ─── Local hook ─────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Local hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 import { useContext } from'react'
 import { AuthContext } from'../App.jsx'
 function useApi(endpoint) {
@@ -292,3 +292,5 @@ function useApi(endpoint) {
  }, [endpoint, token])
  return data
 }
+
+

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate, useLocation } from 'react-router-dom'
+﻿import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, createContext, useContext, Component } from 'react'
 import {
     LayoutDashboard, Target, Server, DollarSign,
@@ -24,7 +24,7 @@ import OrQuantaAssistant from './components/OrQuantaAssistant.jsx'
 import { CommandPalette, ShortcutsModal, useCommandPalette } from './components/CommandPalette.jsx'
 import OnboardingWizard from './components/OnboardingWizard.jsx'
 
-/* ── Error Boundary — catches unhandled render errors across all routes ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Error Boundary Ã¢â‚¬â€ catches unhandled render errors across all routes Ã¢â€â‚¬Ã¢â€â‚¬ */
 class ErrorBoundary extends Component {
     constructor(props) { super(props); this.state = { hasError: false, error: null } }
     static getDerivedStateFromError(error) { return { hasError: true, error } }
@@ -44,7 +44,7 @@ class ErrorBoundary extends Component {
                 </p>
                 <button
                     onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload() }}
-                    style={{ padding: '10px 24px', background: 'linear-gradient(135deg,#3a52eb,#7a9bfa)', border: 'none', borderRadius: 8, color: 'white', cursor: 'pointer', fontSize: 14 }}
+                    style={{ padding: '10px 24px', background: 'linear-gradient(135deg,#3a52eb,#7a9bfa)', border: 'none', borderRadius: 8, color: '#ffffff', cursor: 'pointer', fontSize: 14 }}
                 >
                     Reload App
                 </button>
@@ -54,7 +54,7 @@ class ErrorBoundary extends Component {
     }
 }
 
-/* ── JWT expiry helper — decode exp claim without a library ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ JWT expiry helper Ã¢â‚¬â€ decode exp claim without a library Ã¢â€â‚¬Ã¢â€â‚¬ */
 function isTokenExpired(token) {
     if (!token) return true
     try {
@@ -63,14 +63,14 @@ function isTokenExpired(token) {
     } catch { return true }
 }
 
-/* ── Auth Context ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Auth Context Ã¢â€â‚¬Ã¢â€â‚¬ */
 export const AuthContext = createContext(null)
 export const useAuth = () => useContext(AuthContext)
 
 function AuthProvider({ children }) {
     const [token, setToken] = useState(() => {
         const t = localStorage.getItem('orquanta_token')
-        // Evict expired token on load — don't silently accept stale auth
+        // Evict expired token on load Ã¢â‚¬â€ don't silently accept stale auth
         if (t && isTokenExpired(t)) {
             localStorage.removeItem('orquanta_token')
             localStorage.removeItem('orquanta_user')
@@ -82,7 +82,7 @@ function AuthProvider({ children }) {
         try { return JSON.parse(localStorage.getItem('orquanta_user')) } catch { return null }
     })
 
-    // OAuth redirect token capture — handles ?token=xxx from /auth/google or /auth/github
+    // OAuth redirect token capture Ã¢â‚¬â€ handles ?token=xxx from /auth/google or /auth/github
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
         const oauthToken = params.get('token')
@@ -147,7 +147,7 @@ function AuthProvider({ children }) {
     )
 }
 
-/* ── Login Page ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Login Page Ã¢â€â‚¬Ã¢â€â‚¬ */
 function LoginPage() {
     const { login } = useAuth()
     const [mode, setMode] = useState('login')
@@ -190,10 +190,10 @@ function LoginPage() {
             <div style={{ width: '100%', maxWidth: '440px', padding: '0 16px', position: 'relative', zIndex: 1 }}>
                 <div className="auth-card fade-in">
                     <div className="auth-logo">
-                        {/* Value Proposition — GPU expert hero message */}
+                        {/* Value Proposition Ã¢â‚¬â€ GPU expert hero message */}
                         <div className="login-value-strip">
                             <div className="login-headline">$0.013 / hr</div>
-                            <div className="login-subline">GPU Cloud · Orchestrated by 5 AI Agents · 67% Below AWS</div>
+                            <div className="login-subline">GPU Cloud Ã‚Â· Orchestrated by 5 AI Agents Ã‚Â· 67% Below AWS</div>
                             <div className="login-pills">
                                 <span className="login-pill">Auto-Routing</span>
                                 <span className="login-pill">NemoClaw AI</span>
@@ -309,12 +309,12 @@ function LoginPage() {
     )
 }
 
-/* ── Carbon Tracker (Coming Soon) ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Carbon Tracker (Coming Soon) Ã¢â€â‚¬Ã¢â€â‚¬ */
 function CarbonTrackerPage() {
     return (
         <div className="space-y-6 animate-fade-in">
             <div>
-                <h1 className="text-2xl font-bold text-white">Carbon Tracker</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Carbon Tracker</h1>
                 <p className="text-slate-400 text-sm mt-0.5">Route workloads to the greenest regions automatically</p>
             </div>
             <div className="glass-card p-8 text-center relative overflow-hidden">
@@ -327,7 +327,7 @@ function CarbonTrackerPage() {
                 </p>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 20px', border: '1px solid rgba(0,255,136,0.3)', borderRadius: 999, background: 'rgba(0,255,136,0.06)', color: '#00FF88', fontSize: 13 }}>
                     <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#00FF88', display: 'inline-block', animation: 'pulse 2s infinite' }} />
-                    In Development — Available in v1.1
+                    In Development Ã¢â‚¬â€ Available in v1.1
                 </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -338,7 +338,7 @@ function CarbonTrackerPage() {
                 ].map(c => (
                     <div key={c.title} className="glass-card p-5" style={{ opacity: 0.75 }}>
                         <div style={{ marginBottom: 12 }}><c.icon size={28} color={c.color} /></div>
-                        <h3 className="font-semibold text-white text-sm mb-1.5">{c.title}</h3>
+                        <h3 className="font-semibold text-gray-900 text-sm mb-1.5">{c.title}</h3>
                         <p className="text-xs text-slate-500 leading-relaxed">{c.desc}</p>
                         <div className="mt-3 h-0.5 rounded-full" style={{ background: `${c.color}30` }} />
                     </div>
@@ -348,7 +348,7 @@ function CarbonTrackerPage() {
     )
 }
 
-/* ── Live savings from platform metrics ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Live savings from platform metrics Ã¢â€â‚¬Ã¢â€â‚¬ */
 function useLiveSavings() {
     const { token } = useAuth()
     const [savings, setSavings] = useState(null)
@@ -360,10 +360,10 @@ function useLiveSavings() {
             .then(d => {
                 if (!d || cancelled) return
                 const spent = d.governor_spend?.daily_spend_usd ?? 0
-                // AWS on-demand is ~2.5× our routed price on average
+                // AWS on-demand is ~2.5Ãƒâ€” our routed price on average
                 const awsEquivalent = spent * 2.5
                 const saved = awsEquivalent - spent
-                setSavings(saved > 0 ? `$${saved.toFixed(2)} saved` : 'Tracking savings…')
+                setSavings(saved > 0 ? `$${saved.toFixed(2)} saved` : 'Tracking savingsÃ¢â‚¬Â¦')
             })
             .catch(() => {})
         return () => { cancelled = true }
@@ -371,10 +371,10 @@ function useLiveSavings() {
     return savings
 }
 
-/* ── Navigation Sidebar ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Navigation Sidebar Ã¢â€â‚¬Ã¢â€â‚¬ */
 const VeroIcon = () => <Crown size={16} style={{ minWidth: 16, flexShrink: 0 }} />
 
-/* ── Grouped nav structure ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Grouped nav structure Ã¢â€â‚¬Ã¢â€â‚¬ */
 const NAV_GROUPS = [
   {
     label: 'Compute',
@@ -429,7 +429,7 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
             {mobileOpen && (
                 <div
                     onClick={onMobileClose}
-                    style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 49, backdropFilter: 'blur(2px)' }}
+                    style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 49, }}
                 />
             )}
             <aside
@@ -459,7 +459,7 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
                     {!collapsed && (
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontWeight: 800, fontSize: 13.5, color: 'var(--text-primary)', whiteSpace: 'nowrap', letterSpacing: '-0.02em' }}>OrQuanta</div>
-                            <div style={{ fontSize: 9.5, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 1 }}>GPU Cloud · AI-Powered</div>
+                            <div style={{ fontSize: 9.5, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 1 }}>GPU Cloud Ã‚Â· AI-Powered</div>
                         </div>
                     )}
                     <button onClick={onToggle} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexShrink: 0, padding: 3, borderRadius: 6 }}>
@@ -473,8 +473,8 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <DollarSign size={13} color="var(--success)" style={{ flexShrink: 0 }} />
                             <div>
-                                <div className="sidebar-savings-amount">{liveSavings ?? '—'}</div>
-                                <div className="sidebar-savings-label">vs AWS on-demand · live</div>
+                                <div className="sidebar-savings-amount">{liveSavings ?? 'Ã¢â‚¬â€'}</div>
+                                <div className="sidebar-savings-label">vs AWS on-demand Ã‚Â· live</div>
                             </div>
                         </div>
                     </div>
@@ -520,7 +520,7 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
                                 <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     {user?.email?.split('@')[0] || 'Admin'}
                                 </div>
-                                <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{user?.role === 'admin' ? '⚡ Admin · Active' : 'Member · Active'}</div>
+                                <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{user?.role === 'admin' ? 'Ã¢Å¡Â¡ Admin Ã‚Â· Active' : 'Member Ã‚Â· Active'}</div>
                             </div>
                         )}
                         <button onClick={logout} title="Logout" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexShrink: 0, padding: 4, borderRadius: 6, transition: 'color 0.2s' }}
@@ -537,7 +537,7 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
 }
 
 
-/* ── Protected App Layout ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Protected App Layout Ã¢â€â‚¬Ã¢â€â‚¬ */
 const ROUTE_TITLES = {
     '/': 'Dashboard',
     '/goals': 'Submit Goal',
@@ -570,10 +570,10 @@ function AppLayout() {
     // Per-route document.title
     useEffect(() => {
         const page = ROUTE_TITLES[location.pathname] || 'Dashboard'
-        document.title = `OrQuanta — ${page}`
+        document.title = `OrQuanta Ã¢â‚¬â€ ${page}`
     }, [location.pathname])
 
-    // matchMedia keeps sidebar correct across zoom levels — window.innerWidth is zoom-sensitive
+    // matchMedia keeps sidebar correct across zoom levels Ã¢â‚¬â€ window.innerWidth is zoom-sensitive
     useEffect(() => {
         const mq = window.matchMedia('(max-width: 767px)')
         const handler = (e) => setIsMobile(e.matches)
@@ -619,7 +619,7 @@ function AppLayout() {
                 minHeight: '100vh',
                 transition: 'margin-left 0.25s ease',
             }}>
-                {/* Per-route error boundary — crash in one page doesn't kill the shell */}
+                {/* Per-route error boundary Ã¢â‚¬â€ crash in one page doesn't kill the shell */}
                 <ErrorBoundary>
                     <Routes>
                         <Route path="/" element={<Dashboard />} />
@@ -651,7 +651,7 @@ function AppLayout() {
     )
 }
 
-/* ── Root App ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Root App Ã¢â€â‚¬Ã¢â€â‚¬ */
 export default function App() {
     return (
         <ErrorBoundary>
@@ -668,3 +668,6 @@ function AppRouter() {
     const { isAuth } = useAuth()
     return isAuth ? <AppLayout /> : <LoginPage />
 }
+
+
+

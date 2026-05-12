@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Clock, Plus, Trash2, RefreshCw, Play, Pause, ChevronDown, ChevronRight, CheckCircle, AlertCircle } from 'lucide-react'
 import { useAuth } from '../App.jsx'
 
@@ -12,7 +12,7 @@ const CRON_PRESETS = [
     { label: 'Every Monday 2am',    expr: '0 2 * * 1' },
     { label: 'Every 15 minutes',    expr: '*/15 * * * *' },
     { label: '1st of every month',  expr: '0 0 1 * *' },
-    { label: 'Custom…',             expr: '' },
+    { label: 'Customâ€¦',             expr: '' },
 ]
 
 const GPU_TYPES = ['A100', 'H100', 'A10G', 'L4', 'T4', 'V100']
@@ -139,14 +139,14 @@ export default function SchedulesPage() {
         }
     }
 
-    const fmtDate = (iso) => iso ? new Date(iso).toLocaleString() : '—'
+    const fmtDate = (iso) => iso ? new Date(iso).toLocaleString() : 'â€”'
 
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Schedules</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">Schedules</h1>
                     <p className="text-slate-400 text-sm mt-0.5">Recurring GPU jobs on a cron expression</p>
                 </div>
                 <button
@@ -160,8 +160,8 @@ export default function SchedulesPage() {
             {/* Feedback */}
             {error && (
                 <div className="glass-card p-3 border border-red-500/30 bg-red-500/10 flex items-center gap-2">
-                    <AlertCircle size={14} className="text-red-400 shrink-0" />
-                    <p className="text-sm text-red-400">{error}</p>
+                    <AlertCircle size={14} className="text-red-600 shrink-0" />
+                    <p className="text-sm text-red-600">{error}</p>
                 </div>
             )}
             {success && (
@@ -174,14 +174,14 @@ export default function SchedulesPage() {
             {/* Create form */}
             {showForm && (
                 <div className="glass-card p-6 space-y-5">
-                    <h3 className="text-white font-semibold">New Schedule</h3>
+                    <h3 className="text-gray-900 font-semibold">New Schedule</h3>
                     <form onSubmit={handleCreate} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Goal</label>
+                            <label className="block text-sm font-medium text-slate-600 mb-1.5">Goal</label>
                             <textarea
                                 className="input-field text-sm resize-none"
                                 rows={3}
-                                placeholder="Fine-tune LLaMA 3 8B on customer support data and push to HuggingFace…"
+                                placeholder="Fine-tune LLaMA 3 8B on customer support data and push to HuggingFaceâ€¦"
                                 value={form.goal}
                                 onChange={e => setForm(f => ({ ...f, goal: e.target.value }))}
                                 required
@@ -189,7 +189,7 @@ export default function SchedulesPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Schedule</label>
+                            <label className="block text-sm font-medium text-slate-600 mb-2">Schedule</label>
                             <div className="flex flex-wrap gap-2 mb-3">
                                 {CRON_PRESETS.map(({ label, expr }) => {
                                     const isSelected = expr === '' ? customCron : (!customCron && form.cron_expr === expr)
@@ -200,8 +200,8 @@ export default function SchedulesPage() {
                                             onClick={() => setCronPreset(expr)}
                                             className="text-xs px-3 py-1.5 rounded-full border transition-all"
                                             style={{
-                                                background: isSelected ? 'rgba(82,113,245,0.2)' : 'rgba(255,255,255,0.04)',
-                                                borderColor: isSelected ? 'rgba(82,113,245,0.6)' : 'rgba(255,255,255,0.1)',
+                                                background: isSelected ? 'rgba(82,113,245,0.2)' : 'rgba(0,0,0,0.03)',
+                                                borderColor: isSelected ? 'rgba(82,113,245,0.6)' : 'rgba(0,0,0,0.06)',
                                                 color: isSelected ? '#7a9bfa' : '#94a3b8',
                                                 cursor: 'pointer',
                                             }}>
@@ -226,7 +226,7 @@ export default function SchedulesPage() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">GPU Type</label>
+                                <label className="block text-sm font-medium text-slate-600 mb-1.5">GPU Type</label>
                                 <select
                                     className="input-field text-sm"
                                     value={form.gpu_type}
@@ -235,7 +235,7 @@ export default function SchedulesPage() {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Budget (USD)</label>
+                                <label className="block text-sm font-medium text-slate-600 mb-1.5">Budget (USD)</label>
                                 <input
                                     className="input-field text-sm"
                                     type="number"
@@ -249,7 +249,7 @@ export default function SchedulesPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Description <span className="text-slate-600">(optional)</span></label>
+                            <label className="block text-sm font-medium text-slate-600 mb-1.5">Description <span className="text-slate-600">(optional)</span></label>
                             <input
                                 className="input-field text-sm"
                                 placeholder="e.g. Weekly fine-tune run"
@@ -262,7 +262,7 @@ export default function SchedulesPage() {
                         <div className="flex gap-3">
                             <button type="submit" disabled={submitting} className="btn-primary flex items-center gap-2 text-sm">
                                 {submitting ? <RefreshCw size={14} className="animate-spin" /> : <Clock size={14} />}
-                                {submitting ? 'Creating…' : 'Create Schedule'}
+                                {submitting ? 'Creatingâ€¦' : 'Create Schedule'}
                             </button>
                             <button type="button" onClick={() => { setShowForm(false); setError('') }} className="btn-ghost text-sm">
                                 Cancel
@@ -325,18 +325,18 @@ export default function SchedulesPage() {
 
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <p className="text-white font-medium text-sm leading-snug">{s.goal.length > 100 ? s.goal.slice(0, 100) + '…' : s.goal}</p>
+                                                <p className="text-gray-900 font-medium text-sm leading-snug">{s.goal.length > 100 ? s.goal.slice(0, 100) + 'â€¦' : s.goal}</p>
                                                 {!s.enabled && (
                                                     <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(100,116,139,0.2)', color: '#94a3b8' }}>Paused</span>
                                                 )}
                                             </div>
                                             <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-500">
                                                 <span className="font-mono text-slate-400">{s.cron_expr}</span>
-                                                <span className="text-slate-600">·</span>
+                                                <span className="text-slate-600">Â·</span>
                                                 <span>{s.cron_description}</span>
-                                                <span className="text-slate-600">·</span>
+                                                <span className="text-slate-600">Â·</span>
                                                 <span>{s.gpu_type}</span>
-                                                <span className="text-slate-600">·</span>
+                                                <span className="text-slate-600">Â·</span>
                                                 <span>${s.budget_usd} budget</span>
                                             </div>
                                             {s.description && <p className="text-xs text-slate-600 mt-1">{s.description}</p>}
@@ -355,7 +355,7 @@ export default function SchedulesPage() {
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(s.id)}
-                                                className="btn-ghost text-red-400 hover:text-red-300 flex items-center gap-1 text-xs px-3 py-1.5">
+                                                className="btn-ghost text-red-600 hover:text-red-300 flex items-center gap-1 text-xs px-3 py-1.5">
                                                 <Trash2 size={12} /> Delete
                                             </button>
                                         </div>
@@ -412,3 +412,6 @@ export default function SchedulesPage() {
         </div>
     )
 }
+
+
+

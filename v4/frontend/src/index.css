@@ -1,7 +1,7 @@
-/* OrQuanta Agentic v1.0 — Core Stylesheet (Pure CSS, no PostCSS required) */
+/* OrQuanta Agentic v1.0 â€” Core Stylesheet (Pure CSS, no PostCSS required) */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
 
-/* ── Reset ─────────────────────────────────────────────────────────────── */
+/* â”€â”€ Reset â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 *,
 *::before,
 *::after {
@@ -10,7 +10,7 @@
  padding: 0;
 }
 
-/* ── Global Accessibility: Focus Rings ─────────────────────────────────── */
+/* â”€â”€ Global Accessibility: Focus Rings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 /* Remove default outline only when :focus-visible is supported */
 :focus:not(:focus-visible) {
  outline: none;
@@ -33,69 +33,69 @@ html {
 
 body {
  font-family:'Inter', system-ui, -apple-system, sans-serif;
- background-color: #0a0b14;
- color: #e2e8f0;
+ background-color: #F8FAFC;
+ color: #0F172A;
  min-height: 100vh;
  -webkit-font-smoothing: antialiased;
  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Custom Scrollbar ──────────────────────────────────────────────────── */
+/* â”€â”€ Custom Scrollbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 ::-webkit-scrollbar {
  width: 6px;
  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
- background: #0f1120;
+ background: #F1F5F9;
 }
 
 ::-webkit-scrollbar-thumb {
- background: #3a52eb;
+ background: #CBD5E1;
  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
- background: #5271f5;
+ background: #0091FF;
 }
 
-/* ── CSS Variables ─────────────────────────────────────────────────────── */
+/* â”€â”€ CSS Variables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 :root {
  --brand-50: #f0f4ff;
  --brand-100: #e0e9ff;
  --brand-200: #c7d7fe;
  --brand-300: #a4bffd;
- --brand-400: #7a9bfa;
- --brand-500: #5271f5;
- --brand-600: #3a52eb;
- --brand-700: #2e3fd8;
- --brand-800: #2833b0;
- --brand-900: #27318b;
- --brand-950: #1a1f55;
- --surface-900: #0a0b14;
- --surface-800: #0f1120;
- --surface-700: #151829;
- --surface-600: #1c2038;
- --surface-500: #242845;
- --text-primary: #f1f5f9;
- --text-secondary: #94a3b8;
- --text-muted: #64748b;
- --border: rgba(255, 255, 255, 0.06);
- --border-hover: rgba(255, 255, 255, 0.12);
+ --brand-400: #0091FF;
+ --brand-500: #0078D4;
+ --brand-600: #0065B8;
+ --brand-700: #004E8C;
+ --brand-800: #003D6F;
+ --brand-900: #002C52;
+ --brand-950: #001E3A;
+ --surface-900: #FFFFFF;
+ --surface-800: #F8FAFC;
+ --surface-700: #F1F5F9;
+ --surface-600: #E2E8F0;
+ --surface-500: #CBD5E1;
+ --text-primary: #0F172A;
+ --text-secondary: #475569;
+ --text-muted: #94A3B8;
+ --border: rgba(0, 0, 0, 0.06);
+ --border-hover: rgba(0, 0, 0, 0.12);
  --success: #10b981;
  --warning: #f59e0b;
  --danger: #ef4444;
- --info: #5271f5;
+ --info: #0091FF;
  --radius-sm: 8px;
  --radius: 12px;
  --radius-lg: 16px;
  --radius-xl: 20px;
- --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
- --shadow-brand: 0 4px 20px rgba(82, 113, 245, 0.3);
+ --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+ --shadow-brand: 0 4px 16px rgba(0, 145, 255, 0.15);
  --transition: 0.2s ease;
 }
 
-/* ── Layout ────────────────────────────────────────────────────────────── */
+/* â”€â”€ Layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .app-layout {
  display: flex;
  min-height: 100vh;
@@ -142,10 +142,10 @@ body {
  position: sticky;
  top: 0;
  z-index: 40;
- backdrop-filter: blur(12px);
+ background: rgba(255,255,255,0.95);
 }
 
-/* ── Sidebar Logo ──────────────────────────────────────────────────────── */
+/* â”€â”€ Sidebar Logo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .sidebar-logo {
  padding: 20px 20px 16px;
  border-bottom: 1px solid var(--border);
@@ -155,7 +155,7 @@ body {
  font-size: 18px;
  font-weight: 800;
  letter-spacing: -0.5px;
- background: linear-gradient(135deg, #7a9bfa, #5271f5, #a4bffd);
+ background: linear-gradient(135deg, #0091FF, #7B2FFF);
  -webkit-background-clip: text;
  -webkit-text-fill-color: transparent;
 }
@@ -169,7 +169,7 @@ body {
  margin-top: 2px;
 }
 
-/* ── Nav Links ─────────────────────────────────────────────────────────── */
+/* â”€â”€ Nav Links â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .nav-section {
  padding: 12px 12px 0;
  flex: 1;
@@ -203,21 +203,21 @@ body {
 }
 
 .nav-link:hover {
- background: rgba(255, 255, 255, 0.05);
+ background: rgba(0, 0, 0, 0.04);
  color: var(--text-primary);
 }
 
 .nav-link:focus-visible {
  outline: 2px solid var(--brand-500);
  outline-offset: 2px;
- background: rgba(82, 113, 245, 0.08);
+ background: rgba(0, 145, 255, 0.06);
  color: var(--text-primary);
 }
 
 .nav-link.active {
- background: rgba(82, 113, 245, 0.15);
+ background: rgba(0, 145, 255, 0.08);
  color: var(--brand-400);
- border: 1px solid rgba(82, 113, 245, 0.2);
+ border: 1px solid rgba(0, 145, 255, 0.15);
 }
 
 .nav-link svg {
@@ -231,24 +231,23 @@ body {
  opacity: 1;
 }
 
-/* ── Cards ─────────────────────────────────────────────────────────────── */
+/* â”€â”€ Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .card {
- background: rgba(15, 17, 32, 0.8);
- backdrop-filter: blur(12px);
+ background: #FFFFFF;
  border: 1px solid var(--border);
  border-radius: var(--radius-lg);
+ box-shadow: var(--shadow);
 }
 
 .glass-card {
- background: rgba(15, 17, 32, 0.8);
- backdrop-filter: blur(12px);
+ background: #FFFFFF;
  border: 1px solid var(--border);
  border-radius: var(--radius-lg);
  box-shadow: var(--shadow);
 }
 
 .metric-card {
- background: rgba(15, 17, 32, 0.8);
+ background: #FFFFFF;
  border: 1px solid var(--border);
  border-radius: var(--radius-lg);
  padding: 20px;
@@ -281,7 +280,7 @@ body {
  padding: 20px;
 }
 
-/* ── Buttons ───────────────────────────────────────────────────────────── */
+/* â”€â”€ Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .btn {
  display: inline-flex;
  align-items: center;
@@ -304,15 +303,15 @@ body {
 }
 
 .btn-primary {
- background: linear-gradient(135deg, var(--brand-600), var(--brand-500));
+ background: linear-gradient(135deg, #0091FF, #7B2FFF);
  color: #fff;
  box-shadow: var(--shadow-brand);
 }
 
 .btn-primary:hover:not(:disabled) {
- background: linear-gradient(135deg, var(--brand-500), var(--brand-400));
+ background: linear-gradient(135deg, #007BE0, #6B1FEF);
  transform: translateY(-1px);
- box-shadow: 0 6px 24px rgba(82, 113, 245, 0.45);
+ box-shadow: 0 6px 24px rgba(0, 145, 255, 0.3);
 }
 
 .btn-primary:active {
@@ -320,13 +319,13 @@ body {
 }
 
 .btn-secondary {
- background: rgba(255, 255, 255, 0.06);
+ background: #FFFFFF;
  color: var(--text-secondary);
  border: 1px solid var(--border);
 }
 
 .btn-secondary:hover:not(:disabled) {
- background: rgba(255, 255, 255, 0.1);
+ background: #F8FAFC;
  color: var(--text-primary);
  border-color: var(--border-hover);
 }
@@ -354,7 +353,7 @@ body {
 .btn-icon {
  padding: 8px;
  border-radius: var(--radius-sm);
- background: rgba(255, 255, 255, 0.05);
+ background: #FFFFFF;
  border: 1px solid var(--border);
  color: var(--text-secondary);
  cursor: pointer;
@@ -362,11 +361,11 @@ body {
 }
 
 .btn-icon:hover {
- background: rgba(255, 255, 255, 0.1);
+ background: #F1F5F9;
  color: var(--text-primary);
 }
 
-/* ── Inputs ────────────────────────────────────────────────────────────── */
+/* â”€â”€ Inputs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .input-field,
 input[type="text"],
 input[type="email"],
@@ -374,8 +373,8 @@ input[type="password"],
 textarea,
 select {
  width: 100%;
- background: rgba(21, 24, 41, 0.9);
- border: 1px solid rgba(255, 255, 255, 0.1);
+ background: #FFFFFF;
+ border: 1px solid #E2E8F0;
  border-radius: var(--radius-sm);
  padding: 10px 14px;
  color: var(--text-primary);
@@ -391,8 +390,8 @@ input[type="email"]:focus,
 input[type="password"]:focus,
 textarea:focus,
 select:focus {
- border-color: var(--brand-500);
- box-shadow: 0 0 0 3px rgba(82, 113, 245, 0.2);
+ border-color: #0091FF;
+ box-shadow: 0 0 0 3px rgba(0, 145, 255, 0.12);
 }
 
 input::placeholder,
@@ -420,10 +419,10 @@ select {
 }
 
 select option {
- background: var(--surface-700);
+ background: #FFFFFF;
 }
 
-/* ── Badges / Status ───────────────────────────────────────────────────── */
+/* â”€â”€ Badges / Status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .badge {
  display: inline-flex;
  align-items: center;
@@ -495,7 +494,7 @@ select option {
  background: #64748b;
 }
 
-/* ── Grid Layouts ──────────────────────────────────────────────────────── */
+/* â”€â”€ Grid Layouts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .grid-2 {
  display: grid;
  grid-template-columns: repeat(2, 1fr);
@@ -528,14 +527,14 @@ select option {
  }
 }
 
-/* ── Mobile Sidebar ────────────────────────────────────────────────────── */
+/* â”€â”€ Mobile Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @media (max-width: 767px) {
 
  /* Hide sidebar off-screen by default */
  .orq-sidebar {
  transform: translateX(-100%) !important;
  width: 220px !important;
- box-shadow: 4px 0 32px rgba(0, 0, 0, 0.6);
+ box-shadow: 4px 0 32px rgba(0, 0, 0, 0.15);
  }
 
  /* Show when open */
@@ -559,7 +558,7 @@ select option {
  }
 }
 
-/* ── Tablet: sidebar stays visible, content reflows ───────────────────── */
+/* â”€â”€ Tablet: sidebar stays visible, content reflows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @media (min-width: 768px) and (max-width: 1024px) {
  .orq-sidebar {
  width: 200px !important;
@@ -575,14 +574,14 @@ select option {
  }
 }
 
-/* ── Desktop: ensure sidebar never disappears ──────────────────────────── */
+/* â”€â”€ Desktop: ensure sidebar never disappears â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @media (min-width: 1025px) {
  .orq-sidebar {
  transform: none !important;
  }
 }
 
-/* ── Tables ────────────────────────────────────────────────────────────── */
+/* â”€â”€ Tables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .table-wrap {
  overflow-x: auto;
  border-radius: var(--radius);
@@ -596,7 +595,7 @@ table {
 }
 
 thead tr {
- background: rgba(21, 24, 41, 0.8);
+ background: #F8FAFC;
 }
 
 th {
@@ -613,7 +612,7 @@ th {
 td {
  padding: 13px 16px;
  color: var(--text-secondary);
- border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+ border-bottom: 1px solid var(--border);
 }
 
 tbody tr {
@@ -621,14 +620,14 @@ tbody tr {
 }
 
 tbody tr:hover {
- background: rgba(255, 255, 255, 0.02);
+ background: rgba(0, 0, 0, 0.015);
 }
 
 tbody tr:last-child td {
  border-bottom: none;
 }
 
-/* ── Auth Page ─────────────────────────────────────────────────────────── */
+/* â”€â”€ Auth Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .auth-page {
  min-height: 100vh;
  display: flex;
@@ -643,18 +642,18 @@ tbody tr:last-child td {
  content:'';
  position: absolute;
  inset: 0;
- background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(82, 113, 245, 0.12) 0%, transparent 70%);
+ background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0, 145, 255, 0.06) 0%, transparent 70%);
  pointer-events: none;
 }
 
 .auth-card {
  width: 100%;
  max-width: 420px;
- background: rgba(15, 17, 32, 0.95);
+ background: #FFFFFF;
  border: 1px solid var(--border);
  border-radius: var(--radius-xl);
  padding: 40px;
- box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+ box-shadow: 0 24px 80px rgba(0, 0, 0, 0.08);
  position: relative;
  z-index: 1;
 }
@@ -707,7 +706,7 @@ tbody tr:last-child td {
  right: 0;
 }
 
-/* ── Dashboard Metric Big Numbers ──────────────────────────────────────── */
+/* â”€â”€ Dashboard Metric Big Numbers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .metric-value {
  font-size: 28px;
  font-weight: 800;
@@ -749,7 +748,7 @@ tbody tr:last-child td {
  justify-content: center;
 }
 
-/* ── Page Title ────────────────────────────────────────────────────────── */
+/* â”€â”€ Page Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .page-title {
  font-size: 22px;
  font-weight: 700;
@@ -763,7 +762,7 @@ tbody tr:last-child td {
  margin-top: 4px;
 }
 
-/* ── Alerts / Toasts ───────────────────────────────────────────────────── */
+/* â”€â”€ Alerts / Toasts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .alert {
  display: flex;
  align-items: flex-start;
@@ -776,45 +775,45 @@ tbody tr:last-child td {
 .alert-success {
  background: rgba(16, 185, 129, 0.1);
  border: 1px solid rgba(16, 185, 129, 0.2);
- color: #6ee7b7;
+ color: #059669;
 }
 
 .alert-error {
  background: rgba(239, 68, 68, 0.1);
  border: 1px solid rgba(239, 68, 68, 0.2);
- color: #fca5a5;
+ color: #dc2626;
 }
 
 .alert-warn {
  background: rgba(245, 158, 11, 0.1);
  border: 1px solid rgba(245, 158, 11, 0.2);
- color: #fcd34d;
+ color: #d97706;
 }
 
 .alert-info {
  background: rgba(82, 113, 245, 0.1);
  border: 1px solid rgba(82, 113, 245, 0.2);
- color: #a4bffd;
+ color: #2563eb;
 }
 
-/* ── Code / Terminal ───────────────────────────────────────────────────── */
+/* â”€â”€ Code / Terminal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .code-block {
- background: #060810;
- border: 1px solid var(--border);
+ background: #f8fafc;
+ border: 1px solid #e2e8f0;
  border-radius: var(--radius-sm);
  padding: 14px 16px;
  font-family:'Fira Code','Cascadia Code','Consolas', monospace;
  font-size: 12.5px;
- color: #a4bffd;
+ color: #1e293b;
  overflow-x: auto;
  line-height: 1.7;
 }
 
-/* ── Tabs ──────────────────────────────────────────────────────────────── */
+/* â”€â”€ Tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .tabs {
  display: flex;
  gap: 2px;
- background: rgba(255, 255, 255, 0.04);
+ background: rgba(0, 0, 0, 0.03);
  border-radius: var(--radius-sm);
  padding: 3px;
 }
@@ -840,10 +839,10 @@ tbody tr:last-child td {
  color: var(--text-secondary);
 }
 
-/* ── Progress / Loading ────────────────────────────────────────────────── */
+/* â”€â”€ Progress / Loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .progress-bar {
  height: 6px;
- background: rgba(255, 255, 255, 0.06);
+ background: rgba(0, 0, 0, 0.06);
  border-radius: 99px;
  overflow: hidden;
 }
@@ -858,7 +857,7 @@ tbody tr:last-child td {
 .spinner {
  width: 20px;
  height: 20px;
- border: 2px solid rgba(82, 113, 245, 0.2);
+ border: 2px solid rgba(0, 145, 255, 0.2);
  border-top-color: var(--brand-500);
  border-radius: 50%;
  animation: spin 0.7s linear infinite;
@@ -870,7 +869,7 @@ tbody tr:last-child td {
  }
 }
 
-/* ── Animations ────────────────────────────────────────────────────────── */
+/* â”€â”€ Animations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @keyframes fadeIn {
  from {
  opacity: 0;
@@ -913,7 +912,7 @@ tbody tr:last-child td {
  animation: slideUp 0.3s ease;
 }
 
-/* ── Utility Helpers ───────────────────────────────────────────────────── */
+/* â”€â”€ Utility Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .flex {
  display: flex;
 }
@@ -1088,7 +1087,7 @@ tbody tr:last-child td {
  overflow: hidden;
 }
 
-/* ── Agent Monitor / Reasoning Log ────────────────────────────────────── */
+/* â”€â”€ Agent Monitor / Reasoning Log â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .reasoning-entry {
  padding: 10px 14px;
  border-left: 2px solid var(--brand-700);
@@ -1101,25 +1100,24 @@ tbody tr:last-child td {
 
 .reasoning-entry.think {
  border-color: #f59e0b;
- color: #fcd34d;
+ color: #b45309;
 }
 
 .reasoning-entry.act {
  border-color: #10b981;
- color: #6ee7b7;
+ color: #059669;
 }
 
 .reasoning-entry.obs {
  border-color: #5271f5;
- color: #a4bffd;
+ color: #2563eb;
 }
 
-/* ── Command Palette ───────────────────────────────────────────────────── */
+/* â”€â”€ Command Palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .cmd-overlay {
  position: fixed;
  inset: 0;
- background: rgba(0, 0, 0, 0.7);
- backdrop-filter: blur(6px);
+ background: rgba(0, 0, 0, 0.4);
  z-index: 200;
  display: flex;
  align-items: flex-start;
@@ -1133,7 +1131,7 @@ tbody tr:last-child td {
  background: var(--surface-700);
  border: 1px solid rgba(82, 113, 245, 0.3);
  border-radius: var(--radius-xl);
- box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6);
+ box-shadow: 0 32px 80px rgba(0, 0, 0, 0.1);
  overflow: hidden;
 }
 
@@ -1166,20 +1164,20 @@ tbody tr:last-child td {
  color: var(--text-primary);
 }
 
-/* ── Charts area ───────────────────────────────────────────────────────── */
+/* â”€â”€ Charts area â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .chart-container {
  width: 100%;
  height: 220px;
 }
 
-/* ── Background grid decoration ────────────────────────────────────────── */
+/* â”€â”€ Background grid decoration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .bg-grid {
  background-image: linear-gradient(rgba(82, 113, 245, 0.07) 1px, transparent 1px),
  linear-gradient(90deg, rgba(82, 113, 245, 0.07) 1px, transparent 1px);
  background-size: 40px 40px;
 }
 
-/* ── Glow effects ──────────────────────────────────────────────────────── */
+/* â”€â”€ Glow effects â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .glow-brand {
  box-shadow: 0 0 30px rgba(82, 113, 245, 0.15);
 }
@@ -1188,7 +1186,7 @@ tbody tr:last-child td {
  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
 }
 
-/* ── Sidebar bottom section ────────────────────────────────────────────── */
+/* â”€â”€ Sidebar bottom section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .sidebar-footer {
  padding: 14px 12px;
  border-top: 1px solid var(--border);
@@ -1209,7 +1207,7 @@ tbody tr:last-child td {
  flex-shrink: 0;
 }
 
-/* ── OrQuanta Assistant bubble ─────────────────────────────────────────── */
+/* â”€â”€ OrQuanta Assistant bubble â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .assistant-fab {
  position: fixed;
  bottom: 24px;
@@ -1233,14 +1231,14 @@ tbody tr:last-child td {
  box-shadow: 0 8px 32px rgba(82, 113, 245, 0.5);
 }
 
-/* ── Divider ───────────────────────────────────────────────────────────── */
+/* â”€â”€ Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .divider {
  height: 1px;
  background: var(--border);
  margin: 16px 0;
 }
 
-/* ── Section tags on dashboard ─────────────────────────────────────────── */
+/* â”€â”€ Section tags on dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .section-tag {
  font-size: 10px;
  font-weight: 700;
@@ -1249,406 +1247,43 @@ tbody tr:last-child td {
  color: var(--brand-400);
  margin-bottom: 4px;
 }
-/* ═══════════════════════════════════════════════════════════════════════════
- OrQuanta — Premium 3D Layer
- 3D perspective cards · neon depth · glassmorphism · animated mesh
- ═══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+ OrQuanta â€” Clean Professional Layer
+ White theme Â· subtle shadows Â· no glassmorphism
+ â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ── 3D Root tokens ─────────────────────────────────────────────────────── */
-:root {
- --perspective: 1200px;
- --rotate-max: 8deg;
- --neon-blue: #00D4FF;
- --neon-purple: #7B2FFF;
- --neon-green: #00FF88;
- --neon-gold: #FFB800;
- --depth-1: 0 1px 2px rgba(0,0,0,.8), 0 2px 4px rgba(0,0,0,.6);
- --depth-2: 0 4px 8px rgba(0,0,0,.7), 0 8px 16px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.04);
- --depth-3: 0 8px 24px rgba(0,0,0,.8), 0 16px 48px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.06), inset 0 1px 0 rgba(255,255,255,.08);
- --glow-blue: 0 0 20px rgba(0,212,255,.35), 0 0 60px rgba(0,212,255,.12);
- --glow-purple: 0 0 20px rgba(123,47,255,.35), 0 0 60px rgba(123,47,255,.12);
- --glow-green: 0 0 20px rgba(0,255,136,.35), 0 0 60px rgba(0,255,136,.12);
-}
-
-/* ── Animated background mesh ───────────────────────────────────────────── */
-body::before {
- content:'';
- position: fixed;
- inset: 0;
- z-index: 0;
- pointer-events: none;
- background:
- radial-gradient(ellipse 80% 50% at 20% 20%, rgba(58,82,235,.06) 0%, transparent 60%),
- radial-gradient(ellipse 60% 40% at 80% 80%, rgba(123,47,255,.05) 0%, transparent 60%),
- radial-gradient(ellipse 50% 30% at 50% 50%, rgba(0,212,255,.03) 0%, transparent 70%);
- animation: mesh-drift 20s ease-in-out infinite alternate;
-}
-
-@keyframes mesh-drift {
- 0% { transform: scale(1) rotate(0deg); opacity:.8; }
- 50% { transform: scale(1.1) rotate(2deg); opacity:1; }
- 100% { transform: scale(.95) rotate(-1deg); opacity:.7; }
-}
-
-/* ── 3D Glass Card — replaces flat .glass-card ─────────────────────────── */
+/* â”€â”€ Glass Card â€” solid white (no backdrop-filter) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .glass-card {
- background: linear-gradient(
- 145deg,
- rgba(21,28,55,.85) 0%,
- rgba(12,17,38,.92) 100%
- );
- backdrop-filter: blur(24px) saturate(180%);
- -webkit-backdrop-filter: blur(24px) saturate(180%);
- border: 1px solid rgba(255,255,255,.07);
- border-top: 1px solid rgba(255,255,255,.12);
- border-left: 1px solid rgba(255,255,255,.09);
- border-radius: 16px;
- box-shadow: var(--depth-3);
+ background: #ffffff;
+ border: 1px solid #e2e8f0;
+ border-radius: 12px;
+ box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
  position: relative;
  overflow: hidden;
- transform-style: preserve-3d;
- transition: transform .35s cubic-bezier(.23,1,.32,1),
- box-shadow .35s cubic-bezier(.23,1,.32,1),
- border-color .25s ease;
+ transition: transform .25s ease, box-shadow .25s ease, border-color .2s ease;
 }
 
-/* Prismatic top-edge highlight */
-.glass-card::before {
- content:'';
- position: absolute;
- top: 0; left: 10%; right: 10%;
- height: 1px;
- background: linear-gradient(90deg,
- transparent,
- rgba(0,212,255,.5) 30%,
- rgba(123,47,255,.5) 70%,
- transparent
- );
- border-radius: 999px;
-}
-
-/* Bottom subtle glow leak */
+.glass-card::before,
 .glass-card::after {
- content:'';
- position: absolute;
- bottom: 0; left: 20%; right: 20%;
- height: 60px;
- background: radial-gradient(ellipse at center bottom,
- rgba(58,82,235,.08) 0%, transparent 70%);
- pointer-events: none;
+ display: none;
 }
 
-/* 3D Lift on hover */
 .glass-card:hover {
- transform: translateY(-4px) translateZ(8px);
- border-color: rgba(0,212,255,.18);
- box-shadow:
- 0 12px 40px rgba(0,0,0,.8),
- 0 24px 80px rgba(0,0,0,.5),
- 0 0 0 1px rgba(0,212,255,.1),
- inset 0 1px 0 rgba(255,255,255,.1),
- 0 0 40px rgba(58,82,235,.12);
+ transform: translateY(-1px);
+ border-color: #cbd5e1;
+ box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
 }
 
-/* ── 3D Perspective Tilt on stat cards ─────────────────────────────────── */
-.card-3d-wrap {
- perspective: var(--perspective);
- perspective-origin: 50% 50%;
-}
-
-.card-3d {
- transform-style: preserve-3d;
- transition: transform .4s cubic-bezier(.23,1,.32,1);
- will-change: transform;
-}
-
-.card-3d:hover {
- transform: rotateX(-3deg) rotateY(5deg) scale(1.02) translateZ(10px);
-}
-
-/* ── Neon border animation ──────────────────────────────────────────────── */
-@property --angle {
- syntax:'<angle>';
- inherits: false;
- initial-value: 0deg;
-}
-
-.neon-border {
- position: relative;
- border-radius: 16px;
-}
-
-.neon-border::after {
- content:'';
- position: absolute;
- inset: -2px;
- border-radius: 18px;
- background: conic-gradient(
- from var(--angle),
- #00D4FF,
- #7B2FFF,
- #00FF88,
- #FFB800,
- #00D4FF
- );
- z-index: -1;
- animation: rotate-angle 4s linear infinite;
- opacity: 0;
- transition: opacity .3s;
-}
-
-.neon-border:hover::after {
- opacity: .6;
-}
-
-@keyframes rotate-angle {
- to { --angle: 360deg; }
-}
-
-/* ── 3D Sidebar depth ───────────────────────────────────────────────────── */
-.orq-sidebar {
- background: linear-gradient(
- 180deg,
- rgba(10,11,24,.98) 0%,
- rgba(8,9,20,1) 100%
- ) !important;
- box-shadow:
- 4px 0 24px rgba(0,0,0,.6),
- 1px 0 0 rgba(255,255,255,.04),
- inset -1px 0 0 rgba(58,82,235,.08) !important;
- border-right: 1px solid rgba(58,82,235,.15) !important;
-}
-
-/* 3D Nav items */
-.orq-nav-link {
- position: relative;
- overflow: hidden;
-}
-
-.orq-nav-link::before {
- content:'';
- position: absolute;
- left: 0; top: 0; bottom: 0;
- width: 0;
- background: linear-gradient(90deg, rgba(0,212,255,.15), transparent);
- transition: width .25s ease;
- border-radius: 0 4px 4px 0;
-}
-
-.orq-nav-link:hover::before,
-.orq-nav-link.active::before {
- width: 100%;
-}
-
-.orq-nav-link.active {
- background: linear-gradient(
- 135deg,
- rgba(58,82,235,.25),
- rgba(0,212,255,.08)
- ) !important;
- box-shadow: inset 0 0 20px rgba(58,82,235,.1),
- 0 0 0 1px rgba(58,82,235,.2) !important;
-}
-
-.orq-nav-link.active::after {
- content:'';
- position: absolute;
- right: 0; top: 20%; bottom: 20%;
- width: 2px;
- background: linear-gradient(180deg, transparent, #00D4FF, transparent);
- border-radius: 999px;
- box-shadow: 0 0 8px #00D4FF;
-}
-
-/* ── 3D Topbar ──────────────────────────────────────────────────────────── */
-.topbar,
-header[style*="sticky"] {
- background: rgba(10,11,24,.9) !important;
- backdrop-filter: blur(20px) saturate(160%) !important;
- -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
- border-bottom: 1px solid rgba(58,82,235,.15) !important;
- box-shadow: 0 1px 0 rgba(0,212,255,.05), 0 4px 24px rgba(0,0,0,.4) !important;
-}
-
-/* ── 3D Buttons ─────────────────────────────────────────────────────────── */
-.btn-primary,
-.btn.btn-primary,
-button[class*="btn-primary"] {
- background: linear-gradient(135deg, #3a52eb 0%, #5271f5 50%, #7B2FFF 100%) !important;
- border: none !important;
- box-shadow:
- 0 4px 15px rgba(58,82,235,.5),
- 0 1px 0 rgba(255,255,255,.15) inset,
- 0 -2px 0 rgba(0,0,0,.3) inset !important;
- transform: translateY(0) !important;
- transition: transform .15s ease, box-shadow .15s ease !important;
- position: relative !important;
- overflow: hidden !important;
-}
-
-.btn-primary::before {
- content:'';
- position: absolute;
- top: 0; left: -100%;
- width: 60%;
- height: 100%;
- background: linear-gradient(90deg,
- transparent, rgba(255,255,255,.15), transparent);
- transform: skewX(-20deg);
- transition: left .5s ease;
-}
-
-.btn-primary:hover::before {
- left: 160%;
-}
-
-.btn-primary:hover {
- transform: translateY(-2px) !important;
- box-shadow:
- 0 8px 25px rgba(58,82,235,.65),
- 0 0 40px rgba(0,212,255,.15),
- 0 1px 0 rgba(255,255,255,.2) inset !important;
-}
-
-.btn-primary:active {
- transform: translateY(1px) !important;
- box-shadow: 0 2px 8px rgba(58,82,235,.4) !important;
-}
-
-/* ── 3D Input fields ────────────────────────────────────────────────────── */
-input, textarea, select {
- transition: border-color .2s, box-shadow .2s, transform .1s !important;
-}
-
-input:focus, textarea:focus, select:focus {
- border-color: rgba(0,212,255,.5) !important;
- box-shadow:
- 0 0 0 3px rgba(0,212,255,.1),
- 0 0 20px rgba(0,212,255,.08),
- inset 0 2px 4px rgba(0,0,0,.3) !important;
- transform: translateY(-1px) !important;
- outline: none !important;
-}
-
-/* ── 3D Stat KPI cards ─────────────────────────────────────────────────── */
-.kpi-card,
-[data-kpi],
-.metric-card {
- transition: transform .35s cubic-bezier(.23,1,.32,1), box-shadow .35s ease !important;
-}
-
-.kpi-card:hover,
-[data-kpi]:hover,
-.metric-card:hover {
- transform: translateY(-6px) scale(1.02) !important;
- box-shadow:
- 0 20px 60px rgba(0,0,0,.7),
- 0 0 30px rgba(58,82,235,.15) !important;
-}
-
-/* ── 3D Table rows ──────────────────────────────────────────────────────── */
-.table-row {
- transition: background .2s, transform .2s, box-shadow .2s;
- transform-style: preserve-3d;
-}
-
-.table-row:hover {
- background: rgba(58,82,235,.08) !important;
- transform: translateX(4px) !important;
- box-shadow: -3px 0 0 rgba(0,212,255,.4), inset 0 0 20px rgba(58,82,235,.05) !important;
-}
-
-/* ── Animated badges / status indicators ───────────────────────────────── */
-.badge-live,
-[class*="badge-green"],
-[class*="badge-blue"] {
- position: relative;
-}
-
-.badge-live::before {
- content:'';
- position: absolute;
- inset: -3px;
- border-radius: 999px;
- background: rgba(0,255,136,.15);
- animation: badge-pulse 2s ease-in-out infinite;
-}
-
-@keyframes badge-pulse {
- 0%, 100% { transform: scale(1); opacity: .5; }
- 50% { transform: scale(1.3); opacity: 0; }
-}
-
-/* ── Floating agent cards (OrMind, Cost, Healer etc.) ───────────────────── */
-.agent-card,
-[class*="agent"] {
- animation: agent-float 6s ease-in-out infinite;
-}
-
-.agent-card:nth-child(2) { animation-delay: -1.5s; }
-.agent-card:nth-child(3) { animation-delay: -3s; }
-.agent-card:nth-child(4) { animation-delay: -4.5s; }
-
-@keyframes agent-float {
- 0%, 100% { transform: translateY(0); }
- 50% { transform: translateY(-4px); }
-}
-
-/* ── 3D Progress bars ────────────────────────────────────────────────────── */
-.progress-bar,
-[class*="progress"] > div {
- position: relative;
- overflow: visible !important;
-}
-
-.progress-bar::after,
-[class*="progress"] > div::after {
- content:'';
- position: absolute;
- top: -2px; right: 0;
- width: 8px; height: calc(100% + 4px);
- background: rgba(255,255,255,.6);
- border-radius: 999px;
- box-shadow: 0 0 8px rgba(255,255,255,.8), 0 0 16px currentColor;
- animation: progress-tip 1s ease-in-out infinite alternate;
-}
-
-@keyframes progress-tip {
- 0% { opacity: .5; transform: scaleY(.8); }
- 100% { opacity: 1; transform: scaleY(1.2); }
-}
-
-/* ── 3D Code / terminal blocks ──────────────────────────────────────────── */
-[style*="JetBrains Mono"],
-[style*="monospace"],
-code, pre {
- background: rgba(0,0,0,.6) !important;
- border: 1px solid rgba(0,212,255,.12) !important;
- box-shadow:
- inset 0 2px 8px rgba(0,0,0,.5),
- 0 0 0 1px rgba(0,212,255,.04),
- 0 0 20px rgba(0,212,255,.04) !important;
- border-radius: 8px;
- text-shadow: 0 0 8px rgba(0,212,255,.2);
-}
-
-/* ── Animate-fade-in ─────────────────────────────────────────────────────── */
+/* â”€â”€ Fade-in animation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .animate-fade-in {
- animation: fade-in-up .45s cubic-bezier(.23,1,.32,1) both;
+ animation: fade-in-up .4s cubic-bezier(.23,1,.32,1) both;
 }
 
 @keyframes fade-in-up {
- from {
- opacity: 0;
- transform: translateY(16px) scale(.98);
- }
- to {
- opacity: 1;
- transform: translateY(0) scale(1);
- }
+ from { opacity: 0; transform: translateY(12px); }
+ to { opacity: 1; transform: translateY(0); }
 }
 
-/* Stagger delays for lists */
 .animate-fade-in:nth-child(1) { animation-delay: .05s; }
 .animate-fade-in:nth-child(2) { animation-delay: .10s; }
 .animate-fade-in:nth-child(3) { animation-delay: .15s; }
@@ -1656,60 +1291,13 @@ code, pre {
 .animate-fade-in:nth-child(5) { animation-delay: .25s; }
 .animate-fade-in:nth-child(6) { animation-delay: .30s; }
 
-/* ── 3D Page title glow ──────────────────────────────────────────────────── */
-h1[class*="font-bold"],
-h1[class*="text-2xl"] {
- text-shadow: 0 0 30px rgba(0,212,255,.15), 0 2px 4px rgba(0,0,0,.5);
- letter-spacing: -.01em;
-}
-
-/* ── Number counters & KPI values ─────────────────────────────────────────── */
-[class*="text-3xl"][class*="font-bold"],
-[class*="text-4xl"] {
- font-variant-numeric: tabular-nums;
- text-shadow: 0 0 20px currentColor;
- letter-spacing: -.02em;
-}
-
-/* ── 3D Empty state ──────────────────────────────────────────────────────── */
-[class*="text-slate-500"]:only-child {
- text-shadow: none;
-}
-
-/* ── Scrollbar — neon upgrade ─────────────────────────────────────────────── */
-::-webkit-scrollbar {
- width: 5px;
- height: 5px;
-}
-
-::-webkit-scrollbar-track {
- background: rgba(0,0,0,.4);
-}
-
-::-webkit-scrollbar-thumb {
- background: linear-gradient(180deg, #3a52eb, #7B2FFF);
- border-radius: 999px;
- box-shadow: 0 0 6px rgba(58,82,235,.6);
-}
-
-::-webkit-scrollbar-thumb:hover {
- background: linear-gradient(180deg, #00D4FF, #5271f5);
-}
-
-/* ── Selection ───────────────────────────────────────────────────────────── */
-::selection {
- background: rgba(0,212,255,.25);
- color: #fff;
- text-shadow: 0 0 8px rgba(0,212,255,.5);
-}
-
-/* ── Micro-glow on active nav icons ─────────────────────────────────────── */
+/* â”€â”€ Nav icon active state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .orq-nav-link.active svg,
 .orq-nav-link.active [data-icon] {
- filter: drop-shadow(0 0 6px var(--neon-blue));
+ color: var(--brand-400);
 }
 
-/* ── Glass card inner sections — depth layers ──────────────────────────── */
+/* â”€â”€ Glass card inner sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .glass-card > .space-y-4 > *,
 .glass-card > .space-y-6 > *,
 .glass-card > .grid > * {
@@ -1717,101 +1305,52 @@ h1[class*="text-2xl"] {
  z-index: 1;
 }
 
-/* ── 3D Floating orb backgrounds ──────────────────────────────────────────── */
-.orb {
- position: absolute;
- border-radius: 50%;
- filter: blur(60px);
- pointer-events: none;
- opacity: .12;
- animation: orb-drift 12s ease-in-out infinite alternate;
-}
-
-.orb-blue { background: #00D4FF; }
-.orb-purple { background: #7B2FFF; }
-.orb-green { background: #00FF88; }
-
-@keyframes orb-drift {
- 0% { transform: translate(0,0) scale(1); }
- 33% { transform: translate(20px,-15px) scale(1.1); }
- 66% { transform: translate(-10px, 20px) scale(.9); }
- 100% { transform: translate(15px, 5px) scale(1.05); }
-}
-
-/* ── Premium spinner ─────────────────────────────────────────────────────── */
+/* â”€â”€ Spinner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .spinner,
 [class*="spinner"] {
- border: 2px solid rgba(255,255,255,.1) !important;
- border-top-color: var(--neon-blue) !important;
- border-right-color: var(--neon-purple) !important;
- box-shadow: 0 0 12px rgba(0,212,255,.3) !important;
+ border: 2px solid #e2e8f0;
+ border-top-color: var(--brand-400);
  border-radius: 50%;
- animation: spin3d .7s linear infinite !important;
+ animation: spin .7s linear infinite;
 }
 
-@keyframes spin3d {
- 0% { transform: rotate(0deg) scale(1); }
- 50% { transform: rotate(180deg) scale(1.05); }
- 100% { transform: rotate(360deg) scale(1); }
-}
-
-/* ── Focus rings — accessible + premium ─────────────────────────────────── */
+/* â”€â”€ Focus rings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 :focus-visible {
- outline: 2px solid rgba(0,212,255,.6) !important;
- outline-offset: 3px !important;
- box-shadow: 0 0 0 4px rgba(0,212,255,.1) !important;
+ outline: 2px solid var(--brand-400);
+ outline-offset: 2px;
+ box-shadow: 0 0 0 4px rgba(0,145,255,0.08);
 }
 
-/* ── Mobile: soften 3D on small screens ─────────────────────────────────── */
-@media (max-width: 768px) {
- .glass-card:hover { transform: translateY(-2px); }
- .card-3d:hover { transform: scale(1.01); }
- body::before { opacity: .5; }
+/* â”€â”€ Selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+::selection {
+ background: rgba(99,102,241,0.15);
+ color: #0f172a;
 }
 
-/* end of 3D overhaul */
+/* end of clean professional layer */
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   OrQuanta — Senior GPU Expert Contrast & Readability Layer
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   OrQuanta â€” Senior GPU Expert Contrast & Readability Layer
    Fixes: low contrast, invisible borders, purpose-free layout
    Expert: 10+ years NVIDIA GPU cloud architecture
-   ═══════════════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* ── JetBrains Mono + Space Grotesk loaded at top of file ───────────────── */
+/* â”€â”€ JetBrains Mono + Space Grotesk loaded at top of file â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-/* ── Raise base contrast across the board ───────────────────────────────── */
+/* â”€â”€ Accent tokens for expert GPU dashboard layer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 :root {
-  /* Text — from near-invisible to readable */
-  --text-primary:   #f0f4ff;   /* was #f1f5f9 — add blue tint for GPU feel */
-  --text-secondary: #b4c0d8;   /* was #94a3b8 — raised from 3.2:1 to 5.1:1 */
-  --text-muted:     #7a8aaa;   /* was #64748b — raised from 2.7:1 to 3.8:1 */
-
-  /* Borders — from 6% to 12% opacity */
-  --border:         rgba(255,255,255,0.12);
-  --border-hover:   rgba(255,255,255,0.22);
-  --border-accent:  rgba(0,212,255,0.25);
-
-  /* KPI accent colors — NVIDIA GPU palette */
-  --kpi-gpu:        #00D4FF;   /* Cyan — GPUs, Compute */
-  --kpi-cost:       #FFB800;   /* Amber — Money, Spend */
-  --kpi-savings:    #00FF88;   /* Green — Savings, Health */
-  --kpi-agent:      #A78BFA;   /* Violet — AI Agents */
-  --kpi-jobs:       #FB923C;   /* Orange — Jobs, Workloads */
-
-  /* Surface — slightly lighter for depth */
-  --surface-900:    #080a12;
-  --surface-800:    #0c0f1e;
-  --surface-700:    #111428;
-  --surface-600:    #171c30;
+  /* KPI accent colors â€” professional palette for white theme */
+  --kpi-gpu:        #0091FF;   /* Blue â€” GPUs, Compute */
+  --kpi-cost:       #F59E0B;   /* Amber â€” Money, Spend */
+  --kpi-savings:    #10B981;   /* Emerald â€” Savings, Health */
+  --kpi-agent:      #7C3AED;   /* Violet â€” AI Agents */
+  --kpi-jobs:       #F97316;   /* Orange â€” Jobs, Workloads */
 }
 
-/* ── Body — richer base text ────────────────────────────────────────────── */
-body {
-  color: var(--text-primary) !important;
-  background-color: var(--surface-900) !important;
-}
+/* â”€â”€ Body â€” white theme base (inherits from main :root block) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* No override needed â€” main :root already sets correct white theme values */
 
-/* ── ALL metric numbers — JetBrains Mono ───────────────────────────────── */
+/* â”€â”€ ALL metric numbers â€” JetBrains Mono â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .metric-value,
 .kpi-number,
 [class*="text-3xl"],
@@ -1824,14 +1363,14 @@ body {
   letter-spacing: -0.02em;
 }
 
-/* ── KPI Card — colored left border accent ──────────────────────────────── */
+/* â”€â”€ KPI Card â€” colored left border accent â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .kpi-cyan   { border-left: 3px solid var(--kpi-gpu)!important; }
 .kpi-amber  { border-left: 3px solid var(--kpi-cost)!important; }
 .kpi-green  { border-left: 3px solid var(--kpi-savings)!important; }
 .kpi-violet { border-left: 3px solid var(--kpi-agent)!important; }
 .kpi-orange { border-left: 3px solid var(--kpi-jobs)!important; }
 
-/* ── Hero savings strip ─────────────────────────────────────────────────── */
+/* â”€â”€ Hero savings strip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .savings-hero {
   background: linear-gradient(135deg,
     rgba(0,255,136,0.08) 0%,
@@ -1861,7 +1400,6 @@ body {
   font-size: 22px;
   font-weight: 700;
   color: var(--kpi-savings);
-  text-shadow: 0 0 20px rgba(0,255,136,0.4);
   letter-spacing: -0.03em;
 }
 .savings-hero-label {
@@ -1884,7 +1422,7 @@ body {
   color: var(--kpi-savings);
 }
 
-/* ── Sidebar nav section labels ─────────────────────────────────────────── */
+/* â”€â”€ Sidebar nav section labels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .nav-section-label {
   font-size: 9.5px;
   font-weight: 700;
@@ -1905,7 +1443,7 @@ body {
   border-radius: 999px;
 }
 
-/* ── Sidebar savings footer card ────────────────────────────────────────── */
+/* â”€â”€ Sidebar savings footer card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .sidebar-savings {
   margin: 8px 10px;
   padding: 10px 12px;
@@ -1918,7 +1456,6 @@ body {
   font-size: 16px;
   font-weight: 700;
   color: var(--kpi-savings);
-  text-shadow: 0 0 12px rgba(0,255,136,0.3);
 }
 .sidebar-savings-label {
   font-size: 10px;
@@ -1926,20 +1463,20 @@ body {
   margin-top: 1px;
 }
 
-/* ── Sidebar nav links — higher contrast ────────────────────────────────── */
+/* â”€â”€ Sidebar nav links â€” higher contrast â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .nav-link {
   color: var(--text-secondary) !important;
   font-size: 13px !important;
 }
 .nav-link:hover {
   color: var(--text-primary) !important;
-  background: rgba(255,255,255,0.07) !important;
+  background: rgba(0,0,0,0.04) !important;
 }
 .nav-link.active {
-  color: #fff !important;
+  color: var(--brand-400) !important;
 }
 
-/* ── Nav badge (Free GPU, Live, etc.) ───────────────────────────────────── */
+/* â”€â”€ Nav badge (Free GPU, Live, etc.) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .nav-badge {
   display: inline-flex;
   align-items: center;
@@ -1952,22 +1489,22 @@ body {
   margin-left: auto;
 }
 .nav-badge-green {
-  background: rgba(0,255,136,0.15);
-  border: 1px solid rgba(0,255,136,0.3);
-  color: #00FF88;
+  background: rgba(16,185,129,0.10);
+  border: 1px solid rgba(16,185,129,0.25);
+  color: #059669;
 }
 .nav-badge-cyan {
-  background: rgba(0,212,255,0.15);
-  border: 1px solid rgba(0,212,255,0.3);
-  color: #00D4FF;
+  background: rgba(0,145,255,0.10);
+  border: 1px solid rgba(0,145,255,0.25);
+  color: #0078D4;
 }
 .nav-badge-violet {
-  background: rgba(167,139,250,0.15);
-  border: 1px solid rgba(167,139,250,0.3);
-  color: #A78BFA;
+  background: rgba(124,58,237,0.10);
+  border: 1px solid rgba(124,58,237,0.25);
+  color: #6d28d9;
 }
 
-/* ── Live dot animation ─────────────────────────────────────────────────── */
+/* â”€â”€ Live dot animation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .live-dot {
   width: 7px;
   height: 7px;
@@ -1982,7 +1519,7 @@ body {
   50% { box-shadow: 0 0 12px var(--kpi-savings), 0 0 20px rgba(0,255,136,0.3); transform: scale(1.15); }
 }
 
-/* ── Login page value prop banner ───────────────────────────────────────── */
+/* â”€â”€ Login page value prop banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .login-value-strip {
   text-align: center;
   margin-bottom: 28px;
@@ -1992,7 +1529,6 @@ body {
   font-size: 28px;
   font-weight: 700;
   color: var(--kpi-savings);
-  text-shadow: 0 0 30px rgba(0,255,136,0.35);
   line-height: 1.1;
   letter-spacing: -0.03em;
 }
@@ -2021,7 +1557,7 @@ body {
   color: var(--kpi-gpu);
 }
 
-/* ── Topbar breadcrumb system ────────────────────────────────────────────── */
+/* â”€â”€ Topbar breadcrumb system â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .topbar-breadcrumb {
   display: flex;
   align-items: center;
@@ -2038,19 +1574,19 @@ body {
   opacity: 0.4;
 }
 
-/* ── Dashboard agent status row ──────────────────────────────────────────── */
+/* â”€â”€ Dashboard agent status row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .agent-status-row {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.03);
+  background: rgba(0,0,0,0.02);
   border: 1px solid var(--border);
   transition: all 0.2s ease;
 }
 .agent-status-row:hover {
-  background: rgba(255,255,255,0.05);
+  background: rgba(0,0,0,0.04);
   border-color: var(--border-accent);
 }
 .agent-icon {
@@ -2077,7 +1613,7 @@ body {
 .agent-status-busy { color: var(--kpi-cost); }
 .agent-status-idle { color: var(--text-muted); }
 
-/* ── Page purpose tag (below each page title) ───────────────────────────── */
+/* â”€â”€ Page purpose tag (below each page title) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .purpose-tag {
   display: inline-flex;
   align-items: center;
@@ -2092,7 +1628,7 @@ body {
   margin-top: 8px;
 }
 
-/* ── Metric card — visible colored glow on hover ────────────────────────── */
+/* â”€â”€ Metric card â€” visible colored glow on hover â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .metric-card[data-color="cyan"]:hover  { box-shadow: 0 8px 32px rgba(0,212,255,0.18), 0 0 0 1px rgba(0,212,255,0.15) !important; }
 .metric-card[data-color="green"]:hover { box-shadow: 0 8px 32px rgba(0,255,136,0.18), 0 0 0 1px rgba(0,255,136,0.15) !important; }
 .metric-card[data-color="amber"]:hover { box-shadow: 0 8px 32px rgba(255,184,0,0.18),  0 0 0 1px rgba(255,184,0,0.15) !important; }
