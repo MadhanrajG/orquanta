@@ -261,7 +261,7 @@ class Job(Base):
     artifacts = Column(JSONB, nullable=False, default=list)
     gpu_peak_util_pct = Column(Numeric(5, 2))
     gpu_peak_mem_gb = Column(Numeric(8, 2))
-    metadata = Column(JSONB, nullable=False, default=dict)
+    job_metadata = Column("metadata", JSONB, nullable=False, default=dict)
     created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
     started_at = Column(DateTime(timezone=True))
     completed_at = Column(DateTime(timezone=True))

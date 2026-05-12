@@ -206,6 +206,14 @@ async def lifespan(_app: FastAPI):
     except Exception as exc:
         logger.warning(f"[Pipeline] WS broadcaster not available: {exc}")
 
+    # Orphan pod cleanup — terminate any RunPod pods left from previous crash
+    try:
+        cleaned = await pipeline.cleanup_orphan_pods()
+        if cleaned:
+            logger.warning(f"[Pipeline] Cleaned up {cleaned} orphan pod(s) from previous run")
+    except Exception as exc:
+        logger.warning(f"[Pipeline] Orphan cleanup skipped: {exc}")
+
     # Seed admin user + promote role in background — DB latency must never block startup
     # (critical for cross-region PostgreSQL: Oregon web service -> Singapore DB)
     import asyncio as _asyncio
@@ -623,7 +631,7 @@ _WELCOME_HTML = """
 </div>
 
 <div class="foot">
-  Need help? <a href="mailto:orquanta.founder@gmail.com">orquanta.founder@gmail.com</a> &nbsp;&nbsp;
+  Need help? <a href="mailto:support@orquanta.com">support@orquanta.com</a> &nbsp;&nbsp;
   <a href="/demo">Back to Demo</a> &nbsp;&nbsp;
   <a href="/app">Dashboard </a>
 </div>
