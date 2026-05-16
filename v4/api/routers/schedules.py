@@ -1,11 +1,11 @@
 """
-OrQuanta — Cron Scheduler for Recurring GPU Jobs (OpenClaw-inspired)
+OrQuanta  -  Cron Scheduler for Recurring GPU Jobs (OpenClaw-inspired)
 
 Allows users to schedule GPU workloads on a cron expression.
 Examples:
-  "0 2 * * MON"  → every Monday at 2am
-  "0 */6 * * *"  → every 6 hours
-  "0 9 * * *"    → every day at 9am
+  "0 2 * * MON"  -> every Monday at 2am
+  "0 */6 * * *"  -> every 6 hours
+  "0 9 * * *"    -> every day at 9am
 
 API Endpoints (registered in main.py):
   POST   /api/v1/schedules              Create a schedule
@@ -15,7 +15,7 @@ API Endpoints (registered in main.py):
   GET    /api/v1/schedules/{id}/runs    Run history
 
 Background Task:
-  CronScheduler.run() — ticks every 60s, fires due schedules
+  CronScheduler.run()  -  ticks every 60s, fires due schedules
 """
 from __future__ import annotations
 
@@ -34,12 +34,12 @@ logger = logging.getLogger("orquanta.scheduler.cron")
 
 router = APIRouter(prefix="/api/v1/schedules", tags=["schedules"])
 
-# ─── In-memory store (replace with DB in production) ─────────────────────────
-_schedules: dict[str, dict] = {}   # id → schedule record
-_runs: dict[str, list] = {}        # schedule_id → run history
+# --- In-memory store (replace with DB in production) -------------------------
+_schedules: dict[str, dict] = {}   # id -> schedule record
+_runs: dict[str, list] = {}        # schedule_id -> run history
 
 
-# ─── Schemas ─────────────────────────────────────────────────────────────────
+# --- Schemas -----------------------------------------------------------------
 
 class ScheduleCreate(BaseModel):
     goal: str
@@ -80,12 +80,12 @@ class ScheduleOut(BaseModel):
     last_status: str | None
 
 
-# ─── Auth dependency ──────────────────────────────────────────────────────────
+# --- Auth dependency ----------------------------------------------------------
 
 CurrentUser = Annotated[dict, Depends(get_current_user)]
 
 
-# ─── Routes ──────────────────────────────────────────────────────────────────
+# --- Routes ------------------------------------------------------------------
 
 @router.post("", response_model=ScheduleOut, status_code=201)
 async def create_schedule(body: ScheduleCreate, user: CurrentUser):
@@ -161,7 +161,7 @@ async def get_runs(schedule_id: str, user: CurrentUser):
     return _runs.get(schedule_id, [])[-50:]
 
 
-# ─── Background CronScheduler ────────────────────────────────────────────────
+# --- Background CronScheduler ------------------------------------------------
 
 class CronScheduler:
     """
@@ -176,7 +176,7 @@ class CronScheduler:
     async def run(self) -> None:
         """Start the cron loop. Call this from main.py lifespan."""
         self._running = True
-        logger.info("[CronScheduler] Started — ticking every 60s")
+        logger.info("[CronScheduler] Started  -  ticking every 60s")
         while self._running:
             try:
                 await self._tick_once()
@@ -252,7 +252,7 @@ class CronScheduler:
                     "gpu_type": sched["gpu_type"],
                     "provider": sched.get("provider") or "auto",
                     "estimated_cost_usd": sched["budget_usd"],
-                    "message": f"⏰ Scheduled job triggered: {sched['goal'][:60]}",
+                    "message": f"Scheduled job triggered: {sched['goal'][:60]}",
                 },
                 channels=sched.get("notify_channels", ["email", "in_app"]),
                 priority="high",
@@ -261,7 +261,7 @@ class CronScheduler:
             logger.warning(f"[CronScheduler] Notification failed: {exc}")
 
 
-# ─── Helpers ─────────────────────────────────────────────────────────────────
+# --- Helpers -----------------------------------------------------------------
 
 def _validate_cron(expr: str) -> None:
     """Validate a 5-field cron expression. Raises HTTPException on error."""
@@ -270,7 +270,7 @@ def _validate_cron(expr: str) -> None:
         if not croniter.is_valid(expr):
             raise ValueError()
     except ImportError:
-        # croniter not installed — basic field count check
+        # croniter not installed  -  basic field count check
         if len(expr.split()) != 5:
             raise HTTPException(status_code=422, detail=f"Invalid cron expression: '{expr}'. Expected 5 fields.")
     except ValueError:
@@ -336,7 +336,7 @@ def _to_out(s: dict) -> ScheduleOut:
     )
 
 
-# ─── Singleton ────────────────────────────────────────────────────────────────
+# --- Singleton ----------------------------------------------------------------
 _scheduler: CronScheduler | None = None
 
 def get_cron_scheduler() -> CronScheduler:

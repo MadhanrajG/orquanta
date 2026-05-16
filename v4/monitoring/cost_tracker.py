@@ -262,7 +262,7 @@ class CostTracker:
             alert_key = f"budget-{today}"
             if pct >= self.alert_threshold_pct and alert_key not in self._alert_fired:
                 self._alert_fired.add(alert_key)
-                msg = f"⚠️ Budget alert: ${today_spend:.2f} spent today ({pct:.0f}% of ${self.daily_budget_usd:.0f} budget)"
+                msg = f"Budget alert: ${today_spend:.2f} spent today ({pct:.0f}% of ${self.daily_budget_usd:.0f} budget)"
                 logger.warning(f"[CostTracker] {msg}")
                 if self._alert_callback:
                     self._alert_callback(msg, today_spend, pct)

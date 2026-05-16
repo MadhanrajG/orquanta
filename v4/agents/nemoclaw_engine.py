@@ -1,41 +1,41 @@
 """
-OrQuanta NemoClaw Engine — OpenClaw Multi-Agent Enhancement Layer
+OrQuanta NemoClaw Engine  -  OpenClaw Multi-Agent Enhancement Layer
 
 NemoClaw is the cognitive execution layer that wraps around Vero (Superior Intelligence)
 and the 5 specialist agents, adding:
 
   1. ContextGraph (persistent cross-session knowledge graph)
-     — Stores every goal, decision, outcome as a weighted node
-     — Enables "institutional memory" across user sessions
-     — Powers similarity-based goal decomposition improvement
+      -  Stores every goal, decision, outcome as a weighted node
+      -  Enables "institutional memory" across user sessions
+      -  Powers similarity-based goal decomposition improvement
 
   2. AdaptiveReAct Engine (enhanced ReAct with self-correction)
-     — Adds self-evaluation step after each OBSERVE phase
-     — Agents score their own decisions and request re-plan if < threshold
-     — Produces NemoClaw Trace: full chain-of-thought visible in UI
+      -  Adds self-evaluation step after each OBSERVE phase
+      -  Agents score their own decisions and request re-plan if < threshold
+      -  Produces NemoClaw Trace: full chain-of-thought visible in UI
 
   3. PredictivePrefetch (proactive GPU allocation)
-     — Analyzes ContextGraph to predict what GPU the user will need next
-     — Pre-warms spot instance pools 10-15 minutes before predicted demand
-     — Reduces GPU cold-start latency from 4-8min to < 30s
+      -  Analyzes ContextGraph to predict what GPU the user will need next
+      -  Pre-warms spot instance pools 10-15 minutes before predicted demand
+      -  Reduces GPU cold-start latency from 4-8min to < 30s
 
   4. CostWatcher (real-time budget enforcement)
-     — Monitors cumulative spend against user-defined budget
-     — Injects cost-brake goals to Vero when 80% of budget reached
-     — Generates "save $X by switching to Y" nudges every 5 minutes
+      -  Monitors cumulative spend against user-defined budget
+      -  Injects cost-brake goals to Vero when 80% of budget reached
+      -  Generates "save $X by switching to Y" nudges every 5 minutes
 
   5. MultiModalReasoning (vision + text for model architecture selection)
-     — Accepts architecture diagrams / dataset descriptions as context
-     — Routes to GPT-4V or Claude-3.5-Vision for richer recommendations
-     — Feeds structured output directly into orchestrator task plan
+      -  Accepts architecture diagrams / dataset descriptions as context
+      -  Routes to GPT-4V or Claude-3.5-Vision for richer recommendations
+      -  Feeds structured output directly into orchestrator task plan
 
 Architecture:
     NemoClaw
-        ├── ContextGraph          — Persistent semantic memory
-        ├── AdaptiveReAct         — Self-correcting reasoning loop
-        ├── PredictivePrefetch    — Proactive GPU pre-warming
-        ├── CostWatcher           — Real-time budget enforcement
-        └── MultiModalReasoning   — Vision+text LLM reasoning
+        ├-- ContextGraph           -  Persistent semantic memory
+        ├-- AdaptiveReAct          -  Self-correcting reasoning loop
+        ├-- PredictivePrefetch     -  Proactive GPU pre-warming
+        ├-- CostWatcher            -  Real-time budget enforcement
+        └-- MultiModalReasoning    -  Vision+text LLM reasoning
 
 Usage::
     nemo = get_nemoclaw()
@@ -59,9 +59,9 @@ from uuid import uuid4
 logger = logging.getLogger("orquanta.nemoclaw")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 # NemoClaw Data Models
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 
 @dataclass
 class CtxNode:
@@ -70,7 +70,7 @@ class CtxNode:
     node_type: str          # "goal" | "decision" | "outcome" | "provider_price"
     content: str            # plain-text summary
     embedding_key: str      # key into embedding store (future: pgvector)
-    weight: float           # relevance weight (0.0–1.0), decays over time
+    weight: float           # relevance weight (0.0-1.0), decays over time
     tags: list[str]         # semantic labels
     created_at: str
     last_accessed: str
@@ -135,9 +135,9 @@ class NemoReport:
     generated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# ContextGraph — Persistent Institutional Memory
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
+# ContextGraph  -  Persistent Institutional Memory
+# ------------------------------------------------------------------------------
 
 class ContextGraph:
     """
@@ -251,9 +251,9 @@ class ContextGraph:
             return time.time()
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# CostWatcher — Real-Time Budget Enforcement
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
+# CostWatcher  -  Real-Time Budget Enforcement
+# ------------------------------------------------------------------------------
 
 class CostWatcher:
     """
@@ -324,7 +324,7 @@ class CostWatcher:
         self._brakes.append(brake)
 
         logger.warning(
-            f"[CostWatcher] 💰 Budget {action.upper()} for {user_id}: "
+            f"[CostWatcher]  Budget {action.upper()} for {user_id}: "
             f"${spent:.2f}/${budget:.2f} ({pct*100:.0f}%)"
         )
 
@@ -346,9 +346,9 @@ class CostWatcher:
         return self._brakes[-limit:]
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# PredictivePrefetch — Proactive GPU Pre-Warming
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
+# PredictivePrefetch  -  Proactive GPU Pre-Warming
+# ------------------------------------------------------------------------------
 
 class PredictivePrefetch:
     """
@@ -357,9 +357,9 @@ class PredictivePrefetch:
     even submits a new goal.
 
     Algorithm (v1 - rule-based; v2 planned with LSTM sequence model):
-      - If user has run ≥3 A100 goals in last 24h → recommend prewarm A100 x2
-      - If time-of-day matches past peak usage → alert 15min ahead
-      - If current spot price < 7-day average for requested GPU → lock in now
+      - If user has run ≥3 A100 goals in last 24h -> recommend prewarm A100 x2
+      - If time-of-day matches past peak usage -> alert 15min ahead
+      - If current spot price < 7-day average for requested GPU -> lock in now
     """
 
     # GPU cold-start times by provider (seconds)
@@ -437,13 +437,13 @@ class PredictivePrefetch:
         return self._recommendations[-20:]
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# NemoClaw Engine — Main Coordination Layer
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
+# NemoClaw Engine  -  Main Coordination Layer
+# ------------------------------------------------------------------------------
 
 class NemoClawEngine:
     """
-    NemoClaw — OpenClaw-inspired multi-agent coordination engine for OrQuanta.
+    NemoClaw  -  OpenClaw-inspired multi-agent coordination engine for OrQuanta.
 
     Wraps Vero + MasterOrchestrator with:
     - ContextGraph for cross-session institutional memory
@@ -473,7 +473,7 @@ class NemoClawEngine:
         self._confidence_history: deque[float] = deque(maxlen=100)
 
         logger.info(
-            f"🧬 NemoClawEngine v{self.VERSION} initialised. "
+            f"[NemoClawEngine] v{self.VERSION} initialised. "
             "ContextGraph online. CostWatcher active. PredictivePrefetch ready."
         )
 
@@ -493,7 +493,7 @@ class NemoClawEngine:
         asyncio.create_task(self._cost_watch_loop(), name="nemo-cost-watch")
         asyncio.create_task(self._prefetch_loop(), name="nemo-prefetch")
 
-        logger.info("🧬 NemoClaw started. 3 background loops active.")
+        logger.info("[NemoClaw] Started. 3 background loops active.")
 
     async def run_goal(
         self,
@@ -629,7 +629,7 @@ class NemoClawEngine:
     def get_context_stats(self) -> dict[str, Any]:
         return self.context.get_stats()
 
-    # ── Background loops ──────────────────────────────────────────────────────
+    # -- Background loops ------------------------------------------------------
 
     async def _context_decay_loop(self) -> None:
         """Periodically prune weakest-weight context nodes (every 30 min)."""
@@ -663,7 +663,7 @@ class NemoClawEngine:
                 except Exception as exc:
                     logger.warning(f"[Prefetch] Loop error for {user_id}: {exc}")
 
-    # ── Helpers ───────────────────────────────────────────────────────────────
+    # -- Helpers ---------------------------------------------------------------
 
     def _seed_context_graph(self) -> None:
         """Pre-populate ContextGraph with platform knowledge nodes."""
@@ -672,8 +672,8 @@ class NemoClawEngine:
             ("outcome", "CoreWeave H100 SXM5 at $2.79/hr optimal for multi-node distributed training", ["gpu:H100", "provider:coreweave", "task:distributed"]),
             ("decision", "For 7B parameter LLaMA models use single A100 80GB; 70B models require 2x H100 NVLink", ["gpu:A100", "gpu:H100", "model:llama", "architecture"]),
             ("decision", "Stable Diffusion XL inference fits T4 16GB at $0.35/hr on RunPod spot", ["gpu:T4", "provider:runpod", "task:inference", "model:sdxl"]),
-            ("provider_price", "GCP Spot A100 $1.24/hr — cheapest A100 available globally as of March 2026", ["gpu:A100", "provider:gcp", "cost:lowest"]),
-            ("outcome", "LoRA fine-tuning typically reduces VRAM 4x — 70B model trains on single A100 with LoRA", ["technique:lora", "gpu:A100", "optimization"]),
+            ("provider_price", "GCP Spot A100 $1.24/hr  -  cheapest A100 available globally as of March 2026", ["gpu:A100", "provider:gcp", "cost:lowest"]),
+            ("outcome", "LoRA fine-tuning typically reduces VRAM 4x  -  70B model trains on single A100 with LoRA", ["technique:lora", "gpu:A100", "optimization"]),
         ]
         for node_type, content, tags in seed_data:
             self.context.add_node(
@@ -702,9 +702,9 @@ class NemoClawEngine:
         return tags
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 # Singleton
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 
 _nemoclaw: NemoClawEngine | None = None
 

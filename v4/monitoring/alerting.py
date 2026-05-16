@@ -50,11 +50,11 @@ SEVERITY_COLORS = {
     AlertSeverity.P1: "#800000",        # Dark red
 }
 
-SEVERITY_EMOJI = {
-    AlertSeverity.INFO: "ℹ️",
-    AlertSeverity.WARNING: "⚠️",
-    AlertSeverity.CRITICAL: "🔴",
-    AlertSeverity.P1: "🚨",
+SEVERITY_LABEL = {
+    AlertSeverity.INFO: "[INFO]",
+    AlertSeverity.WARNING: "[WARN]",
+    AlertSeverity.CRITICAL: "[CRITICAL]",
+    AlertSeverity.P1: "[P1]",
 }
 
 
@@ -183,10 +183,10 @@ class AlertManager:
             logger.info(f"[AlertManager] Slack not configured. Alert: [{alert.severity.name}] {alert.title}")
             return
 
-        emoji = SEVERITY_EMOJI.get(alert.severity, "⚠️")
+        label = SEVERITY_LABEL.get(alert.severity, "[WARN]")
         color = SEVERITY_COLORS.get(alert.severity, "#ff9900")
         payload = {
-            "text": f"{emoji} *OrQuanta Platform Alert* — {alert.severity.name}",
+            "text": f"{label} *OrQuanta Platform Alert* — {alert.severity.name}",
             "attachments": [{
                 "color": color,
                 "title": alert.title,

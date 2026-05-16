@@ -47,7 +47,7 @@ _DEMO_MODE = (
     or os.getenv("DEMO_MODE", "false").lower() in ("true", "1", "yes")
 )
 
-# Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Logging Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+# Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬ Logging Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
@@ -63,7 +63,7 @@ _ENV = os.getenv("ENV", "production")
 _DEFAULT_ORIGINS = "https://orquanta.com,https://www.orquanta.com,https://orquanta-app.pages.dev"
 ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", _DEFAULT_ORIGINS).split(",")
 
-# Sentry — production error tracking + performance monitoring (no-op when DSN absent)
+# Sentry  -  production error tracking + performance monitoring (no-op when DSN absent)
 _SENTRY_DSN = os.getenv("SENTRY_DSN", "")
 if _SENTRY_DSN:
     try:
@@ -82,21 +82,21 @@ if _SENTRY_DSN:
             ],
             send_default_pii=False,
         )
-        logger.info(f"[Sentry] Initialized — env={_ENV}, traces=10%")
+        logger.info(f"[Sentry] Initialized  -  env={_ENV}, traces=10%")
     except ImportError:
-        logger.warning("[Sentry] sentry-sdk not installed — skipping")
+        logger.warning("[Sentry] sentry-sdk not installed  -  skipping")
 else:
-    logger.debug("[Sentry] SENTRY_DSN not set — error tracking disabled")
+    logger.debug("[Sentry] SENTRY_DSN not set  -  error tracking disabled")
 
 
-# Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Lifespan (startup / shutdown) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+# Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬ Lifespan (startup / shutdown) Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     """Startup: validate env, boot agents, wire pipeline. Shutdown: graceful stop."""
     logger.info(f"OrQuanta Agentic v{VERSION} starting up...")
 
-    # Ã¢â€â‚¬Ã¢â€â‚¬ 0. Validate production environment Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    # Ã¢"â‚¬Ã¢"â‚¬ 0. Validate production environment Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬
     try:
         from ..startup_validator import validate_env
         env_report = validate_env(strict=False)
@@ -120,7 +120,7 @@ async def lifespan(_app: FastAPI):
         logger.warning(f"[Persistence] Startup load failed (non-fatal): {_exc}")
         _persisted_goals, _persisted_jobs = [], []
 
-    # Start MasterOrchestrator — wrapped so a DB/import error never blocks startup
+    # Start MasterOrchestrator  -  wrapped so a DB/import error never blocks startup
     try:
         from .routers.goals import get_orchestrator
         orchestrator = get_orchestrator()
@@ -132,7 +132,7 @@ async def lifespan(_app: FastAPI):
         from .routers.goals import get_orchestrator
         orchestrator = get_orchestrator()  # still need the ref for agent wiring
 
-    # Start specialist agents — use module-level singletons so all routers
+    # Start specialist agents  -  use module-level singletons so all routers
     # share the same instances (not orphan copies with empty state).
     from ..agents.scheduler_agent import get_scheduler as _get_scheduler
     from ..agents.cost_optimizer_agent import get_cost_optimizer as _get_cost_optimizer
@@ -179,17 +179,17 @@ async def lifespan(_app: FastAPI):
     except Exception as exc:
         logger.warning(f'[Vero] Failed to start (non-fatal): {exc}')
 
-    # Start NemoClaw — OpenClaw-inspired multi-agent cognitive layer
+    # Start NemoClaw  -  OpenClaw-inspired multi-agent cognitive layer
     try:
         from ..agents.nemoclaw_engine import get_nemoclaw
         nemoclaw = get_nemoclaw()
         _vero_ref = vero
         await nemoclaw.start(vero=_vero_ref, orchestrator=orchestrator)
-        logger.info('🧬 NEMOCLAW ONLINE — ContextGraph ready, CostWatcher active, PredictivePrefetch started.')
+        logger.info('[NemoClaw] ONLINE  -  ContextGraph ready, CostWatcher active, PredictivePrefetch started.')
     except Exception as exc:
         logger.warning(f'[NemoClaw] Failed to start (non-fatal): {exc}')
 
-    # Pre-warm Live Pricing cache — so /pricing shows data on first page load
+    # Pre-warm Live Pricing cache  -  so /pricing shows data on first page load
     try:
         from .routers.pricing import _refresh_cache
         import asyncio as _asyncio
@@ -199,7 +199,7 @@ async def lifespan(_app: FastAPI):
         logger.warning(f'[Pricing] Pre-warm failed (non-fatal): {exc}')
 
 
-    # Ã¢â€â‚¬Ã¢â€â‚¬ Init production job pipeline Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    # Ã¢"â‚¬Ã¢"â‚¬ Init production job pipeline Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬
     from ..execution.pipeline import get_pipeline
     pipeline = get_pipeline()
     if _persisted_jobs:
@@ -212,7 +212,7 @@ async def lifespan(_app: FastAPI):
     except Exception as exc:
         logger.warning(f"[Pipeline] WS broadcaster not available: {exc}")
 
-    # Orphan pod cleanup — terminate any RunPod pods left from previous crash
+    # Orphan pod cleanup  -  terminate any RunPod pods left from previous crash
     try:
         cleaned = await pipeline.cleanup_orphan_pods()
         if cleaned:
@@ -220,7 +220,7 @@ async def lifespan(_app: FastAPI):
     except Exception as exc:
         logger.warning(f"[Pipeline] Orphan cleanup skipped: {exc}")
 
-    # Seed admin user + promote role in background — DB latency must never block startup
+    # Seed admin user + promote role in background  -  DB latency must never block startup
     # (critical for cross-region PostgreSQL: Oregon web service -> Singapore DB)
     import asyncio as _asyncio
 
@@ -229,13 +229,13 @@ async def lifespan(_app: FastAPI):
         _admin_email = os.getenv("ADMIN_EMAIL", "admin@orquanta.com")
         _admin_password = os.getenv("ADMIN_PASSWORD", "")
         if not _admin_password:
-            logger.warning("ADMIN_PASSWORD not set — skipping admin seed.")
+            logger.warning("ADMIN_PASSWORD not set  -  skipping admin seed.")
             return
         try:
             register_user(email=_admin_email, password=_admin_password, name="OrQuanta Admin")
             logger.info(f"Admin user '{_admin_email}' created.")
         except Exception:
-            pass  # Already exists — fine
+            pass  # Already exists  -  fine
         try:
             _ph = "%s" if _USE_PG else "?"
             _conn = _get_db()
@@ -267,7 +267,7 @@ async def lifespan(_app: FastAPI):
         except Exception as exc:
             logger.warning(f"[Demo] Demo startup error (non-fatal): {exc}")
 
-    # Ã¢â€â‚¬Ã¢â€â‚¬ Start CronScheduler (OpenClaw-inspired recurring GPU jobs) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    # Ã¢"â‚¬Ã¢"â‚¬ Start CronScheduler (OpenClaw-inspired recurring GPU jobs) Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬
     import asyncio as _asyncio
     cron_scheduler = get_cron_scheduler()
     cron_task = _asyncio.create_task(cron_scheduler.run())
@@ -281,8 +281,8 @@ async def lifespan(_app: FastAPI):
     cron_scheduler.stop()
     cron_task.cancel()
 
-    # Shutdown — graceful; ignore errors from agents that never fully started
-    logger.info("OrQuanta shutting down…")
+    # Shutdown  -  graceful; ignore errors from agents that never fully started
+    logger.info("OrQuanta shutting down...")
     for _agent in (orchestrator, scheduler, cost_agent, healing_agent, forecast_agent):
         if _agent is None:
             continue
@@ -293,7 +293,7 @@ async def lifespan(_app: FastAPI):
     logger.info("Shutdown complete.")
 
 
-# Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ FastAPI App Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+# Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬ FastAPI App Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬
 
 app = FastAPI(
     title="OrQuanta Agentic v1.0",
@@ -318,7 +318,7 @@ app.add_middleware(
 )
 
 
-# Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Security Headers Middleware Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+# Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬ Security Headers Middleware Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add production-grade security headers to every response."""
@@ -335,7 +335,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         "base-uri 'self'; "
         "form-action 'self';"
     )
-    # Demo page uses server-rendered inline scripts — allow unsafe-inline for /demo only
+    # Demo page uses server-rendered inline scripts  -  allow unsafe-inline for /demo only
     _CSP_DEMO = (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline'; "
@@ -358,7 +358,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
         response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
-        # Apply per-route CSP — demo page needs unsafe-inline for its inline scripts
+        # Apply per-route CSP  -  demo page needs unsafe-inline for its inline scripts
         path = request.url.path
         if path.startswith("/demo"):
             response.headers["Content-Security-Policy"] = self._CSP_DEMO
@@ -366,26 +366,26 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             response.headers["Content-Security-Policy"] = self._CSP_APP
         return response
 
-# ─── Middleware registration order (CRITICAL) ───────────────────────────────
+# --- Middleware registration order (CRITICAL) -------------------------------
 # Starlette applies add_middleware() in REVERSE order:
 #   last registered = outermost wrapper = first to execute on every request
 #
-# Desired execution order (outermost → innermost):
-#   1. SecurityHeadersMiddleware   ← adds CSP/HSTS/XSS headers to ALL responses
-#   2. PrometheusMiddleware        ← records metrics (inner, skips /health)
-#   3. CORSMiddleware              ← already added above
+# Desired execution order (outermost -> innermost):
+#   1. SecurityHeadersMiddleware   <- adds CSP/HSTS/XSS headers to ALL responses
+#   2. PrometheusMiddleware        <- records metrics (inner, skips /health)
+#   3. CORSMiddleware              <- already added above
 #   4. Route handlers
 #
 # Registration order must therefore be OPPOSITE:
 
-# Register FIRST → runs INNERMOST (after security headers are already set)
+# Register FIRST -> runs INNERMOST (after security headers are already set)
 app.add_middleware(PrometheusMiddleware)
 
-# Register LAST → runs OUTERMOST (executes before anything else, wraps all responses)
+# Register LAST -> runs OUTERMOST (executes before anything else, wraps all responses)
 app.add_middleware(SecurityHeadersMiddleware)
 
 
-# ─── Structured Request Logging Middleware ─────────────────────────────────────
+# --- Structured Request Logging Middleware -------------------------------------
 _req_logger = logging.getLogger("orquanta.requests")
 
 
@@ -428,7 +428,7 @@ async def structured_request_logging(request: Request, call_next):
             response.headers["X-Request-ID"] = request_id
 
 
-# Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Global exception handler Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+# Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬ Global exception handler Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -452,7 +452,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Auth endpoints Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+# Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬ Auth endpoints Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬
 
 _REGISTER_HTML = """
 <!DOCTYPE html>
@@ -577,22 +577,22 @@ _WELCOME_HTML = """
     *{margin:0;padding:0;box-sizing:border-box}
     body{background:#F8FAFC;color:#0F172A;font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Animated gradient hero Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* Ã¢"â‚¬Ã¢"â‚¬ Animated gradient hero Ã¢"â‚¬Ã¢"â‚¬ */
     .hero{position:relative;text-align:center;padding:64px 24px 48px;overflow:hidden}
     .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(0,145,255,0.06),transparent 70%);pointer-events:none}
     .hero::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:1px;height:120px;background:linear-gradient(to bottom,rgba(0,145,255,0.4),transparent)}
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Success badge Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* Ã¢"â‚¬Ã¢"â‚¬ Success badge Ã¢"â‚¬Ã¢"â‚¬ */
     .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 18px;border-radius:999px;border:1px solid rgba(16,185,129,0.3);background:rgba(16,185,129,0.06);font-size:13px;font-weight:600;color:#10B981;margin-bottom:28px;animation:fadeSlideDown .5s ease}
     .badge-dot{width:8px;height:8px;border-radius:50%;background:#10B981;animation:pulse 2s infinite}
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Typography Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* Ã¢"â‚¬Ã¢"â‚¬ Typography Ã¢"â‚¬Ã¢"â‚¬ */
     .logo{font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:600;color:#475569;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px}
     h1{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;line-height:1.15;margin-bottom:12px;color:#0F172A;animation:fadeSlideDown .5s .1s ease both}
     .h1-sub{color:#475569;font-size:.95rem;margin-bottom:20px;animation:fadeSlideDown .5s .15s ease both}
     .email-pill{display:inline-block;background:rgba(0,145,255,0.06);border:1px solid rgba(0,145,255,0.2);border-radius:999px;color:#0091FF;font-size:.82rem;padding:5px 16px;margin-bottom:40px;animation:fadeSlideDown .5s .2s ease both}
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Token box (collapsed) Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* Ã¢"â‚¬Ã¢"â‚¬ Token box (collapsed) Ã¢"â‚¬Ã¢"â‚¬ */
     .token-section{max-width:540px;margin:0 auto 40px;animation:fadeSlideDown .5s .25s ease both}
     .token-toggle{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:12px 18px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:.85rem;color:#475569;user-select:none;transition:border-color .2s}
     .token-toggle:hover{border-color:rgba(0,145,255,0.3)}
@@ -604,7 +604,7 @@ _WELCOME_HTML = """
     .copy-btn:hover{background:rgba(0,145,255,0.15)}
     .copy-hint{font-size:.75rem;color:#94A3B8;margin-top:8px}
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Action cards Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* Ã¢"â‚¬Ã¢"â‚¬ Action cards Ã¢"â‚¬Ã¢"â‚¬ */
     .cards-label{font-family:'Space Grotesk',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#475569;text-align:center;margin-bottom:14px}
     .cards{display:grid;grid-template-columns:1fr;gap:14px;max-width:520px;margin:0 auto 40px;padding:0 20px}
     .card{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;padding:24px 26px;text-decoration:none;display:block;transition:transform .15s,box-shadow .15s,border-color .15s}
@@ -623,15 +623,15 @@ _WELCOME_HTML = """
     .c2 .card-tag{background:rgba(16,185,129,0.06);color:#10B981;border:1px solid rgba(16,185,129,0.2)}
     .c3 .card-tag{background:rgba(123,47,255,0.06);color:#7B2FFF;border:1px solid rgba(123,47,255,0.2)}
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Footer Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* Ã¢"â‚¬Ã¢"â‚¬ Footer Ã¢"â‚¬Ã¢"â‚¬ */
     .foot{text-align:center;color:#94A3B8;font-size:.82rem;padding:0 24px 40px;line-height:1.8}
     .foot a{color:#0091FF;text-decoration:none}
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Animations Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* Ã¢"â‚¬Ã¢"â‚¬ Animations Ã¢"â‚¬Ã¢"â‚¬ */
     @keyframes fadeSlideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
     @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Confetti canvas Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* Ã¢"â‚¬Ã¢"â‚¬ Confetti canvas Ã¢"â‚¬Ã¢"â‚¬ */
     #confetti{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:100}
   </style>
 </head>
@@ -695,7 +695,7 @@ _WELCOME_HTML = """
 </div>
 
 <script>
-// Ã¢â€â‚¬Ã¢â€â‚¬ Token display Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"â‚¬Ã¢"â‚¬ Token display Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬
 var tok = localStorage.getItem('orquanta_token');
 var em  = localStorage.getItem('orquanta_email');
 if (em) document.getElementById('user-email').textContent = em;
@@ -720,7 +720,7 @@ function copyToken(){
   });
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ Confetti burst Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// Ã¢"â‚¬Ã¢"â‚¬ Confetti burst Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬
 (function(){
   var cv = document.getElementById('confetti');
   var cx = cv.getContext('2d');
@@ -793,7 +793,7 @@ async def register(req: RegisterRequest):
 
 
 # Per-IP sliding-window rate limiter for /auth/login
-# Tracks FAILED attempts only — successful logins don't count toward the limit.
+# Tracks FAILED attempts only  -  successful logins don't count toward the limit.
 # Limits: 5 failures/60s triggers soft block; 10 failures/300s triggers hard block.
 _login_failures: defaultdict[str, deque] = defaultdict(deque)
 _LOGIN_SOFT_LIMIT = 5    # failures before 429 (60-second window)
@@ -856,12 +856,12 @@ async def login(req: LoginRequest, request: Request):
             content={"error": "Invalid email or password."},
         )
 
-    _clear_login_failures(ip)       # successful login → reset failure counter
+    _clear_login_failures(ip)       # successful login -> reset failure counter
     token = create_access_token(user["id"], user["email"], user["role"])
     return TokenResponse(access_token=token, expires_in=86400)
 
 
-# ─── Change Password endpoint (used by Settings → Security tab) ───────────
+# --- Change Password endpoint (used by Settings -> Security tab) -----------
 
 from pydantic import BaseModel as _BaseModel
 
@@ -915,7 +915,7 @@ async def change_password(
     return {"success": True, "message": "Password updated successfully."}
 
 
-# ─── Update user profile (used by Settings → Profile tab) ────────────────
+# --- Update user profile (used by Settings -> Profile tab) ----------------
 
 class _ProfileUpdateRequest(_BaseModel):
     full_name: str = ""
@@ -952,7 +952,7 @@ async def update_profile(
 
 
 
-# Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Health check Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+# Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬ Health check Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬
 
 @app.get("/metrics", tags=["System"], summary="Prometheus metrics", include_in_schema=False)
 async def prometheus_metrics():
@@ -994,13 +994,13 @@ async def root():
 
 @app.get("/register", include_in_schema=False)
 async def register_shortcut():
-    """Convenience redirect: /register → /app (React handles registration)."""
+    """Convenience redirect: /register -> /app (React handles registration)."""
     return RedirectResponse(url="/app", status_code=302)
 
 
 @app.get("/signup", include_in_schema=False)
 async def signup_shortcut():
-    """Convenience redirect: /signup → /app (React handles registration)."""
+    """Convenience redirect: /signup -> /app (React handles registration)."""
     return RedirectResponse(url="/app", status_code=302)
 
 
@@ -1017,7 +1017,7 @@ async def api_info():
     }
 
 
-# Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Include routers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+# Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬ Include routers Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬
 
 app.include_router(goals.router)
 app.include_router(jobs.router)
@@ -1045,7 +1045,7 @@ except Exception:
     pass  # demo package optional
 
 
-# Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Serve built React frontend Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+# Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬ Serve built React frontend Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬
 
 # FIX-9: Resolve from the v4/ root (two levels up from api/) - avoids double v4/ prefix
 _DIST_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
@@ -1073,7 +1073,7 @@ else:
         )
 
 
-# Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Providers endpoint (public - no auth required) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+# Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬ Providers endpoint (public - no auth required) Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬
 
 @app.get("/providers/prices", tags=["Providers"], summary="Live GPU spot prices")
 async def provider_prices(gpu_type: str = "A100"):
@@ -1150,7 +1150,7 @@ async def readiness_check():
     }
 
 
-# Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Entry point Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+# Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬ Entry point Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬Ã¢"â‚¬
 
 if __name__ == "__main__":
     import uvicorn

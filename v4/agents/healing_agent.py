@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — Healing Agent
+OrQuanta Agentic v1.0  -  Healing Agent
 
 Continuous GPU job health monitoring with:
 - Metric-based anomaly detection (Z-score + threshold rules)
@@ -71,11 +71,11 @@ class HealingAgent:
     with LLM reasoning, and executes a self-healing playbook.
 
     Healing Playbook (in order of escalation):
-    1. OOM detected → prescale memory (upgrade GPU type)
-    2. Thermal throttling → alert + reduce batch size
-    3. Persistent anomaly (Z-score > threshold) → restart job
-    4. Restart loop detected → migrate to different instance
-    5. Max restarts exceeded → terminate + notify user
+    1. OOM detected -> prescale memory (upgrade GPU type)
+    2. Thermal throttling -> alert + reduce batch size
+    3. Persistent anomaly (Z-score > threshold) -> restart job
+    4. Restart loop detected -> migrate to different instance
+    5. Max restarts exceeded -> terminate + notify user
 
     Usage::
 
@@ -233,7 +233,7 @@ class HealingAgent:
     # ------------------------------------------------------------------
 
     async def _heal_oom(self, record: JobHealthRecord, metrics: dict) -> None:
-        """Healing playbook: OOM risk — diagnose with LLM, then scale up GPU."""
+        """Healing playbook: OOM risk  -  diagnose with LLM, then scale up GPU."""
         logger.warning(f"[Healer] OOM risk detected for {record.job_id} ({metrics.get('memory_utilization_pct', 0):.1f}% mem)")
         record.status = "healing"
 
@@ -253,7 +253,7 @@ class HealingAgent:
 
         logger.info(
             f"[Healer] OOM diagnosis for {record.job_id}: {diagnosis.get('diagnosis', 'N/A')} "
-            f"→ action={action} (confidence={confidence:.0%})"
+            f"-> action={action} (confidence={confidence:.0%})"
         )
 
         heal_record = {
@@ -268,7 +268,7 @@ class HealingAgent:
         if action == "scale_up":
             await self.tools.send_alert(
                 message=(
-                    f"🔧 Auto-healing: Job {record.job_id} hitting OOM. "
+                    f" Auto-healing: Job {record.job_id} hitting OOM. "
                     f"Recommending GPU upgrade. Confidence: {confidence:.0%}."
                 ),
                 severity="warning",
@@ -288,13 +288,13 @@ class HealingAgent:
         }, agent_name="healing_agent")
 
     async def _heal_thermal(self, record: JobHealthRecord, metrics: dict) -> None:
-        """Healing playbook: thermal throttling — send alert, suggest batch reduction."""
+        """Healing playbook: thermal throttling  -  send alert, suggest batch reduction."""
         logger.warning(f"[Healer] Thermal throttle on {record.job_id}: {metrics.get('temp_celsius', 0)}°C")
         record.status = "degraded"
 
         await self.tools.send_alert(
             message=(
-                f"🌡️ Thermal alert on job {record.job_id}: {metrics.get('temp_celsius', 0):.1f}°C. "
+                f"Thermal alert on job {record.job_id}: {metrics.get('temp_celsius', 0):.1f}C. "
                 "Consider reducing batch size or migrating to a cooler region."
             ),
             severity="warning",
@@ -312,7 +312,7 @@ class HealingAgent:
         record.last_healed_at = datetime.now(timezone.utc).isoformat()
 
     async def _heal_anomaly(self, record: JobHealthRecord, metrics: dict, z_score: float) -> None:
-        """Healing playbook: persistent statistical anomaly — restart job."""
+        """Healing playbook: persistent statistical anomaly  -  restart job."""
         logger.warning(
             f"[Healer] Persistent anomaly on {record.job_id}: "
             f"z-score={z_score:.2f}, restarts={record.restart_count}/{MAX_RESTART_ATTEMPTS}"
@@ -322,7 +322,7 @@ class HealingAgent:
             # Escalate: terminate and notify
             await self.tools.send_alert(
                 message=(
-                    f"🛑 Job {record.job_id} exceeded max restart attempts ({MAX_RESTART_ATTEMPTS}). "
+                    f"Job {record.job_id} exceeded max restart attempts ({MAX_RESTART_ATTEMPTS}). "
                     "Manual intervention required."
                 ),
                 severity="critical",

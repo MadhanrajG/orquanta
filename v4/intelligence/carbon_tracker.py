@@ -253,7 +253,7 @@ class CarbonTracker:
             "tonnes_offset":     round(tonnes_offset, 4),
             "total_co2_tonnes":  round(total_co2_tonnes, 4),
             "carbon_neutral":    self._carbon_neutral,
-            "badge":             "🌿 Carbon Neutral" if self._carbon_neutral else None,
+            "badge":             "Carbon Neutral" if self._carbon_neutral else None,
         }
 
     def monthly_report(self) -> dict:
@@ -281,11 +281,11 @@ class CarbonTracker:
 
     @staticmethod
     def _green_rating(intensity: float) -> str:
-        if intensity < 50:   return "A+ 🌿"
-        if intensity < 150:  return "A  ♻️"
-        if intensity < 300:  return "B  ⚡"
-        if intensity < 450:  return "C  ⚠️"
-        return "D  ❌"
+        if intensity < 50:   return "A+"
+        if intensity < 150:  return "A"
+        if intensity < 300:  return "B"
+        if intensity < 450:  return "C"
+        return "D"
 
 
 # ─── Singleton ────────────────────────────────────────────────────────────

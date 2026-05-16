@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — Recommendation Agent
+OrQuanta Agentic v1.0  -  Recommendation Agent
 
 Proactively analyzes customer's job history (last 30 days) and
 surfaces actionable optimization recommendations:
@@ -33,7 +33,7 @@ class Recommendation:
     title: str
     description: str
     estimated_monthly_savings_usd: float
-    confidence: float    # 0.0 – 1.0
+    confidence: float    # 0.0 - 1.0
     evidence: list[str]  # Supporting data points
     action_url: str
     acted_on: bool = False
@@ -66,10 +66,10 @@ class RecommendationAgent:
 
         recommendations: list[Recommendation] = []
 
-        # 1. Low GPU utilization → right-size or reduce parallelism
+        # 1. Low GPU utilization -> right-size or reduce parallelism
         recommendations.extend(self._check_gpu_waste(job_history))
 
-        # 2. Oversized GPU → switch to smaller/cheaper
+        # 2. Oversized GPU -> switch to smaller/cheaper
         recommendations.extend(self._check_gpu_oversize(job_history))
 
         # 3. Off-peak scheduling opportunity
@@ -110,7 +110,7 @@ class RecommendationAgent:
                 return True
         return False
 
-    # ─── Analysis modules ─────────────────────────────────────────────
+    # --- Analysis modules ---------------------------------------------
 
     def _check_gpu_waste(self, jobs: list[dict]) -> list[Recommendation]:
         """Detect jobs with <30% average GPU utilization."""
@@ -125,7 +125,7 @@ class RecommendationAgent:
         return [Recommendation(
             id=f"waste-{len(wasteful)}",
             type="reduce_waste",
-            title=f"🔴 {len(wasteful)} jobs averaging only {avg_util:.0f}% GPU utilization",
+            title=f"{len(wasteful)} jobs averaging only {avg_util:.0f}% GPU utilization",
             description=f"These jobs are using GPU memory but keeping the chip mostly idle. "
                         f"Consider increasing batch sizes, enabling CUDA data prefetching, or "
                         f"switching to a CPU-only instance for preprocessing steps.",
@@ -157,7 +157,7 @@ class RecommendationAgent:
         return [Recommendation(
             id=f"oversize-{len(oversized)}",
             type="right_size_gpu",
-            title=f"💡 {len(oversized)} jobs are on A100/H100 but only use <40% VRAM",
+            title=f" {len(oversized)} jobs are on A100/H100 but only use <40% VRAM",
             description=f"These jobs could run on V100 or T4 instances at 60-70% lower cost. "
                         f"Your models are small enough that the extra VRAM on A100/H100 is not utilized.",
             estimated_monthly_savings_usd=monthly_savings,
@@ -191,7 +191,7 @@ class RecommendationAgent:
         return [Recommendation(
             id="offpeak-scheduling",
             type="schedule_off_peak",
-            title="🌙 Schedule jobs at night for lower spot prices",
+            title="Schedule jobs at night for lower spot prices",
             description=f"{len(peak_jobs)} of your jobs run during peak hours (9am-6pm UTC) when spot prices "
                         f"are highest. Scheduling training runs overnight or on weekends can reduce spot prices "
                         f"by 15-25%. OrQuanta can schedule these automatically.",
@@ -235,7 +235,7 @@ class RecommendationAgent:
         return [Recommendation(
             id="provider-switch-coreweave",
             type="switch_provider",
-            title="⚡ Switch A100 jobs from AWS to CoreWeave — save ~35%",
+            title=" Switch A100 jobs from AWS to CoreWeave  -  save ~35%",
             description=f"CoreWeave's A100 instances are typically 30-40% cheaper than AWS p4d instances "
                         f"for the same GPU. OrQuanta can transparently route future A100 jobs to CoreWeave while "
                         f"maintaining AWS as a failover.",
@@ -261,7 +261,7 @@ class RecommendationAgent:
         return [Recommendation(
             id="batch-short-jobs",
             type="batch_jobs",
-            title=f"📦 Batch {len(short_jobs)} short jobs to eliminate startup overhead",
+            title=f" Batch {len(short_jobs)} short jobs to eliminate startup overhead",
             description=f"You have {len(short_jobs)} jobs under 10 minutes. Each job incurs ~3 minutes of "
                         f"instance startup and warmup time. Batching them into fewer, longer runs eliminates "
                         f"this overhead and can save significantly on instance-hour minimums.",

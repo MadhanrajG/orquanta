@@ -1,10 +1,10 @@
 """
-OrQuanta Agentic v1.0 — RunPod Serverless Endpoint Bridge
+OrQuanta Agentic v1.0  -  RunPod Serverless Endpoint Bridge
 ==========================================================
 
 RunPod Serverless is a scale-to-zero GPU compute model:
   - Workers spin up on demand (cold start ~5s), scale to zero when idle
-  - Billed per-second of actual compute — zero idle cost
+  - Billed per-second of actual compute  -  zero idle cost
   - Perfect for AI inference jobs dispatched by OrQuanta's SchedulerAgent
 
 This module wraps the runpod-python SDK Endpoint API for:
@@ -49,9 +49,9 @@ RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY", "")
 RUNPOD_ENDPOINT_ID = os.getenv("RUNPOD_ENDPOINT_ID", "")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 # Data models
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 
 @dataclass
 class EndpointJobResult:
@@ -101,9 +101,9 @@ class EndpointHealth:
     checked_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 # Core bridge
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 
 class RunPodServerlessBridge:
     """
@@ -117,7 +117,7 @@ class RunPodServerlessBridge:
 
     def __init__(self) -> None:
         self._api_key = RUNPOD_API_KEY
-        self._endpoints: dict[str, str] = {}       # alias → endpoint_id
+        self._endpoints: dict[str, str] = {}       # alias -> endpoint_id
         self._job_log: list[EndpointJobResult] = []  # audit trail
         self._sdk_ok = False
 
@@ -128,18 +128,18 @@ class RunPodServerlessBridge:
         if self._api_key:
             self._init_sdk()
         else:
-            logger.info("[RunPod Serverless] RUNPOD_API_KEY not set — mock mode")
+            logger.info("[RunPod Serverless] RUNPOD_API_KEY not set  -  mock mode")
 
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
     # SDK management
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
 
     def _init_sdk(self) -> None:
         try:
             import runpod
             runpod.api_key = self._api_key
             self._sdk_ok = True
-            logger.info("[RunPod Serverless] SDK initialized ✓")
+            logger.info("[RunPod Serverless] SDK initialized")
         except ImportError:
             logger.warning(
                 "[RunPod Serverless] runpod package not found. "
@@ -153,9 +153,9 @@ class RunPodServerlessBridge:
         import runpod
         return runpod.Endpoint(endpoint_id)
 
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
     # Endpoint registry
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
 
     def register_endpoint(self, alias: str, endpoint_id: str) -> None:
         """
@@ -166,7 +166,7 @@ class RunPodServerlessBridge:
             bridge.register_endpoint("sdxl", "xyz789endpoint")
         """
         self._endpoints[alias] = endpoint_id
-        logger.info(f"[RunPod Serverless] Registered endpoint '{alias}' → {endpoint_id}")
+        logger.info(f"[RunPod Serverless] Registered endpoint '{alias}' -> {endpoint_id}")
 
     def has_endpoint(self, alias_or_id: str) -> bool:
         """Return True if the alias (or raw endpoint ID) is registered/known."""
@@ -176,9 +176,9 @@ class RunPodServerlessBridge:
         """Resolve an alias or raw endpoint ID to a valid endpoint ID."""
         return self._endpoints.get(alias_or_id, alias_or_id)
 
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
     # Job dispatch
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
 
     async def invoke(
         self,
@@ -252,7 +252,7 @@ class RunPodServerlessBridge:
 
             elapsed_ms = (time.monotonic() - t0) * 1000
 
-            # Parse result — run_sync returns the output dict directly if done
+            # Parse result  -  run_sync returns the output dict directly if done
             if isinstance(raw_result, dict):
                 if raw_result.get("status") == "FAILED":
                     result = EndpointJobResult(
@@ -273,7 +273,7 @@ class RunPodServerlessBridge:
                         completed_at=datetime.now(timezone.utc).isoformat(),
                     )
             else:
-                # Job exceeded run_sync timeout — get job_id and poll
+                # Job exceeded run_sync timeout  -  get job_id and poll
                 job_id = getattr(raw_result, "job_id", str(raw_result))
                 result = await self.poll_job(endpoint_id, job_id, timeout_s=timeout_s - elapsed_ms / 1000)
 
@@ -384,15 +384,15 @@ class RunPodServerlessBridge:
             endpoint = self._get_endpoint_obj(eid)
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(None, lambda: endpoint.cancel(job_id))
-            logger.info(f"[RunPod Serverless] ✅ Cancelled job {job_id}")
+            logger.info(f"[RunPod Serverless]  Cancelled job {job_id}")
             return True
         except Exception as exc:
             logger.error(f"[RunPod Serverless] cancel_job failed: {exc}")
             return False
 
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
     # Monitoring
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
 
     async def get_endpoint_health(self, endpoint_id: str) -> EndpointHealth:
         """Fetch health and queue metrics for a serverless endpoint."""
@@ -447,9 +447,9 @@ class RunPodServerlessBridge:
             "registered_endpoints": list(self._endpoints.keys()),
         }
 
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
     # Mock / demo helpers
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
 
     def _mock_invoke(self, endpoint_id: str, payload: dict) -> str:
         """Return a fake job_id for demo mode."""
@@ -480,9 +480,9 @@ class RunPodServerlessBridge:
         return result
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 # Singleton for use across OrQuanta
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 
 _bridge: RunPodServerlessBridge | None = None
 

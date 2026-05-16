@@ -55,7 +55,7 @@ async def scenario_cost_optimizer(engine: DemoEngine) -> dict:
     for i, (goal, gpu, provider, duration) in enumerate(jobs, 1):
         await engine._emit(DemoEvent("agent_thought", {
             "agent": "cost_optimizer",
-            "icon": "💸",
+            "icon": "cost_optimizer",
             "message": f"Job {i}/5: Comparing prices... Lambda Labs wins at ${0.75 if 'a10' in gpu else 1.99:.2f}/hr",
             "confidence": 0.94,
         }))
@@ -107,14 +107,14 @@ async def scenario_self_healing(engine: DemoEngine) -> dict:
 
     await engine._emit(DemoEvent("agent_thought", {
         "agent": "orquanta_orchestrator",
-        "icon": "🧠",
+        "icon": "orchestrator",
         "message": "Submitting LLaMA 7B fine-tune job. Confidence: 0.89.",
     }))
     await asyncio.sleep(1)
 
     await engine._emit(DemoEvent("agent_thought", {
         "agent": "healing_agent",
-        "icon": "🔧",
+        "icon": "healing_agent",
         "message": "1Hz telemetry monitor armed on gpu_1x_a100 | Threshold: VRAM > 95%",
     }))
 
@@ -164,18 +164,18 @@ async def scenario_natural_language(engine: DemoEngine) -> dict:
 
     await engine._emit(DemoEvent("scenario_start", {
         "scenario": "natural_language",
-        "title": "Scenario 3: Natural Language → Running GPU Job",
+        "title": "Scenario 3: Natural Language to Running GPU Job",
         "description": f'User typed: "{goal_text}"',
     }))
 
     # Orchestrator thinking steps
     thinking_steps = [
-        ("orquanta_orchestrator", "🧠", "Parsing natural language goal...", 0.91),
-        ("orquanta_orchestrator", "🧠", "Intent: fine_tune | Model: Mistral 7B | Budget: $50 | Constraint: cost_limit", 0.93),
-        ("orquanta_orchestrator", "🧠", "DAG: 5 tasks | Dependencies resolved | Dispatching agents", 0.91),
-        ("cost_optimizer",        "💸", "Budget $50 → max 25 GPU-hours at $2/hr | Searching cheapest A100...", 0.95),
-        ("cost_optimizer",        "💸", "Lambda Labs gpu_1x_a100 @ $1.99/hr | Estimated: $39.80 for 20hrs | Under budget ✓", 0.97),
-        ("scheduler",             "📅", "No queue backlog | Provisioning now | ETA: 18 seconds", 0.99),
+        ("orquanta_orchestrator", "orchestrator", "Parsing natural language goal...", 0.91),
+        ("orquanta_orchestrator", "orchestrator", "Intent: fine_tune | Model: Mistral 7B | Budget: $50 | Constraint: cost_limit", 0.93),
+        ("orquanta_orchestrator", "orchestrator", "DAG: 5 tasks | Dependencies resolved | Dispatching agents", 0.91),
+        ("cost_optimizer",        "cost_optimizer", "Budget $50 - max 25 GPU-hours at $2/hr | Searching cheapest A100...", 0.95),
+        ("cost_optimizer",        "cost_optimizer", "Lambda Labs gpu_1x_a100 @ $1.99/hr | Estimated: $39.80 for 20hrs | Under budget", 0.97),
+        ("scheduler",             "scheduler", "No queue backlog | Provisioning now | ETA: 18 seconds", 0.99),
     ]
 
     for agent, icon, message, conf in thinking_steps:
@@ -194,7 +194,7 @@ async def scenario_natural_language(engine: DemoEngine) -> dict:
     await asyncio.sleep(2)
     await engine._emit(DemoEvent("agent_thought", {
         "agent": "audit_agent",
-        "icon": "🔒",
+        "icon": "audit_agent",
         "message": f"Job {job.job_id} logged. Goal hash: {hash(goal_text)&0xFFFFFF:06X}. HMAC signing batch #1.",
     }))
 
@@ -215,7 +215,7 @@ async def scenario_natural_language(engine: DemoEngine) -> dict:
         "estimated_total": round(job.cost_per_hr * (job.duration_min / 60), 2),
         "under_budget": True,
         "summary": (
-            f"Natural language goal → running GPU job in 18 seconds. "
+            f"Natural language goal to running GPU job in 18 seconds. "
             f"4 agents coordinated. Lambda Labs selected at $1.99/hr. "
             f"Estimated cost: ${job.cost_per_hr * (job.duration_min / 60):.2f} — under $50 budget."
         ),

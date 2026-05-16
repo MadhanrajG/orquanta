@@ -1,5 +1,5 @@
 """
-OrQuanta — Free GPU Tier API Router
+OrQuanta  -  Free GPU Tier API Router
 =====================================
 Exposes endpoints for the $0 GPU tier:
 
@@ -39,10 +39,10 @@ logger = logging.getLogger("orquanta.free_tier")
 router = APIRouter(prefix="/api/v1/free", tags=["free-gpu"])
 
 # In-memory store for generated notebooks (replace with DB/S3 in production)
-_notebooks: dict[str, dict] = {}   # job_id → { notebook_json, goal, created_at }
+_notebooks: dict[str, dict] = {}   # job_id -> { notebook_json, goal, created_at }
 
 
-# ─── Schemas ──────────────────────────────────────────────────────────────────
+# --- Schemas ------------------------------------------------------------------
 
 class NotebookRequest(BaseModel):
     goal: str
@@ -57,7 +57,7 @@ class KaggleSubmitRequest(BaseModel):
     model_id: str | None = None
 
 
-# ─── Auth (reuse pattern from other routers) ──────────────────────────────────
+# --- Auth (reuse pattern from other routers) ----------------------------------
 
 def _current_user(request: Request) -> dict:
     auth = request.headers.get("Authorization", "")
@@ -70,7 +70,7 @@ def _current_user(request: Request) -> dict:
 CurrentUser = Annotated[dict, Depends(_current_user)]
 
 
-# ─── Routes ───────────────────────────────────────────────────────────────────
+# --- Routes -------------------------------------------------------------------
 
 @router.get("/options")
 async def get_free_options():
@@ -80,8 +80,8 @@ async def get_free_options():
             {
                 "id":            "colab",
                 "name":          "Google Colab",
-                "icon":          "🟡",
-                "gpu":           "T4 16GB (free) · A100/H100 (paid)",
+                "icon":          "colab",
+                "gpu":           "T4 16GB (free)  -  A100/H100 (paid)",
                 "free_hours":    "~12 hrs/day (session limit)",
                 "weekly_hours":  None,
                 "cost":          "$0.00",
@@ -95,7 +95,7 @@ async def get_free_options():
             {
                 "id":            "kaggle",
                 "name":          "Kaggle Kernels",
-                "icon":          "🟠",
+                "icon":          "kaggle",
                 "gpu":           "T4 16GB or P100 16GB",
                 "free_hours":    "Up to 9 hrs per session",
                 "weekly_hours":  30,
@@ -111,7 +111,7 @@ async def get_free_options():
             {
                 "id":            "lambda",
                 "name":          "Lambda Labs",
-                "icon":          "🟢",
+                "icon":          "lambda",
                 "gpu":           "A10 24GB / A100 40GB",
                 "free_hours":    "$10 free credits on signup",
                 "weekly_hours":  None,
@@ -122,7 +122,7 @@ async def get_free_options():
                 "cta":           "Get $10 Free Credits",
                 "setup_minutes": 3,
                 "signup_url":    "https://cloud.lambdalabs.com/sign-up",
-                "referral_note": "Create account → API Keys → paste into OrQuanta",
+                "referral_note": "Create account -> API Keys -> paste into OrQuanta",
             },
         ],
         "recommendation": "Start with Colab notebook (zero setup). Upgrade to Kaggle for automation.",
@@ -173,15 +173,15 @@ async def generate_notebook(body: NotebookRequest, user: CurrentUser):
         "instructions": [
             "1. Click 'Download Notebook' below",
             "2. Go to colab.research.google.com",
-            "3. File → Upload notebook → select the downloaded .ipynb",
-            "4. Runtime → Change runtime type → GPU (T4)",
-            "5. Runtime → Run all  ✅  Your free GPU job starts!",
+            "3. File -> Upload notebook -> select the downloaded .ipynb",
+            "4. Runtime -> Change runtime type -> GPU (T4)",
+            "5. Runtime -> Run all    Your free GPU job starts!",
         ],
         "kaggle_instructions": [
             "1. Click 'Download Notebook'",
-            "2. Go to kaggle.com/code → New Notebook",
-            "3. File → Import Notebook → upload the .ipynb",
-            "4. Click ▶ Run All  ✅  Free T4 GPU (30hrs/week)",
+            "2. Go to kaggle.com/code -> New Notebook",
+            "3. File -> Import Notebook -> upload the .ipynb",
+            "4. Click 'Run All'  -  Free T4 GPU (30hrs/week)",
         ],
         "created_at": datetime.now(timezone.utc).isoformat(),
         "cost_usd":   0.0,

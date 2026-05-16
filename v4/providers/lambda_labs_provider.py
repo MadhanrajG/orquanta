@@ -1,16 +1,16 @@
 """
-OrQuanta Agentic v1.0 — Lambda Labs Cloud Provider
+OrQuanta Agentic v1.0  -  Lambda Labs Cloud Provider
 ===================================================
 
 Real integration with Lambda Labs GPU Cloud REST API.
 API docs: https://cloud.lambdalabs.com/api/v1/
 
 Supported GPU types:
-  gpu_1x_a10        — A10  24GB  ~$0.75/hr
-  gpu_1x_a100       — A100 80GB  ~$1.99/hr
-  gpu_1x_h100_pcie  — H100 80GB  ~$2.99/hr
-  gpu_8x_a100       — 8xA100     ~$14.32/hr
-  gpu_8x_h100_sxm5  — 8xH100 SXM ~$24.80/hr
+  gpu_1x_a10         -  A10  24GB  ~$0.75/hr
+  gpu_1x_a100        -  A100 80GB  ~$1.99/hr
+  gpu_1x_h100_pcie   -  H100 80GB  ~$2.99/hr
+  gpu_8x_a100        -  8xA100     ~$14.32/hr
+  gpu_8x_h100_sxm5   -  8xH100 SXM ~$24.80/hr
 
 Auth: Bearer token via LAMBDA_LABS_API_KEY env var.
 
@@ -39,20 +39,20 @@ logger = logging.getLogger("orquanta.providers.lambda_labs")
 LAMBDA_API_BASE = "https://cloud.lambdalabs.com/api/v1"
 LAMBDA_API_KEY  = os.getenv("LAMBDA_LABS_API_KEY", "")
 
-# GPU type → friendly name mapping
+# GPU type -> friendly name mapping
 GPU_DISPLAY_NAMES = {
     "gpu_1x_a10":        "NVIDIA A10 (24GB)",
     "gpu_1x_a100":       "NVIDIA A100 (80GB)",
     "gpu_1x_a100_sxm4":  "NVIDIA A100 SXM4 (80GB)",
     "gpu_1x_h100_pcie":  "NVIDIA H100 PCIe (80GB)",
     "gpu_1x_h100_sxm5":  "NVIDIA H100 SXM5 (80GB)",
-    "gpu_2x_a100":       "2× NVIDIA A100 (80GB)",
-    "gpu_4x_a100":       "4× NVIDIA A100 (80GB)",
-    "gpu_8x_a100":       "8× NVIDIA A100 (80GB)",
-    "gpu_8x_h100_sxm5":  "8× NVIDIA H100 SXM5 (80GB)",
+    "gpu_2x_a100":       "2x NVIDIA A100 (80GB)",
+    "gpu_4x_a100":       "4x NVIDIA A100 (80GB)",
+    "gpu_8x_a100":       "8x NVIDIA A100 (80GB)",
+    "gpu_8x_h100_sxm5":  "8x NVIDIA H100 SXM5 (80GB)",
     "gpu_1x_a6000":      "NVIDIA A6000 (48GB)",
-    "gpu_2x_a6000":      "2× NVIDIA A6000 (48GB)",
-    "gpu_4x_a6000":      "4× NVIDIA A6000 (48GB)",
+    "gpu_2x_a6000":      "2x NVIDIA A6000 (48GB)",
+    "gpu_4x_a6000":      "4x NVIDIA A6000 (48GB)",
 }
 
 # Region codes
@@ -74,11 +74,11 @@ class LambdaLabsProvider(BaseGPUProvider):
     def __init__(self) -> None:
         self._key = LAMBDA_API_KEY
         self._client: httpx.AsyncClient | None = None
-        self._instance_cache: dict[str, dict] = {}   # instance_id → meta
-        self._price_cache:    dict[str, float] = {}  # "type:region" → $/hr
+        self._instance_cache: dict[str, dict] = {}   # instance_id -> meta
+        self._price_cache:    dict[str, float] = {}  # "type:region" -> $/hr
         self._price_cache_ts: float = 0.0
 
-    # ─── HTTP client ──────────────────────────────────────────────────────────
+    # --- HTTP client ----------------------------------------------------------
 
     def _get_client(self) -> httpx.AsyncClient:
         if self._client is None or self._client.is_closed:
@@ -109,16 +109,16 @@ class LambdaLabsProvider(BaseGPUProvider):
             resp.raise_for_status()
             return resp.json()
 
-    # ─── BaseGPUProvider interface ────────────────────────────────────────────
+    # --- BaseGPUProvider interface --------------------------------------------
 
     async def is_available(self) -> bool:
         """Return True if the Lambda Labs API is reachable and key is valid."""
         if not self._key:
-            logger.warning("[LambdaLabs] LAMBDA_LABS_API_KEY not set — using mock mode")
+            logger.warning("[LambdaLabs] LAMBDA_LABS_API_KEY not set  -  using mock mode")
             return False
         try:
             await self._get("/instance-types")
-            logger.info("[LambdaLabs] API healthy ✓")
+            logger.info("[LambdaLabs] API healthy")
             return True
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code == 401:
@@ -203,7 +203,7 @@ class LambdaLabsProvider(BaseGPUProvider):
         return prices
 
     async def get_metrics(self, instance_id: str, region: str | None = None):
-        """Fetch GPU metrics — Lambda Labs API doesn't expose them directly."""
+        """Fetch GPU metrics  -  Lambda Labs API doesn't expose them directly."""
         from v4.providers.base_provider import GPUMetrics
         return GPUMetrics(
             instance_id=instance_id,
@@ -382,7 +382,7 @@ class LambdaLabsProvider(BaseGPUProvider):
             return False
 
     async def terminate(self, instance_id: str, region: str | None = None) -> bool:
-        """Alias for terminate_instance — satisfies BaseGPUProvider abstract method."""
+        """Alias for terminate_instance  -  satisfies BaseGPUProvider abstract method."""
         return await self.terminate_instance(instance_id)
 
     async def get_instance_status(self, instance_id: str) -> dict[str, Any]:
@@ -400,7 +400,7 @@ class LambdaLabsProvider(BaseGPUProvider):
         """
         Lambda Labs doesn't expose GPU metrics via API.
         Metrics must be fetched via SSH from nvidia-smi.
-        Returns an empty metrics object — caller should use SSH polling.
+        Returns an empty metrics object  -  caller should use SSH polling.
         """
         return GpuMetrics(
             instance_id=instance_id,
@@ -465,7 +465,7 @@ class LambdaLabsProvider(BaseGPUProvider):
             return CommandResult(instance_id=instance_id, command=command,
                                   stdout="", stderr=str(exc), exit_code=1)
 
-    # ─── SSH Key management ───────────────────────────────────────────────────
+    # --- SSH Key management ---------------------------------------------------
 
     async def list_ssh_keys(self) -> list[dict]:
         """Return all SSH keys registered on this account."""
@@ -486,14 +486,14 @@ class LambdaLabsProvider(BaseGPUProvider):
                     if k.get("name") == preferred_name:
                         return preferred_name
             return keys[0]["name"]
-        # No keys — user needs to add one
+        # No keys  -  user needs to add one
         raise LambdaLabsError(
             "No SSH keys found on Lambda Labs account. "
             "Add an SSH key at https://cloud.lambdalabs.com/ssh-keys "
             "then set LAMBDA_LABS_SSH_KEY_NAME in .env"
         )
 
-    # ─── Polling helpers ──────────────────────────────────────────────────────
+    # --- Polling helpers ------------------------------------------------------
 
     async def _wait_for_ip(self, instance_id: str, timeout_s: int = 90) -> str:
         """Poll until instance has an IP address or timeout."""
@@ -516,7 +516,7 @@ class LambdaLabsProvider(BaseGPUProvider):
         logger.warning(f"[LambdaLabs] Timeout waiting for IP on {instance_id}")
         return ""  # Return empty; caller can retry
 
-    # ─── Mock / Demo helpers ──────────────────────────────────────────────────
+    # --- Mock / Demo helpers --------------------------------------------------
 
     def _mock_instance_types(self) -> list[dict]:
         """Return realistic mock instance types when API key not set."""
@@ -533,11 +533,11 @@ class LambdaLabsProvider(BaseGPUProvider):
              "price_usd_per_hour": 2.99,  "price_cents_per_hour": 299,
              "vcpus": 26, "memory_gib": 200, "storage_gib": 512,
              "regions_available": ["us-east-1"], "available": True},
-            {"name": "gpu_8x_a100",      "display_name": "8× NVIDIA A100 (80GB)",
+            {"name": "gpu_8x_a100",      "display_name": "8x NVIDIA A100 (80GB)",
              "price_usd_per_hour": 14.32, "price_cents_per_hour": 1432,
              "vcpus": 124, "memory_gib": 1800, "storage_gib": 12300,
              "regions_available": ["us-tx-3"], "available": True},
-            {"name": "gpu_8x_h100_sxm5", "display_name": "8× NVIDIA H100 SXM5 (80GB)",
+            {"name": "gpu_8x_h100_sxm5", "display_name": "8x NVIDIA H100 SXM5 (80GB)",
              "price_usd_per_hour": 24.80, "price_cents_per_hour": 2480,
              "vcpus": 208, "memory_gib": 1800, "storage_gib": 22100,
              "regions_available": [], "available": False},
@@ -577,7 +577,7 @@ class LambdaLabsError(Exception):
     """Lambda Labs API error."""
 
 
-# ─── Register with ProviderRouter ─────────────────────────────────────────────
+# --- Register with ProviderRouter ---------------------------------------------
 
 def register(router_registry: dict) -> None:
     """Called by ProviderRouter to register this provider."""

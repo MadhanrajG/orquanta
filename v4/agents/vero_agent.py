@@ -1,34 +1,34 @@
 """
-OrQuanta Vero — Superior Intelligence Meta-Agent
+OrQuanta Vero  -  Superior Intelligence Meta-Agent
 
 Vero is the god-mode meta-agent that sits above all OrQuanta specialist agents.
 Inspired by NeMo Claw multi-agent architecture, Vero has three core loops:
 
   1. SuperiorOversight (every 15s)
-     — Health-checks all 5 specialist agents (Scheduler, CostOptimizer, Healer,
+      -  Health-checks all 5 specialist agents (Scheduler, CostOptimizer, Healer,
        Forecast, MasterOrchestrator)
-     — Scores each on 4 KPIs: responsiveness, decision quality, cost efficiency,
+      -  Scores each on 4 KPIs: responsiveness, decision quality, cost efficiency,
        SLA compliance
-     — Injects corrective goals when any agent KPI drops below threshold
-     — Enforces guardrail policies via PolicyRails + SafetyGovernor
+      -  Injects corrective goals when any agent KPI drops below threshold
+      -  Enforces guardrail policies via PolicyRails + SafetyGovernor
 
   2. UserIntelligence (every 60s)
-     — Reads UserAnalyticsEngine to compute DAU/MAU, login trends, feature usage
-     — Detects anomalous patterns (login spike, feature abandonment)
-     — Recommends capacity adjustments to MasterOrchestrator
+      -  Reads UserAnalyticsEngine to compute DAU/MAU, login trends, feature usage
+      -  Detects anomalous patterns (login spike, feature abandonment)
+      -  Recommends capacity adjustments to MasterOrchestrator
 
   3. MarketAdaptation (every 300s)
-     — Reads MarketTrendAnalyzer for GPU price / scarcity signals
-     — Generates UI/UX recommendations automatically
-     — In full NEM Claw mode: pushes config changes to the frontend at runtime
+      -  Reads MarketTrendAnalyzer for GPU price / scarcity signals
+      -  Generates UI/UX recommendations automatically
+      -  In full NEM Claw mode: pushes config changes to the frontend at runtime
 
 Vero exposes a VeroReport dataclass that the REST API serves to the dashboard.
 
 Architecture:
     VeroAgent
-        ├── _oversight_loop()         15s  → AgentHealthScorer
-        ├── _user_intelligence_loop() 60s  → UserAnalyticsEngine
-        └── _market_adaptation_loop() 300s → MarketTrendAnalyzer
+        ├-- _oversight_loop()         15s  -> AgentHealthScorer
+        ├-- _user_intelligence_loop() 60s  -> UserAnalyticsEngine
+        └-- _market_adaptation_loop() 300s -> MarketTrendAnalyzer
 
 Usage::
     vero = VeroAgent()
@@ -60,10 +60,10 @@ class AgentKPI:
     """Health scorecard for a single specialist agent."""
     agent_name: str
     status: str                   # "healthy" | "degraded" | "critical" | "unknown"
-    responsiveness_score: float   # 0.0–1.0 (response time)
-    decision_quality_score: float # 0.0–1.0 (outcome success rate)
-    cost_efficiency_score: float  # 0.0–1.0 (savings delivered vs target)
-    sla_score: float              # 0.0–1.0 (SLA compliance)
+    responsiveness_score: float   # 0.0-1.0 (response time)
+    decision_quality_score: float # 0.0-1.0 (outcome success rate)
+    cost_efficiency_score: float  # 0.0-1.0 (savings delivered vs target)
+    sla_score: float              # 0.0-1.0 (SLA compliance)
     overall_score: float          # weighted average
     corrective_goals_injected: int
     last_checked: str             # ISO timestamp
@@ -85,7 +85,7 @@ class VeroDecisionEntry:
 
 @dataclass
 class VeroReport:
-    """Full Vero platform intelligence report — served by /api/v1/vero/status."""
+    """Full Vero platform intelligence report  -  served by /api/v1/vero/status."""
     # Vero meta
     vero_status: str                    # "nominal" | "alert" | "critical"
     uptime_seconds: float
@@ -211,14 +211,14 @@ class AgentHealthScorer:
 
 class VeroAgent:
     """
-    Vero — Superior Intelligence Meta-Agent.
+    Vero  -  Superior Intelligence Meta-Agent.
 
     Runs 3 concurrent asyncio background loops:
     - _oversight_loop:         monitors all specialist agents every 15s
     - _user_intelligence_loop: aggregates user analytics every 60s
     - _market_adaptation_loop: processes market signals every 300s
 
-    Thread-safe via asyncio event loop — start() must be called from async context.
+    Thread-safe via asyncio event loop  -  start() must be called from async context.
     """
 
     # Thresholds
@@ -248,7 +248,7 @@ class VeroAgent:
         self._market_analyzer: Any = None
 
         logger.info(
-            "👁️  VERO AGENT INITIALISED — Superior Intelligence Meta-Agent online. "
+            "[Vero] INITIALISED  -  Superior Intelligence Meta-Agent online. "
             "Oversight loops starting..."
         )
 
@@ -282,7 +282,7 @@ class VeroAgent:
             asyncio.create_task(self._user_intelligence_loop(), name="vero-user-intel"),
             asyncio.create_task(self._market_adaptation_loop(), name="vero-market"),
         ]
-        logger.info("👁️  VERO started. 3 supervision loops active.")
+        logger.info("[Vero] Started. 3 supervision loops active.")
 
     async def stop(self) -> None:
         """Gracefully stop all Vero loops."""
@@ -331,7 +331,7 @@ class VeroAgent:
         if now - last < self._CORRECTION_COOLDOWN_S:
             logger.debug(
                 f"[Vero] Cooldown active for {kpi.agent_name} "
-                f"({self._CORRECTION_COOLDOWN_S - (now - last):.0f}s remaining) — skipping injection."
+                f"({self._CORRECTION_COOLDOWN_S - (now - last):.0f}s remaining)  -  skipping injection."
             )
             return
         self._last_correction[kpi.agent_name] = now
@@ -369,11 +369,11 @@ class VeroAgent:
                     user_id="vero",
                     raw_text=goal_text,
                 )
-                logger.warning(f"[Vero] 🎯 Corrective goal injected for {kpi.agent_name}: {goal_text[:80]}")
+                logger.warning(f"[Vero]  Corrective goal injected for {kpi.agent_name}: {goal_text[:80]}")
             except Exception as exc:
                 logger.warning(f"[Vero] Goal injection failed: {exc}")
         else:
-            logger.warning(f"[Vero] 📋 Corrective goal queued for {kpi.agent_name}: {goal_text[:80]}")
+            logger.warning(f"[Vero]  Corrective goal queued for {kpi.agent_name}: {goal_text[:80]}")
 
     def _build_corrective_goal(self, kpi: AgentKPI) -> str:
         """Build targeted corrective goal text based on which KPI is lowest."""
@@ -390,10 +390,10 @@ class VeroAgent:
         agent = kpi.agent_name
 
         goals = {
-            "responsiveness": f"Vero: Reset {agent} response pipeline — last 3 actions exceeded latency SLA. Reinitialise decision buffers and validate agent heartbeat.",
-            "decision_quality": f"Vero: Run {agent} self-diagnostic — decision quality dropped to {kpi.decision_quality_score:.0%}. Review last 5 rejected actions and recalibrate confidence thresholds.",
-            "cost_efficiency": f"Vero: Optimise {agent} cost model — current efficiency {kpi.cost_efficiency_score:.0%} below target. Re-evaluate spot pricing strategy and provider routing weights.",
-            "sla": f"Vero: Restore {agent} SLA compliance — score {kpi.sla_score:.0%}. Audit recent job completions against SLA targets and adjust queue priority.",
+            "responsiveness": f"Vero: Reset {agent} response pipeline  -  last 3 actions exceeded latency SLA. Reinitialise decision buffers and validate agent heartbeat.",
+            "decision_quality": f"Vero: Run {agent} self-diagnostic  -  decision quality dropped to {kpi.decision_quality_score:.0%}. Review last 5 rejected actions and recalibrate confidence thresholds.",
+            "cost_efficiency": f"Vero: Optimise {agent} cost model  -  current efficiency {kpi.cost_efficiency_score:.0%} below target. Re-evaluate spot pricing strategy and provider routing weights.",
+            "sla": f"Vero: Restore {agent} SLA compliance  -  score {kpi.sla_score:.0%}. Audit recent job completions against SLA targets and adjust queue priority.",
         }
         return goals.get(dim, f"Vero: Investigate and restore {agent} to healthy status. KPI score: {kpi.overall_score:.2f}")
 
@@ -421,14 +421,14 @@ class VeroAgent:
                             timestamp=datetime.now(timezone.utc).isoformat(),
                             decision_type="user_alert",
                             target="UserSessionLayer",
-                            action=f"Session spike detected: {prev_sessions} → {current_sessions} active sessions",
+                            action=f"Session spike detected: {prev_sessions} -> {current_sessions} active sessions",
                             reasoning=f"Active sessions increased {(current_sessions/prev_sessions - 1)*100:.0f}% in 60s. Recommend pre-warming GPU pool.",
                             outcome="alert_logged",
                             severity="warning",
                         )
                         self._decision_log.insert(0, entry)
                         self._decision_log = self._decision_log[:50]
-                        logger.warning(f"[Vero] 📈 User session spike: {prev_sessions} → {current_sessions}")
+                        logger.warning(f"[Vero]  User session spike: {prev_sessions} -> {current_sessions}")
 
                     prev_sessions = current_sessions
                     logger.debug(f"[Vero] User intel: sessions={current_sessions}, DAU={report.dau}, logins={report.total_logins_today}")
@@ -468,7 +468,7 @@ class VeroAgent:
                         )
                         self._decision_log.insert(0, entry)
                         self._decision_log = self._decision_log[:50]
-                        logger.info(f"[Vero] 🌐 Market adapt: [{top.urgency.upper()}] {top.change[:80]}")
+                        logger.info(f"[Vero]  Market adapt: [{top.urgency.upper()}] {top.change[:80]}")
 
             except Exception as exc:
                 logger.error(f"[Vero] Market adaptation loop error: {exc}")
@@ -500,7 +500,7 @@ class VeroAgent:
         gpu_trend = "stable"
         cheapest = "N/A"
         ui_rec_count = 0
-        top_rec = "No market data yet — refreshing..."
+        top_rec = "No market data yet  -  refreshing..."
         if self._market_analyzer and self._market_analyzer._snapshot:
             snap = self._market_analyzer._snapshot
             gpu_trend = snap.price_trend

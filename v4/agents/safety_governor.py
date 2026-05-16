@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — Safety Governor
+OrQuanta Agentic v1.0  -  Safety Governor
 
 Agent-level guardrails that wrap every agent action with:
 - Cost threshold enforcement (human approval above configurable limit)
@@ -123,14 +123,14 @@ class SafetyGovernor:
         """Immediately halt all agents. Thread-safe."""
         self._emergency_stop = True
         self._stop_reason = reason
-        logger.critical(f"🛑 EMERGENCY STOP TRIGGERED: {reason}")
+        logger.critical(f"[SafetyGovernor] EMERGENCY STOP TRIGGERED: {reason}")
 
     def clear_emergency_stop(self, override_token: str) -> bool:
         """Clear the emergency stop. Requires override token from environment."""
         expected = os.getenv("SAFETY_OVERRIDE_TOKEN")
         if not expected:
             logger.critical(
-                "SAFETY_OVERRIDE_TOKEN is not configured — emergency stop cannot be cleared via API. "
+                "SAFETY_OVERRIDE_TOKEN is not configured  -  emergency stop cannot be cleared via API. "
                 "Set this env var to a strong random secret in production."
             )
             return False

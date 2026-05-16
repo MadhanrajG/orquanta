@@ -1,18 +1,18 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Clock, Plus, Trash2, RefreshCw, Play, Pause, ChevronDown, ChevronRight, CheckCircle, AlertCircle } from 'lucide-react'
 import { useAuth } from '../App.jsx'
 
 const API = import.meta.env.VITE_API_URL || ''
 
 const CRON_PRESETS = [
-    { label: 'Every hour',          expr: '0 * * * *' },
-    { label: 'Every 6 hours',       expr: '0 */6 * * *' },
-    { label: 'Every day at 9am',    expr: '0 9 * * *' },
+    { label: 'Every hour', expr: '0 * * * *' },
+    { label: 'Every 6 hours', expr: '0 */6 * * *' },
+    { label: 'Every day at 9am', expr: '0 9 * * *' },
     { label: 'Every day at midnight', expr: '0 0 * * *' },
-    { label: 'Every Monday 2am',    expr: '0 2 * * 1' },
-    { label: 'Every 15 minutes',    expr: '*/15 * * * *' },
-    { label: '1st of every month',  expr: '0 0 1 * *' },
-    { label: 'Customâ€¦',             expr: '' },
+    { label: 'Every Monday 2am', expr: '0 2 * * 1' },
+    { label: 'Every 15 minutes', expr: '*/15 * * * *' },
+    { label: '1st of every month', expr: '0 0 1 * *' },
+    { label: 'Custom"...', expr: '' },
 ]
 
 const GPU_TYPES = ['A100', 'H100', 'A10G', 'L4', 'T4', 'V100']
@@ -139,7 +139,7 @@ export default function SchedulesPage() {
         }
     }
 
-    const fmtDate = (iso) => iso ? new Date(iso).toLocaleString() : 'â€”'
+    const fmtDate = (iso) => iso ? new Date(iso).toLocaleString() : '""'
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -181,7 +181,7 @@ export default function SchedulesPage() {
                             <textarea
                                 className="input-field text-sm resize-none"
                                 rows={3}
-                                placeholder="Fine-tune LLaMA 3 8B on customer support data and push to HuggingFaceâ€¦"
+                                placeholder="Fine-tune LLaMA 3 8B on customer support data and push to HuggingFace..."
                                 value={form.goal}
                                 onChange={e => setForm(f => ({ ...f, goal: e.target.value }))}
                                 required
@@ -262,7 +262,7 @@ export default function SchedulesPage() {
                         <div className="flex gap-3">
                             <button type="submit" disabled={submitting} className="btn-primary flex items-center gap-2 text-sm">
                                 {submitting ? <RefreshCw size={14} className="animate-spin" /> : <Clock size={14} />}
-                                {submitting ? 'Creatingâ€¦' : 'Create Schedule'}
+                                {submitting ? 'Creating"...' : 'Create Schedule'}
                             </button>
                             <button type="button" onClick={() => { setShowForm(false); setError('') }} className="btn-ghost text-sm">
                                 Cancel
@@ -325,18 +325,18 @@ export default function SchedulesPage() {
 
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <p className="text-gray-900 font-medium text-sm leading-snug">{s.goal.length > 100 ? s.goal.slice(0, 100) + 'â€¦' : s.goal}</p>
+                                                <p className="text-gray-900 font-medium text-sm leading-snug">{s.goal.length > 100 ? s.goal.slice(0, 100) + '"...' : s.goal}</p>
                                                 {!s.enabled && (
                                                     <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(100,116,139,0.2)', color: '#94a3b8' }}>Paused</span>
                                                 )}
                                             </div>
                                             <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-500">
                                                 <span className="font-mono text-slate-400">{s.cron_expr}</span>
-                                                <span className="text-slate-600">Â·</span>
+                                                <span className="text-slate-600"> - </span>
                                                 <span>{s.cron_description}</span>
-                                                <span className="text-slate-600">Â·</span>
+                                                <span className="text-slate-600"> - </span>
                                                 <span>{s.gpu_type}</span>
-                                                <span className="text-slate-600">Â·</span>
+                                                <span className="text-slate-600"> - </span>
                                                 <span>${s.budget_usd} budget</span>
                                             </div>
                                             {s.description && <p className="text-xs text-slate-600 mt-1">{s.description}</p>}

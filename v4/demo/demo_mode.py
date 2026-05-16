@@ -364,7 +364,7 @@ class DemoEngine:
             "job_id":  job.job_id,
             "trigger": "oom_risk",
             "action":  "prescale_memory",
-            "message": "Memory prescaled. VRAM: 97.3% → 71.0%. Job continues. No data lost.",
+            "message": "Memory prescaled. VRAM: 97.3% down to 71.0%. Job continues. No data lost.",
             "severity": "resolved",
             "response_time_ms": 8300,
             "agent": "healing_agent",

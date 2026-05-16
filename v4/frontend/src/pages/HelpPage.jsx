@@ -1,15 +1,15 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { X, BookOpen, MessageCircle, Zap, Shield, Code2, ExternalLink,
          Search, ChevronRight, HelpCircle, Mail, Globe, FileText,
          Brain, Cpu, DollarSign, BarChart2, Layers, Wand2 } from 'lucide-react'
 
 const FAQS = [
     {
-        section: 'ðŸš€ Getting Started',
+        section: 'Getting Started',
         items: [
             {
                 q: 'What is OrQuanta?',
-                a: 'OrQuanta is an AI-native GPU cloud platform that autonomously orchestrates workloads across 6 cloud providers (Lambda Labs, RunPod, CoreWeave, AWS, GCP, Azure). Just describe your goal in plain English â€” 5 AI agents handle the rest.'
+                a: 'OrQuanta is an AI-native GPU cloud platform that autonomously orchestrates workloads across 6 cloud providers (Lambda Labs, RunPod, CoreWeave, AWS, GCP, Azure). Just describe your goal in plain English "" 5 AI agents handle the rest.'
             },
             {
                 q: 'How do I submit my first GPU job?',
@@ -17,12 +17,12 @@ const FAQS = [
             },
             {
                 q: 'What is a "Goal" vs a "Job"?',
-                a: 'A Goal is a high-level intent (e.g. "Train Whisper on 10hrs audio"). OrQuanta\'s AI agents decompose it into one or more Jobs â€” actual GPU compute tasks. You set the goal; agents handle the rest.'
+                a: 'A Goal is a high-level intent (e.g. "Train Whisper on 10hrs audio"). OrQuanta\'s AI agents decompose it into one or more Jobs "" actual GPU compute tasks. You set the goal; agents handle the rest.'
             },
         ]
     },
     {
-        section: 'ðŸ’° Cost & Billing',
+        section: 'Cost & Billing',
         items: [
             {
                 q: 'How does OrQuanta save me money?',
@@ -30,7 +30,7 @@ const FAQS = [
             },
             {
                 q: 'How do I set a budget limit?',
-                a: 'OrQuanta\'s CostWatcher enforces 3 automatic budget tiers: âš ï¸ Warn at 50%, ðŸ”¶ Throttle new jobs at 80%, ðŸ›‘ Halt non-critical jobs at 95%. Set your monthly budget in Billing & Plans â†’ Settings.'
+                a: 'OrQuanta\'s CostWatcher enforces 3 automatic budget tiers: Warn at 50%, Throttle new jobs at 80%, Halt non-critical jobs at 95%. Set your monthly budget in Billing & Plans Settings.'
             },
             {
                 q: 'What payment methods are accepted?',
@@ -39,11 +39,11 @@ const FAQS = [
         ]
     },
     {
-        section: 'ðŸ¤– AI Agents',
+        section: 'AI Agents',
         items: [
             {
                 q: 'What are the 5 core agents?',
-                a: '1. Orchestrator â€” Decomposes your goal into subtasks. 2. Scheduler â€” Picks the optimal GPU and timing. 3. CostOptimizer â€” Finds the cheapest provider in real-time. 4. HealingAgent â€” Recovers failed jobs automatically. 5. Vero (Meta-Agent) â€” Oversees all agents and injects corrective goals.'
+                a: '1. Orchestrator "" Decomposes your goal into subtasks. 2. Scheduler "" Picks the optimal GPU and timing. 3. CostOptimizer "" Finds the cheapest provider in real-time. 4. HealingAgent "" Recovers failed jobs automatically. 5. Vero (Meta-Agent) "" Oversees all agents and injects corrective goals.'
             },
             {
                 q: 'What is NemoClaw?',
@@ -51,12 +51,12 @@ const FAQS = [
             },
             {
                 q: 'What is Vero?',
-                a: 'Vero is the meta-agent â€” the "manager" that watches all other agents. It runs a health loop every 15 seconds, 60 seconds, and 5 minutes. If any agent misbehaves or makes a bad decision, Vero injects a corrective goal to fix it automatically.'
+                a: 'Vero is the meta-agent "" the "manager" that watches all other agents. It runs a health loop every 15 seconds, 60 seconds, and 5 minutes. If any agent misbehaves or makes a bad decision, Vero injects a corrective goal to fix it automatically.'
             },
         ]
     },
     {
-        section: 'ðŸ›¡ï¸ Security & Compliance',
+        section: 'Security & Compliance',
         items: [
             {
                 q: 'How is my data protected?',
@@ -64,20 +64,20 @@ const FAQS = [
             },
             {
                 q: 'What is the Audit Log?',
-                a: 'A tamper-proof event trail of every decision made by every agent â€” job submissions, provider switches, cost alerts, healing actions. Each entry is HMAC-signed for integrity. Useful for SOC2 / compliance reviews.'
+                a: 'A tamper-proof event trail of every decision made by every agent "" job submissions, provider switches, cost alerts, healing actions. Each entry is HMAC-signed for integrity. Useful for SOC2 / compliance reviews.'
             },
         ]
     },
     {
-        section: 'âš™ï¸ Technical',
+        section: 'Technical',
         items: [
             {
                 q: 'How do I connect my cloud provider API keys?',
-                a: 'Go to Settings â†’ API Keys. Add your RunPod, Lambda Labs, CoreWeave, AWS, or GCP API keys. OrQuanta uses these to provision GPUs on your behalf. Keys are AES-256 encrypted at rest.'
+                a: 'Go to Settings > API Keys. Add your RunPod, Lambda Labs, CoreWeave, AWS, or GCP API keys. OrQuanta uses these to provision GPUs on your behalf. Keys are AES-256 encrypted at rest.'
             },
             {
                 q: 'What GPU types are supported?',
-                a: 'A100 80GB, H100 80GB, A10G, RTX 4090, RTX 3090, V100, T4 â€” across Lambda Labs, RunPod, CoreWeave, AWS (g5/p4d), GCP (a2/n1-highmem), and Azure (NDv3/NDv4). New GPU types are added automatically as providers list them.'
+                a: 'A100 80GB, H100 80GB, A10G, RTX 4090, RTX 3090, V100, T4 "" across Lambda Labs, RunPod, CoreWeave, AWS (g5/p4d), GCP (a2/n1-highmem), and Azure (NDv3/NDv4). New GPU types are added automatically as providers list them.'
             },
             {
                 q: 'Can I use OrQuanta with Kubernetes?',
@@ -129,7 +129,7 @@ export default function HelpPage() {
                 </div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Help Center</h1>
                 <p className="text-slate-400 text-sm max-w-md mx-auto">
-                    Everything you need to master OrQuanta â€” the AI-native GPU cloud platform.
+                    Everything you need to master OrQuanta "" the AI-native GPU cloud platform.
                 </p>
             </div>
 
@@ -232,7 +232,7 @@ export default function HelpPage() {
                 style={{ background: 'linear-gradient(135deg, rgba(0,145,255,0.05), rgba(123,47,255,0.05))', border: '1px solid rgba(0,145,255,0.1)' }}>
                 <MessageCircle size={24} className="mx-auto mb-3" style={{ color: '#0091FF' }} />
                 <h3 className="text-gray-900 font-semibold mb-1">Still need help?</h3>
-                <p className="text-slate-500 text-sm mb-4">Our team is available Monâ€“Fri, 9amâ€“6pm IST</p>
+                <p className="text-slate-500 text-sm mb-4">Our team is available Mon""Fri, 9am""6pm IST</p>
                 <div className="flex items-center justify-center gap-3 flex-wrap">
                     <a href="mailto:support@orquanta.com"
                         className="btn-primary text-sm flex items-center gap-2"
