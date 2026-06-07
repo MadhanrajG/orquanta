@@ -1,4 +1,4 @@
-"""OrQuanta Agentic v1.0 — Audit Router."""
+"""OrQuanta Agentic v1.0  -  Audit Router."""
 from __future__ import annotations
 from typing import Any
 from fastapi import APIRouter, Depends, Query
@@ -17,8 +17,8 @@ async def get_audit_log(
 ) -> dict[str, Any]:
     """Return the full audit trail of all agent decisions and actions.
     
-    Every action taken by any agent — from provisioning instances to
-    sending alerts — is logged here with its reasoning and outcome.
+    Every action taken by any agent  -  from provisioning instances to
+    sending alerts  -  is logged here with its reasoning and outcome.
     """
     governor = get_governor()
     entries = governor.get_audit_log(agent_filter=agent, limit=limit, offset=offset)

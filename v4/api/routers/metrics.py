@@ -1,4 +1,4 @@
-"""OrQuanta Agentic v1.0 — Metrics Router."""
+"""OrQuanta Agentic v1.0  -  Metrics Router."""
 from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any

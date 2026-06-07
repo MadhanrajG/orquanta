@@ -1,9 +1,10 @@
 /**
- * VeroStatus — compact Vero widget for Dashboard
+ * VeroStatus - compact Vero widget for Dashboard
  * Shows live safety status: Vero health badge, agents monitored, active users, trend alerts.
  * Polls /api/v1/vero/status every 15s.
  */
 import { useState, useEffect, useContext } from 'react'
+import { motion } from 'framer-motion'
 import { AuthContext } from '../App.jsx'
 import { Crown, Users, TrendingUp, AlertTriangle, CheckCircle, Wifi } from 'lucide-react'
 
@@ -34,7 +35,11 @@ export default function VeroStatus() {
         : '#64748b'
 
     return (
-        <div style={{
+        <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+            style={{
             background: 'linear-gradient(135deg, rgba(123,47,255,0.12), rgba(0,145,255,0.08))',
             border: `1px solid ${statusColor}30`,
             borderRadius: 16, padding: '16px 20px',
@@ -74,11 +79,14 @@ export default function VeroStatus() {
                         {data?.vero_status || 'initializing'}
                     </span>
                     {/* Pulse dot */}
-                    <span style={{
+                    <motion.span
+                        animate={{ scale: [1, 1.4, 1], opacity: [1, 0.6, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                        style={{
                         width: 6, height: 6, borderRadius: '50%',
+                        display: 'inline-block',
                         background: statusColor,
                         boxShadow: `0 0 6px ${statusColor}`,
-                        animation: 'pulse 1.5s infinite',
                         marginLeft: 'auto',
                     }} />
                 </div>
@@ -91,23 +99,23 @@ export default function VeroStatus() {
             <div style={{ display: 'flex', gap: 12, flexShrink: 0 }}>
                 <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: '#10B981' }}>
-                        {data ? `${data.agent_summary?.healthy ?? '—'}/5` : '—'}
+                        {data ? `${data.agent_summary?.healthy ?? ' - '}/5` : ' - '}
                     </div>
                     <div style={{ fontSize: 10, color: '#64748b', marginTop: 1 }}>Agents</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: '#0091FF' }}>
-                        {data?.user_intelligence?.active_sessions ?? '—'}
+                        {data?.user_intelligence?.active_sessions ?? ' - '}
                     </div>
                     <div style={{ fontSize: 10, color: '#64748b', marginTop: 1 }}>Online</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: '#F472B6' }}>
-                        {data?.market_intelligence?.ui_recommendations_count ?? '—'}
+                        {data?.market_intelligence?.ui_recommendations_count ?? ' - '}
                     </div>
                     <div style={{ fontSize: 10, color: '#64748b', marginTop: 1 }}>Trends</div>
                 </div>
             </div>
-        </div>
+        </motion.div>
     )
 }

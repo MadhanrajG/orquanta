@@ -1,4 +1,5 @@
-﻿import { useState, useEffect } from'react'
+import { useState, useEffect } from'react'
+import { motion } from 'framer-motion'
 import { ScrollText, RefreshCw, Filter, CheckCircle, AlertCircle, Clock } from'lucide-react'
 import { useAuth } from'../App.jsx'
 
@@ -40,21 +41,25 @@ export default function AuditLog() {
  return () => { clearInterval(t); controller.abort() }
  }, [agentFilter, token])
 
- const outcomeIcon = o => o ==='success' ? <CheckCircle size={13} className="text-emerald-400" /> :
- o?.startsWith('error') ? <AlertCircle size={13} className="text-red-600" /> :
- <Clock size={13} className="text-amber-600" />
+ const outcomeIcon = o => o ==='success' ? <CheckCircle size={13} className="text-emerald-500" /> :
+  o?.startsWith('error') ? <AlertCircle size={13} className="text-red-500" /> :
+  <Clock size={13} className="text-amber-500" />
 
  const agentColor = name => ({
- master_orchestrator:'text-purple-600', scheduler_agent:'text-brand-400',
- cost_optimizer_agent:'text-emerald-400', healing_agent:'text-amber-600',
- forecast_agent:'text-blue-600',
- }[name] ||'text-slate-400')
+  master_orchestrator:'text-purple-600', scheduler_agent:'text-lavender-500',
+  cost_optimizer_agent:'text-emerald-600', healing_agent:'text-amber-600',
+  forecast_agent:'text-blue-600',
+ }[name] ||'text-slate-500')
 
- return (
- <div className="space-y-6 animate-fade-in">
+  return (
+  <motion.div
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+    className="space-y-6 animate-fade-in">
  <div>
- <h1 className="text-2xl font-bold text-gray-900">Audit Log</h1>
- <p className="text-slate-400 text-sm mt-0.5">Complete decision trail - every agent action logged</p>
+  <h1 className="text-2xl font-bold text-slate-800">Audit Log</h1>
+ <p className="text-slate-500 text-sm mt-0.5">Complete decision trail - every agent action logged</p>
  </div>
 
  {/* Stats row */}
@@ -67,7 +72,7 @@ export default function AuditLog() {
  { label:'Today Spend', value: `$${(stats.daily_spend_usd ?? 0).toFixed(2)}` },
  ].map(({ label, value }) => (
  <div key={label} className="glass-card p-4 text-center">
- <p className="text-xl font-bold text-gray-900">{value}</p>
+  <p className="text-xl font-bold text-slate-800" style={{ fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: 'tabular-nums' }}>{value}</p>
  <p className="text-xs text-slate-500 mt-0.5">{label}</p>
  </div>
  ))}
@@ -76,29 +81,29 @@ export default function AuditLog() {
 
  {/* Controls */}
  <div className="flex items-center gap-3">
- <Filter size={14} className="text-slate-500" />
+ <Filter size={14} className="text-slate-400" />
  <div className="flex gap-2 flex-wrap">
  {AGENTS.map(a => (
  <button key={a} onClick={() => setAgentFilter(a)}
  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
  style={{
- background: agentFilter === a ?'rgba(82,113,245,0.15)' :'rgba(0,0,0,0.06)',
- color: agentFilter === a ?'#7a9bfa' :'#94a3b8',
- border: agentFilter === a ?'1px solid rgba(82,113,245,0.3)' :'1px solid rgba(255,255,255,0.12)',
+  background: agentFilter === a ?'rgba(124,107,240,0.10)' :'rgba(12,26,58,0.03)',
+ color: agentFilter === a ?'#7C6BF0' :'#475569',
+ border: agentFilter === a ?'1px solid rgba(124,107,240,0.3)' :'1px solid #E2E8F0',
  }}>
  {a ||'All Agents'}
  </button>
  ))}
  </div>
- <button onClick={() => fetchAudit(new AbortController().signal)} className="ml-auto btn-ghost flex items-center gap-1.5 text-xs">
+ <button onClick={() => fetchAudit(new AbortController().signal)} className="ml-auto btn-ghost flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800">
  <RefreshCw size={13} />Refresh
  </button>
  </div>
 
  {/* Audit table */}
  <div className="glass-card overflow-hidden">
- <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.06]">
- <span className="text-sm font-medium text-slate-600">
+ <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200" style={{ background: '#F8FAFC' }}>
+  <span className="text-sm font-medium text-slate-600">
  {total > 0 ? `${entries.length} of ${total} entries` :'No entries yet'}
  </span>
  <span className="text-xs text-slate-500">Latest first</span>
@@ -107,21 +112,23 @@ export default function AuditLog() {
  <div className="py-12 text-center text-slate-500">Loading audit trail...</div>
  ) : entries.length === 0 ? (
  <div className="py-12 text-center">
- <ScrollText size={32} className="mx-auto mb-3" style={{ color:'#475569' }} />
- <p className="text-sm" style={{ color:'#94a3b8' }}>No audit entries yet.</p>
- <p className="text-xs mt-1" style={{ color:'#64748b' }}>Agent actions will appear here once you submit a goal.</p>
+ <ScrollText size={32} className="mx-auto mb-3" style={{ color:'#94A3B8' }} />
+ <p className="text-sm" style={{ color:'#475569' }}>No audit entries yet.</p>
+ <p className="text-xs mt-1" style={{ color:'#94A3B8' }}>Agent actions will appear here once you submit a goal.</p>
  </div>
  ) : (
- <div className="divide-y divide-white/[0.04]">
+ <div className="divide-y divide-slate-100">
  {entries.map((entry, i) => (
- <div key={entry.id || i} className="px-5 py-3.5 hover:bg-white/[0.02] transition-colors animate-fade-in">
+ <div key={entry.id || i} className="px-5 py-3.5 transition-colors animate-fade-in" style={{ cursor: 'default' }}
+  onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,107,240,0.03)'}
+  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
  <div className="flex items-start gap-3">
  <div className="mt-0.5">{outcomeIcon(entry.outcome)}</div>
  <div className="flex-1 min-w-0">
  <div className="flex items-center gap-2 flex-wrap mb-1">
  <span className={`text-sm font-semibold ${agentColor(entry.agent_name)}`}>{entry.agent_name}</span>
  <span className="text-slate-400 text-sm"></span>
- <span className="text-sm text-slate-200 font-medium">{entry.action}</span>
+ <span className="text-sm text-slate-700 font-medium">{entry.action}</span>
  {entry.cost_impact > 0 && (
  <span className="badge badge-yellow ml-auto">${entry.cost_impact.toFixed(4)}</span>
  )}
@@ -133,8 +140,8 @@ export default function AuditLog() {
  <span className={`badge ${entry.outcome ==='success' ?'badge-green' : entry.outcome ==='pending' ?'badge-gray' :'badge-red'}`}>
  {entry.outcome}
  </span>
- <span className="text-xs" style={{ color:'#94a3b8' }}>{entry.created_at ? new Date(entry.created_at).toLocaleString() :''}</span>
- <span className="text-xs font-mono" style={{ color:'#64748b' }}>{entry.id?.slice(0, 8)}</span>
+ <span className="text-xs" style={{ color:'#475569' }}>{entry.created_at ? new Date(entry.created_at).toLocaleString() :''}</span>
+ <span className="text-xs font-mono" style={{ color:'#94A3B8' }}>{entry.id?.slice(0, 8)}</span>
  </div>
  </div>
  </div>
@@ -143,7 +150,7 @@ export default function AuditLog() {
  </div>
  )}
  </div>
- </div>
+ </motion.div>
  )
 }
 

@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — WebSocket Agent Reasoning Stream
+OrQuanta Agentic v1.0  -  WebSocket Agent Reasoning Stream
 
 Real-time streaming of agent reasoning steps to the frontend dashboard.
 Clients subscribe to a WebSocket at /ws/agent-stream and receive
@@ -78,8 +78,8 @@ async def agent_stream(ws: WebSocket) -> None:
     - heartbeat: Keep-alive every 30s
     
     Messages received from client:
-    - {"type": "subscribe", "goal_id": "..."}  — subscribe to a specific goal
-    - {"type": "ping"}                          — keep-alive ping
+    - {"type": "subscribe", "goal_id": "..."}   -  subscribe to a specific goal
+    - {"type": "ping"}                           -  keep-alive ping
     """
     await manager.connect(ws)
     subscribed_goal: str | None = None

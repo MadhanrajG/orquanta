@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — Tool Registry
+OrQuanta Agentic v1.0  -  Tool Registry
 
 All callable tools available to agents as strongly-typed functions.
 Tools wrap external GPU cloud provider APIs (mocked in development,
@@ -35,7 +35,7 @@ logger = logging.getLogger("orquanta.tools")
 _INSTANCES: dict[str, dict[str, Any]] = {}
 _JOBS: dict[str, dict[str, Any]] = {}
 
-# Simulated spot price matrix (provider → gpu → region → $/hr)
+# Simulated spot price matrix (provider -> gpu -> region -> $/hr)
 SPOT_PRICE_MATRIX: dict[str, dict[str, dict[str, float]]] = {
     "aws": {
         "H100": {"us-east-1": 5.20, "eu-west-1": 5.45},
@@ -393,24 +393,57 @@ class ToolRegistry:
     # ------------------------------------------------------------------
 
     async def _real_spin_up(self, req: SpinUpRequest) -> dict[str, Any]:
-        """Delegate to real provider SDK (e.g., boto3 for AWS)."""
-        raise NotImplementedError(
-            "Real provider integration not yet implemented. "
-            "Set USE_REAL_PROVIDERS=false for mock mode."
-        )
+        """Delegate to ProviderRouter for real GPU provisioning."""
+        from v4.providers.provider_router import get_router
+        router = get_router()
+        try:
+            instance, decision = await router.spin_up_cheapest(
+                gpu_type=req.gpu_type,
+                gpu_count=req.count,
+                spot=True,
+                tags={"source": "tool_registry"},
+            )
+            return {
+                "instance_id": instance.instance_id,
+                "provider": instance.provider,
+                "gpu_type": instance.gpu_type,
+                "gpu_count": instance.gpu_count,
+                "region": instance.region,
+                "status": instance.status,
+                "hourly_cost_usd": instance.hourly_cost_usd,
+                "vram_gb": instance.vram_gb,
+                "provisioned_at": instance.launched_at,
+                "routing_decision": decision.to_dict(),
+            }
+        except Exception as exc:
+            logger.error(f"[Tool] Real spin_up failed: {exc}")
+            raise
 
     async def _real_terminate(self, instance_id: str) -> dict[str, Any]:
-        """Delegate to real provider SDK."""
-        raise NotImplementedError(
-            "Real provider integration not yet implemented."
-        )
+        """Delegate to ProviderRouter for real instance termination."""
+        from v4.providers.provider_router import get_router
+        router = get_router()
+        # Find which provider owns this instance
+        for name, provider in router._providers.items():
+            try:
+                ok = await router.terminate_instance(instance_id, name)
+                if ok:
+                    return {
+                        "status": "terminated",
+                        "instance_id": instance_id,
+                        "provider": name,
+                        "terminated_at": datetime.now(timezone.utc).isoformat(),
+                    }
+            except Exception:
+                continue
+        return {"status": "not_found", "instance_id": instance_id}
 
     async def _send_slack(self, req: AlertRequest, alert_id: str, ts: str) -> None:
         """Send Slack webhook notification."""
         import urllib.request
         webhook_url = os.getenv("SLACK_WEBHOOK_URL", "")
         payload = json_payload = {
-            "text": f"🚨 *OrQuanta Alert [{req.severity.upper()}]*\n{req.message}",
+            "text": f" *OrQuanta Alert [{req.severity.upper()}]*\n{req.message}",
             "blocks": [
                 {"type": "section", "text": {"type": "mrkdwn",
                     "text": f"*[{req.severity.upper()}]* {req.message}"}},

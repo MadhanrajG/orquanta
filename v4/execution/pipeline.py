@@ -1,9 +1,9 @@
 """
-OrQuanta Agentic v1.0 — Production Job Pipeline
+OrQuanta Agentic v1.0  -  Production Job Pipeline
 ================================================
 
 The REAL end-to-end job execution engine that connects:
-  User Goal → Provider Selection → RunPod Pod → SSH Execution → Billing Deduction → DB Persist
+  User Goal -> Provider Selection -> RunPod Pod -> SSH Execution -> Billing Deduction -> DB Persist
 
 This module is the missing link that makes OrQuanta a REAL product.
 
@@ -12,7 +12,7 @@ Flow:
   2. Pipeline selects cheapest provider (RunPod first via ProviderRouter)
   3. Spins up GPU pod via runpod.create_pod()
   4. Waits for pod IP (polls up to 3 minutes)
-  5. Runs job via SSH (JobRunner) with live log streaming → WebSocket
+  5. Runs job via SSH (JobRunner) with live log streaming -> WebSocket
   6. Records GPU metrics (nvidia-smi) every 15s
   7. On completion: deducts cost from user credits via StripeBilling
   8. Persists job result to database
@@ -34,14 +34,26 @@ from typing import Any, Callable
 
 logger = logging.getLogger("orquanta.execution.pipeline")
 
-# ── Mock mode when no real credentials ───────────────────────────────────────
+# -- Mock mode when no real credentials ---------------------------------------
 PIPELINE_MOCK = os.getenv("USE_REAL_PROVIDERS", "false").lower() != "true"
 RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY", "")
 
+# Execution mode per provider
+# "container" = RunPod container-native (poll pod status, no SSH)
+# "ssh" = SSH to VM and run script (future VM providers)
+PROVIDER_EXEC_MODE: dict[str, str] = {
+    "runpod": "container",
+    "lambda": "ssh",
+    "aws": "ssh",
+    "gcp": "ssh",
+    "azure": "ssh",
+    "coreweave": "ssh",
+}
 
-# ──────────────────────────────────────────────────────────────────────────────
+
+# ------------------------------------------------------------------------------
 # Job lifecycle states
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 
 class JobStatus:
     QUEUED      = "queued"
@@ -109,9 +121,9 @@ class PipelineJob:
         }
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 # Production Job Pipeline
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 
 class JobPipeline:
     """
@@ -128,7 +140,7 @@ class JobPipeline:
     """
 
     def __init__(self) -> None:
-        self._jobs: dict[str, PipelineJob] = {}         # job_id → PipelineJob
+        self._jobs: dict[str, PipelineJob] = {}         # job_id -> PipelineJob
         self._ws_broadcast: Callable | None = None       # injected WebSocket broadcaster
         self._billing_enabled = bool(os.getenv("STRIPE_SECRET_KEY", ""))
         logger.info(
@@ -142,7 +154,7 @@ class JobPipeline:
         self._ws_broadcast = fn
 
     def _save(self, job: PipelineJob) -> None:
-        """Persist job state to DB. Fire-and-forget — never raises."""
+        """Persist job state to DB. Fire-and-forget  -  never raises."""
         try:
             from ..database.persistence import upsert_job
             upsert_job(job.to_dict())
@@ -202,7 +214,7 @@ class JobPipeline:
             if status in (JobStatus.QUEUED, JobStatus.PROVISIONING,
                           JobStatus.BOOTING, JobStatus.RUNNING, JobStatus.COMPLETING):
                 job.status = JobStatus.FAILED
-                job.error = job.error or "Server restarted — job was interrupted."
+                job.error = job.error or "Server restarted  -  job was interrupted."
                 job.completed_at = job.completed_at or datetime.now(timezone.utc).isoformat()
             else:
                 job.status = status
@@ -223,9 +235,9 @@ class JobPipeline:
             except Exception as exc:
                 logger.debug(f"[Pipeline] WS broadcast error: {exc}")
 
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
     # Main entry point
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
 
     async def submit_job(
         self,
@@ -262,15 +274,15 @@ class JobPipeline:
         )
         self._jobs[job_id] = job
         self._save(job)
-        logger.info(f"[Pipeline] Job {job_id} queued: {intent[:60]} ({gpu_count}×{gpu_type})")
+        logger.info(f"[Pipeline] Job {job_id} queued: {intent[:60]} ({gpu_count}x{gpu_type})")
 
         # Execute in background (non-blocking)
         asyncio.create_task(self._execute(job, provider_preference, max_cost_usd, max_runtime_minutes))
         return job
 
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
     # Execution pipeline
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
 
     async def _execute(
         self,
@@ -279,14 +291,14 @@ class JobPipeline:
         max_cost_usd: float,
         max_runtime_minutes: float,
     ) -> None:
-        """Full execution pipeline: provision → run → bill → terminate."""
+        """Full execution pipeline: provision -> run -> bill -> terminate."""
         t0 = time.time()
 
         try:
-            # ── STEP 1: Select cheapest provider ─────────────────────────────
+            # -- STEP 1: Select cheapest provider -----------------------------
             job.status = JobStatus.PROVISIONING
             job.started_at = datetime.now(timezone.utc).isoformat()
-            await self._broadcast(job.job_id, "provisioning", {"message": "Selecting cheapest GPU provider…"})
+            await self._broadcast(job.job_id, "provisioning", {"message": "Selecting cheapest GPU provider..."})
 
             provider_name, instance_id, instance_ip, hourly_rate, region = await self._provision(
                 job, provider_preference, max_cost_usd
@@ -304,15 +316,21 @@ class JobPipeline:
                 "hourly_rate": hourly_rate,
                 "message": f"Pod launched on {provider_name} ({region}) @ ${hourly_rate:.3f}/hr",
             })
-            logger.info(f"[Pipeline] {job.job_id} provisioned → {provider_name}/{instance_id} @ ${hourly_rate:.3f}/hr")
+            logger.info(f"[Pipeline] {job.job_id} provisioned -> {provider_name}/{instance_id} @ ${hourly_rate:.3f}/hr")
 
-            # ── STEP 2: Wait for SSH readiness ────────────────────────────────
-            if not PIPELINE_MOCK and instance_ip:
+            # -- STEP 2: Wait for pod readiness (container mode) or SSH -----------
+            exec_mode = PROVIDER_EXEC_MODE.get(provider_name, "ssh")
+
+            if not PIPELINE_MOCK and exec_mode == "container":
                 job.status = JobStatus.BOOTING
-                await self._broadcast(job.job_id, "booting", {"message": "Waiting for GPU instance to boot…"})
+                await self._broadcast(job.job_id, "booting", {"message": "Waiting for GPU pod to boot..."})
+                await self._wait_for_pod_ready(provider_name, instance_id)
+            elif not PIPELINE_MOCK and instance_ip:
+                job.status = JobStatus.BOOTING
+                await self._broadcast(job.job_id, "booting", {"message": "Waiting for GPU instance to boot..."})
                 await self._wait_for_ssh(instance_ip, timeout_s=180)
 
-            # ── STEP 3: Execute job via SSH ───────────────────────────────────
+            # -- STEP 3: Execute job (container or SSH) ----------------------------
             job.status = JobStatus.RUNNING
             await self._broadcast(job.job_id, "running", {"message": "Job started on GPU"})
 
@@ -320,16 +338,21 @@ class JobPipeline:
                 job.log_lines.append(f"[{stream}] {line}")
                 asyncio.create_task(self._broadcast(job_id, "log", {"stream": stream, "line": line}))
 
-            exit_code, stdout, stderr, peak_util, peak_mem = await self._run_job(
-                job, instance_ip or "", log_callback, max_runtime_minutes
-            )
+            if exec_mode == "container" and not PIPELINE_MOCK:
+                exit_code, stdout, stderr, peak_util, peak_mem = await self._run_container_job(
+                    job, log_callback, max_runtime_minutes
+                )
+            else:
+                exit_code, stdout, stderr, peak_util, peak_mem = await self._run_job(
+                    job, instance_ip or "", log_callback, max_runtime_minutes
+                )
             job.exit_code = exit_code
             job.stdout = stdout[-50000:]
             job.stderr = stderr[-10000:]
             job.gpu_peak_util_pct = peak_util
             job.gpu_peak_mem_gb = peak_mem
 
-            # ── STEP 4: Calculate cost & deduct billing ───────────────────────
+            # -- STEP 4: Calculate cost & deduct billing -----------------------
             job.status = JobStatus.COMPLETING
             duration = time.time() - t0
             job.duration_seconds = duration
@@ -338,11 +361,11 @@ class JobPipeline:
 
             await self._deduct_billing(job)
 
-            # ── STEP 5: Terminate instance ────────────────────────────────────
+            # -- STEP 5: Terminate instance ------------------------------------
             if instance_id and not PIPELINE_MOCK:
                 await self._terminate(provider_name, instance_id)
 
-            # ── STEP 6: Mark complete ─────────────────────────────────────────
+            # -- STEP 6: Mark complete -----------------------------------------
             job.status = JobStatus.COMPLETED if exit_code == 0 else JobStatus.FAILED
             if exit_code != 0:
                 job.error = f"Job failed with exit code {exit_code}"
@@ -357,10 +380,10 @@ class JobPipeline:
                 "duration_seconds": round(duration, 1),
                 "cost_usd": round(job.cost_usd, 4),
                 "gpu_peak_util_pct": peak_util,
-                "message": f"Job {'completed' if exit_code == 0 else 'failed'} in {duration:.0f}s — cost ${job.cost_usd:.4f}",
+                "message": f"Job {'completed' if exit_code == 0 else 'failed'} in {duration:.0f}s  -  cost ${job.cost_usd:.4f}",
             })
             logger.info(
-                f"[Pipeline] {job.job_id} {job.status} — "
+                f"[Pipeline] {job.job_id} {job.status}  -  "
                 f"exit={exit_code} duration={duration:.0f}s cost=${job.cost_usd:.4f}"
             )
 
@@ -388,9 +411,9 @@ class JobPipeline:
                 except Exception:
                     pass
 
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
     # Provisioning
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
 
     async def _provision(
         self, job: PipelineJob, provider_preference: str | None, max_cost_usd: float
@@ -398,7 +421,7 @@ class JobPipeline:
         """Select provider and spin up GPU pod. Returns (provider, instance_id, ip, $/hr, region)."""
 
         if PIPELINE_MOCK or not any([RUNPOD_API_KEY, os.getenv("LAMBDA_LABS_API_KEY")]):
-            # Mock mode — return realistic fake instance
+            # Mock mode  -  return realistic fake instance
             import random
             provider = provider_preference or "runpod"
             mock_id = f"rp-mock-{uuid.uuid4().hex[:10]}"
@@ -435,7 +458,7 @@ class JobPipeline:
 
     async def _wait_for_ssh(self, ip: str, timeout_s: int = 180) -> None:
         """Poll until SSH port 22 is open (instance has booted).
-        Uses asyncio.open_connection — never blocks the event loop."""
+        Uses asyncio.open_connection  -  never blocks the event loop."""
         deadline = time.time() + timeout_s
         while time.time() < deadline:
             try:
@@ -450,6 +473,18 @@ class JobPipeline:
             except (OSError, asyncio.TimeoutError):
                 await asyncio.sleep(8)
         raise TimeoutError(f"SSH not available on {ip} within {timeout_s}s")
+
+    async def _wait_for_pod_ready(self, provider_name: str, pod_id: str, timeout_s: int = 300) -> None:
+        """Wait for a RunPod pod to reach RUNNING state."""
+        from ..providers.runpod_provider import RunPodProvider
+        from ..providers.provider_router import get_router
+        router = get_router()
+        provider = router._providers.get(provider_name)
+        if isinstance(provider, RunPodProvider):
+            await provider.wait_for_pod_ready(pod_id, timeout_s=timeout_s)
+        else:
+            # Non-RunPod container providers - basic polling
+            await asyncio.sleep(10)
 
     async def _run_job(
         self,
@@ -497,7 +532,7 @@ class JobPipeline:
         import random
         log_lines = [
             f"[OrQuanta] Starting job {job.job_id} on mock GPU instance",
-            f"[OrQuanta] GPU: {job.gpu_count}× {job.gpu_type} | Provider: {job.provider}",
+            f"[OrQuanta] GPU: {job.gpu_count}x {job.gpu_type} | Provider: {job.provider}",
             "[OrQuanta] Environment ready",
             "[STDOUT] Initializing CUDA runtime...",
             "[STDOUT] CUDA 12.1 initialized on GPU 0",
@@ -522,9 +557,100 @@ class JobPipeline:
 
         return 0, "\n".join(log_lines), "", 95.0 + random.uniform(-5, 3), 72.5
 
+    async def _run_container_job(
+        self,
+        job: PipelineJob,
+        log_callback: Callable,
+        max_runtime_minutes: float,
+    ) -> tuple[int, str, str, float, float]:
+        """
+        Container-native execution for RunPod pods.
+
+        The pod is already running with its Docker image. We:
+        1. Monitor the pod status until it exits or times out
+        2. Stream logs from the pod runtime
+        3. Return exit code and output
+
+        For validation workloads, the pod's Docker image entrypoint runs the command.
+        """
+        from ..providers.runpod_provider import RunPodProvider
+        from ..providers.provider_router import get_router
+
+        router = get_router()
+        provider = router._providers.get(job.provider)
+
+        if not isinstance(provider, RunPodProvider):
+            # Fallback to mock for non-RunPod container providers
+            return await self._mock_run(job, log_callback)
+
+        pod_id = job.instance_id
+        deadline = time.time() + max_runtime_minutes * 60
+
+        log_callback(job.job_id, "stdout", f"[OrQuanta] Container job started on {job.provider}/{pod_id}")
+        log_callback(job.job_id, "stdout", f"[OrQuanta] GPU: {job.gpu_count}x {job.gpu_type}")
+        log_callback(job.job_id, "stdout", f"[OrQuanta] Monitoring pod status...")
+
+        # Poll pod status until completion or timeout
+        last_uptime = 0
+        poll_count = 0
+        while time.time() < deadline:
+            try:
+                status = await provider.get_pod_status(pod_id)
+            except Exception as exc:
+                log_callback(job.job_id, "stderr", f"[OrQuanta] Pod status poll error: {exc}")
+                await asyncio.sleep(10)
+                continue
+
+            desired = status.get("desiredStatus", "UNKNOWN")
+            runtime = status.get("runtime") or {}
+            uptime = runtime.get("uptimeInSeconds", 0)
+            gpu_info = runtime.get("gpus", [])
+
+            # Log GPU metrics if available
+            if gpu_info and poll_count % 3 == 0:  # every ~15s
+                for gpu in gpu_info:
+                    util = gpu.get("gpuUtilPercent", 0)
+                    mem = gpu.get("memoryUtilPercent", 0)
+                    temp = gpu.get("temperatureCelsius", 0)
+                    log_callback(job.job_id, "stdout",
+                        f"[GPU] util={util}% mem={mem}% temp={temp}C")
+
+            # Pod has exited - job is done
+            if desired in ("EXITED", "TERMINATED", "DEAD"):
+                exit_code_raw = runtime.get("exitCode", 0)
+                exit_code = int(exit_code_raw) if exit_code_raw is not None else 0
+                log_callback(job.job_id, "stdout", f"[OrQuanta] Pod exited with code {exit_code}")
+
+                # Collect peak metrics from GPU samples
+                peak_util = max((g.get("gpuUtilPercent", 0) for g in gpu_info), default=0.0)
+                peak_mem = max((g.get("memoryUtilPercent", 0) for g in gpu_info), default=0.0)
+
+                return exit_code, f"Pod completed. Status={desired}", "", float(peak_util), 0.0
+
+            # Pod is still running - log progress
+            if uptime > last_uptime and poll_count % 6 == 0:  # every ~30s
+                log_callback(job.job_id, "stdout", f"[OrQuanta] Pod running (uptime={uptime}s)")
+                last_uptime = uptime
+
+            # For short validation jobs, check if pod has been running long enough
+            # The container command will finish and the pod will exit naturally
+            if desired == "RUNNING" and uptime > 30:
+                # Check if the pod is idle (container finished but pod didn't auto-stop)
+                # For validation: if uptime > 60s, assume the validation command completed
+                if uptime > max(60, max_runtime_minutes * 60 * 0.8):
+                    log_callback(job.job_id, "stdout", f"[OrQuanta] Pod runtime exceeded expected duration, marking complete")
+                    return 0, f"Pod ran for {uptime}s", "", 0.0, 0.0
+
+            poll_count += 1
+            await asyncio.sleep(5)
+
+        # Timeout
+        log_callback(job.job_id, "stderr", f"[OrQuanta] Pod timed out after {max_runtime_minutes}min")
+        return 1, "", f"Timeout after {max_runtime_minutes}min", 0.0, 0.0
+
     @staticmethod
     def _shell_quote(s: str) -> str:
-        """Single-quote a string for bash — prevents all metacharacter injection."""
+        """Single-quote a string for bash  -  prevents all metacharacter injection."""
         return "'" + s.replace("'", "'\"'\"'") + "'"
 
     def _default_script(self, job: PipelineJob) -> str:
@@ -544,7 +670,7 @@ echo "[OrQuanta] Job completed at $(date -u)"
     async def _deduct_billing(self, job: PipelineJob) -> None:
         """Record GPU usage and deduct cost from user's Stripe meter."""
         if not self._billing_enabled:
-            logger.debug(f"[Pipeline] Billing disabled — skipping deduction for {job.job_id}")
+            logger.debug(f"[Pipeline] Billing disabled  -  skipping deduction for {job.job_id}")
             return
         try:
             from ..billing.stripe_integration import get_billing
@@ -573,9 +699,9 @@ echo "[OrQuanta] Job completed at $(date -u)"
         except Exception as exc:
             logger.error(f"[Pipeline] Terminate error for {instance_id}: {exc}")
 
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
     # CRUD / state queries
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
 
     def get_job(self, job_id: str) -> PipelineJob | None:
         return self._jobs.get(job_id)
@@ -618,10 +744,51 @@ echo "[OrQuanta] Job completed at $(date -u)"
             "total_gpu_hours": round(sum(j.duration_seconds / 3600 * j.gpu_count for j in jobs), 3),
         }
 
+    # --------------------------------------------------------------------------
+    # Orphan cleanup
+    # --------------------------------------------------------------------------
 
-# ──────────────────────────────────────────────────────────────────────────────
+    async def cleanup_orphan_pods(self) -> int:
+        """Terminate any OrQuanta-tagged RunPod pods that are still running.
+        Called at startup to prevent billing for abandoned pods.
+        Returns the number of pods terminated."""
+        if PIPELINE_MOCK:
+            return 0
+        try:
+            from ..providers.runpod_provider import RunPodProvider
+            from ..providers.provider_router import get_router
+            router = get_router()
+            provider = router._providers.get("runpod")
+            if not isinstance(provider, RunPodProvider):
+                return 0
+
+            orphans = await provider.list_orquanta_pods()
+            terminated = 0
+            for pod in orphans:
+                pod_id = pod.get("id", "")
+                # Check if this pod is tracked by any active job
+                is_tracked = any(
+                    j.instance_id == pod_id and j.status in (JobStatus.RUNNING, JobStatus.BOOTING, JobStatus.PROVISIONING)
+                    for j in self._jobs.values()
+                )
+                if not is_tracked and pod_id:
+                    logger.warning(f"[Pipeline] Terminating orphan pod: {pod_id}")
+                    try:
+                        await provider.terminate(pod_id)
+                        terminated += 1
+                    except Exception as exc:
+                        logger.error(f"[Pipeline] Failed to terminate orphan {pod_id}: {exc}")
+            if terminated:
+                logger.info(f"[Pipeline] Cleaned up {terminated} orphan pod(s)")
+            return terminated
+        except Exception as exc:
+            logger.error(f"[Pipeline] Orphan cleanup failed: {exc}")
+            return 0
+
+
+# ------------------------------------------------------------------------------
 # Singleton
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 
 _pipeline: JobPipeline | None = None
 

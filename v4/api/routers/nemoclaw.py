@@ -26,7 +26,7 @@ except ImportError:
 router = APIRouter(prefix="/api/v1/nemoclaw", tags=["NemoClaw"])
 
 
-# ── Request Models ─────────────────────────────────────────────────────────────
+# -- Request Models -------------------------------------------------------------
 
 class RunGoalRequest(BaseModel):
     goal_text: str
@@ -39,7 +39,7 @@ class ContextQueryRequest(BaseModel):
     top_k: int = 5
 
 
-# ── Endpoints ──────────────────────────────────────────────────────────────────
+# -- Endpoints ------------------------------------------------------------------
 
 @router.get("/status", summary="NemoClaw engine status and full report")
 async def nemoclaw_status(user: dict = Depends(get_current_user)):

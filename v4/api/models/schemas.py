@@ -1,4 +1,4 @@
-"""OrQuanta Agentic v1.0 — All Pydantic schemas and response models."""
+"""OrQuanta Agentic v1.0  -  All Pydantic schemas and response models."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ class RegisterRequest(BaseModel):
         """Lowercase and strip whitespace; block obviously injected values."""
         import re
         v = str(v).strip().lower()
-        # Block SQL/script injection — hyphen alone is valid in emails (user@my-domain.com)
+        # Block SQL/script injection  -  hyphen alone is valid in emails (user@my-domain.com)
         # Double-dash (SQL comment) is caught by the |-- branch
         if re.search(r"[<>'\"\\;]|--", v):
             raise ValueError("Invalid characters in email address")
@@ -64,7 +64,7 @@ class GoalSubmitRequest(BaseModel):
         min_length=10,
         max_length=2000,
         description="Natural language description of what you want to accomplish.",
-        examples=["Train a LLaMA 3 70B model on my medical dataset using 4×H100 GPUs"],
+        examples=["Train a LLaMA 3 70B model on my medical dataset using 4xH100 GPUs"],
     )
     budget_usd: Optional[float] = Field(None, ge=0.0, description="Optional budget cap in USD")
     priority: Optional[float] = Field(0.5, ge=0.0, le=1.0, description="Priority 0.0-1.0")
@@ -126,7 +126,7 @@ class JobCreateRequest(BaseModel):
     gpu_type: str = Field("H100", description="GPU model: H100/A100/T4/A10G/L4/V100")
     gpu_count: int = Field(1, ge=1, le=64)
     provider: str = Field("runpod", description="Cloud provider preference: runpod/lambda/coreweave/aws/gcp/azure (router selects cheapest if not found)")
-    required_vram_gb: int = Field(40, ge=1, le=640, description="Required VRAM in GB — used for bin-packing scheduler")
+    required_vram_gb: int = Field(40, ge=1, le=640, description="Required VRAM in GB  -  used for bin-packing scheduler")
     max_runtime_minutes: int = Field(120, ge=1, le=10080)
     max_cost_usd: float = Field(50.0, ge=0.0)
     priority: float = Field(0.5, ge=0.0, le=1.0)

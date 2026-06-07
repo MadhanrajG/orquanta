@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — Docker Container Job Runner
+OrQuanta Agentic v1.0  -  Docker Container Job Runner
 
 Submits ML jobs as Docker containers on GPU instances:
 - Pulls images from DockerHub / ECR / GCR
@@ -32,8 +32,8 @@ class DockerJobSpec:
     gpu_count: int = 1
     gpu_device_ids: str = "all"         # "all" or "0,1,2,3"
     env: dict[str, str] = field(default_factory=dict)
-    volumes: dict[str, str] = field(default_factory=dict)   # host_path → container_path
-    ports: dict[int, int] = field(default_factory=dict)     # host_port → container_port
+    volumes: dict[str, str] = field(default_factory=dict)   # host_path -> container_path
+    ports: dict[int, int] = field(default_factory=dict)     # host_port -> container_port
     shm_size: str = "16g"               # /dev/shm for multi-GPU comm
     restart_policy: str = "no"          # no / on-failure / always
     memory_limit: str | None = None     # e.g. "64g"
@@ -73,7 +73,7 @@ class DockerRunner:
 
     Can target:
     1. Local Docker daemon (docker.sock)
-    2. Remote Docker daemon over TCP (host:2376) — for cloud instances
+    2. Remote Docker daemon over TCP (host:2376)  -  for cloud instances
     3. Docker-in-Kubernetes (DinD) sidecar
 
     Requires: pip install docker
@@ -88,14 +88,14 @@ class DockerRunner:
         """
         self._docker_host = docker_host
         self._client = None
-        self._active: dict[str, str] = {}  # job_id → container_id
+        self._active: dict[str, str] = {}  # job_id -> container_id
 
     def _get_client(self):
         if self._client is None:
             try:
                 import docker
                 if self._docker_host:
-                    # TLS for remote daemons — expects SSL certs in ~/.docker/
+                    # TLS for remote daemons  -  expects SSL certs in ~/.docker/
                     self._client = docker.DockerClient(
                         base_url=self._docker_host,
                         tls=self._docker_host.startswith("tcp://"),
@@ -125,7 +125,7 @@ class DockerRunner:
         client = self._get_client()
         t0 = time.time()
 
-        logger.info(f"[Docker] Pulling image {spec.image} for job {spec.job_id}…")
+        logger.info(f"[Docker] Pulling image {spec.image} for job {spec.job_id}...")
         try:
             await loop.run_in_executor(None, lambda: client.images.pull(spec.image))
         except Exception as exc:
@@ -208,7 +208,7 @@ class DockerRunner:
         self._active.pop(spec.job_id, None)
 
         status = "completed" if exit_code == 0 else "failed"
-        logger.info(f"[Docker] Job {spec.job_id} {status} — exit={exit_code}, cost=${total_cost:.4f}")
+        logger.info(f"[Docker] Job {spec.job_id} {status}  -  exit={exit_code}, cost=${total_cost:.4f}")
 
         return DockerJobResult(
             job_id=spec.job_id,

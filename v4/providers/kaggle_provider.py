@@ -1,11 +1,11 @@
 """
-OrQuanta — Kaggle Kernels Provider
+OrQuanta  -  Kaggle Kernels Provider
 ====================================
 Gives OrQuanta users FREE GPU compute via Kaggle (30 hrs/week T4/P100).
 
 Setup (per user):
   1. User signs up at kaggle.com
-  2. Account → API → Create New API Token → downloads kaggle.json
+  2. Account -> API -> Create New API Token -> downloads kaggle.json
   3. User pastes username + key into OrQuanta profile settings
   4. OrQuanta submits, monitors, and retrieves outputs automatically
 
@@ -19,7 +19,7 @@ Kaggle free tier:
 
 This module handles:
   - Kernel creation / update via Kaggle REST API
-  - Job status polling (queued → running → complete)
+  - Job status polling (queued -> running -> complete)
   - Output download (generated files, logs)
   - Cost tracking ($0.00 always)
 """
@@ -64,7 +64,7 @@ class KaggleProvider:
         self.api_key  = api_key
         self._auth    = (username, api_key)
 
-    # ─── Public interface ──────────────────────────────────────────────────────
+    # --- Public interface ------------------------------------------------------
 
     async def submit_job(
         self,
@@ -106,7 +106,7 @@ class KaggleProvider:
             result = await self._push_kernel(tmp, slug)
 
         dashboard_url = f"https://www.kaggle.com/code/{self.username}/{slug}"
-        logger.info(f"[Kaggle] Submitted kernel {kernel_ref} → {dashboard_url}")
+        logger.info(f"[Kaggle] Submitted kernel {kernel_ref} -> {dashboard_url}")
 
         return {
             "kernel_ref":    kernel_ref,
@@ -161,7 +161,7 @@ class KaggleProvider:
         for attempt in range(MAX_POLL_ATTEMPTS):
             status = await self.get_status(kernel_ref)
             s = status.get("status")
-            logger.info(f"[Kaggle] {kernel_ref} → {s} (poll {attempt+1})")
+            logger.info(f"[Kaggle] {kernel_ref} -> {s} (poll {attempt+1})")
 
             if on_status_change:
                 try:
@@ -207,7 +207,7 @@ class KaggleProvider:
             logger.warning(f"[Kaggle] List kernels failed: {exc}")
         return []
 
-    # ─── Internal ──────────────────────────────────────────────────────────────
+    # --- Internal --------------------------------------------------------------
 
     async def _push_kernel(self, kernel_dir: str, slug: str) -> dict:
         """Push kernel files via Kaggle API v1 (multipart or CLI equivalent)."""
@@ -238,7 +238,7 @@ class KaggleProvider:
             logger.error(f"[Kaggle] Push failed: {exc}")
             return {}
 
-    # ─── Capability check ──────────────────────────────────────────────────────
+    # --- Capability check ------------------------------------------------------
 
     async def check_credentials(self) -> bool:
         """Verify the Kaggle credentials are valid."""
@@ -267,7 +267,7 @@ class KaggleProvider:
         }
 
 
-# ─── Singleton factory ────────────────────────────────────────────────────────
+# --- Singleton factory --------------------------------------------------------
 
 def get_kaggle_provider(username: str, api_key: str) -> KaggleProvider:
     return KaggleProvider(username, api_key)

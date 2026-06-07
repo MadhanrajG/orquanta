@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — Memory Manager
+OrQuanta Agentic v1.0  -  Memory Manager
 
 ChromaDB-backed vector memory for all agents.
 Provides:

@@ -1,6 +1,7 @@
-﻿import { useState, useEffect, useCallback } from'react'
+import { useState, useEffect, useCallback } from'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
-/* â”€â”€â”€ Command Palette + Keyboard Shortcuts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/* """ Command Palette + Keyboard Shortcuts """""""""""""""""""""""""""""
  - Cmd/Ctrl+K open command palette
  - ? show keyboard shortcuts help
  - G D go to Dashboard
@@ -8,7 +9,7 @@
  - G A go to Agents
  - G C go to Costs
  - Escape close any overlay
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" */
 
 const COMMANDS = [
  { id:'dash', label:'Go to Dashboard', icon:'', shortcut:'G D', action:'nav://' },
@@ -63,50 +64,53 @@ const SHORTCUT_HELP = [
 function Kbd({ children }) {
  return (
  <kbd className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono"
- style={{ background:'rgba(0,0,0,0.08)', border:'1px solid rgba(255,255,255,0.15)', color:'#CBD5E1' }}>
+  style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', color:'#CBD5E1' }}>
  {children}
  </kbd>
  )
 }
 
-/* â”€â”€â”€ Keyboard Shortcuts Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* """ Keyboard Shortcuts Modal """"""""""""""""""""""""""""""""""""""""""" */
 function ShortcutsModal({ onClose }) {
  return (
- <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={onClose}>
- <div className="absolute inset-0" style={{ background:'rgba(0,0,0,0.7)', }} />
- <div className="relative w-full max-w-xl rounded-2xl overflow-hidden animate-fade-in"
- style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.08)', boxShadow:'0 8px 40px rgba(0,0,0,0.08), 0 32px 64px rgba(0,0,0,0.04)' }}
- onClick={e => e.stopPropagation()}>
- <div className="px-6 py-4 border-b flex items-center justify-between" style={{ borderColor:'rgba(0,0,0,0.06)' }}>
- <div className="flex items-center gap-2">
- <span className="text-lg"></span>
- <h3 className="font-semibold text-gray-900">Keyboard Shortcuts</h3>
- </div>
- <button onClick={onClose} className="text-xs text-slate-500 hover:text-gray-900"><Kbd>Esc</Kbd></button>
- </div>
- <div className="p-6 grid grid-cols-2 gap-6 max-h-96 overflow-y-auto">
- {SHORTCUT_HELP.map(group => (
- <div key={group.group}>
- <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">{group.group}</div>
- <div className="space-y-2">
- {group.items.map((item, i) => (
- <div key={i} className="flex items-center justify-between gap-4">
- <span className="text-xs text-slate-400 flex-1" style={item.danger ? { color:'#F87171' } : {}}>{item.desc}</span>
- <div className="flex gap-1 shrink-0">
- {item.keys.map((k, j) => <Kbd key={j}>{k}</Kbd>)}
- </div>
- </div>
- ))}
- </div>
- </div>
- ))}
- </div>
- </div>
- </div>
- )
+  <motion.div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={onClose}
+  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+  <div className="absolute inset-0" style={{ background:'rgba(0,0,0,0.75)', backdropFilter:'blur(8px)' }} />
+  <motion.div className="relative w-full max-w-xl rounded-2xl overflow-hidden"
+  initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }}
+  transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+  style={{ background:'#0B0E18', border:'1px solid rgba(255,255,255,0.06)', boxShadow:'0 8px 40px rgba(0,0,0,0.5), 0 32px 64px rgba(0,0,0,0.3)' }}
+  onClick={e => e.stopPropagation()}>
+  <div className="px-6 py-4 border-b flex items-center justify-between" style={{ borderColor:'rgba(255,255,255,0.06)' }}>
+  <div className="flex items-center gap-2">
+  <span className="text-lg"></span>
+  <h3 className="font-semibold text-slate-100">Keyboard Shortcuts</h3>
+  </div>
+  <button onClick={onClose} className="text-xs text-slate-500 hover:text-slate-100"><Kbd>Esc</Kbd></button>
+  </div>
+  <div className="p-6 grid grid-cols-2 gap-6 max-h-96 overflow-y-auto">
+  {SHORTCUT_HELP.map(group => (
+  <div key={group.group}>
+  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">{group.group}</div>
+  <div className="space-y-2">
+  {group.items.map((item, i) => (
+  <div key={i} className="flex items-center justify-between gap-4">
+  <span className="text-xs text-slate-400 flex-1" style={item.danger ? { color:'#F87171' } : {}}>{item.desc}</span>
+  <div className="flex gap-1 shrink-0">
+  {item.keys.map((k, j) => <Kbd key={j}>{k}</Kbd>)}
+  </div>
+  </div>
+  ))}
+  </div>
+  </div>
+  ))}
+  </div>
+  </motion.div>
+  </motion.div>
+  )
 }
 
-/* â”€â”€â”€ Cmd+K Command Palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* """ Cmd+K Command Palette """""""""""""""""""""""""""""""""""""""""""""" */
 function CommandPalette({ onClose, onNavigate }) {
  const [query, setQuery] = useState('')
  const [selected, setSelected] = useState(0)
@@ -130,7 +134,7 @@ function CommandPalette({ onClose, onNavigate }) {
  } else if (cmd.action ==='refresh') {
  window.location.reload()
  } else if (cmd.action ==='estop') {
- if (window.confirm(' Emergency stop ALL instances? This will terminate all running GPU jobs.')) {
+ if (window.confirm('Emergency stop ALL instances? This will terminate all running GPU jobs.')) {
  fetch('/emergency-stop', { method:'POST' }).catch(() => { })
  alert('Emergency stop signal sent. All instances will terminate within 30 seconds.')
  }
@@ -145,59 +149,63 @@ function CommandPalette({ onClose, onNavigate }) {
  }
 
  return (
- <div className="fixed inset-0 z-[100] flex items-start justify-center pt-24 px-4" onClick={onClose}>
- <div className="absolute inset-0" style={{ background:'rgba(0,0,0,0.7)', }} />
- <div className="relative w-full max-w-lg rounded-2xl overflow-hidden animate-slide-up"
- style={{ background:'#FFFFFF', border:'1px solid rgba(0,0,0,0.08)', boxShadow:'0 8px 40px rgba(0,0,0,0.08), 0 32px 64px rgba(0,0,0,0.04)' }}
- onClick={e => e.stopPropagation()}>
- {/* Input */}
- <div className="flex items-center gap-3 px-4 py-3.5 border-b" style={{ borderColor:'rgba(0,0,0,0.08)' }}>
- <span className="text-slate-500"></span>
- <input ref={inputRef} id="palette-input"
- value={query} onChange={e => setQuery(e.target.value)} onKeyDown={handleKey}
- placeholder="Search commands, pages, actions..."
- className="flex-1 bg-transparent text-gray-900 text-sm outline-none placeholder-slate-600"
- />
- {query && <button onClick={() => setQuery('')} className="text-xs text-slate-600 hover:text-gray-900">Clear</button>}
- </div>
+  <motion.div className="fixed inset-0 z-[100] flex items-start justify-center pt-24 px-4" onClick={onClose}
+  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+  <div className="absolute inset-0" style={{ background:'rgba(0,0,0,0.75)', backdropFilter:'blur(8px)' }} />
+  <motion.div className="relative w-full max-w-lg rounded-2xl overflow-hidden"
+  initial={{ opacity: 0, y: -20, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -20, scale: 0.96 }}
+  transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+  style={{ background:'#0B0E18', border:'1px solid rgba(255,255,255,0.06)', boxShadow:'0 8px 40px rgba(0,0,0,0.5), 0 32px 64px rgba(0,0,0,0.3)' }}
+  onClick={e => e.stopPropagation()}>
+  {/* Input */}
+  <div className="flex items-center gap-3 px-4 py-3.5 border-b" style={{ borderColor:'rgba(255,255,255,0.06)' }}>
+  <span className="text-slate-500"></span>
+  <input ref={inputRef} id="palette-input"
+  value={query} onChange={e => setQuery(e.target.value)} onKeyDown={handleKey}
+  placeholder="Search commands, pages, actions..."
+  className="flex-1 bg-transparent text-slate-100 text-sm outline-none placeholder-slate-500"
+  />
+  {query && <button onClick={() => setQuery('')} className="text-xs text-slate-400 hover:text-slate-100">Clear</button>}
+  </div>
 
- {/* Results */}
- <div className="max-h-80 overflow-y-auto py-2">
- {filtered.length === 0 ? (
- <div className="text-center py-8 text-slate-600 text-sm">No commands found</div>
- ) : (
- filtered.map((cmd, i) => (
- <button key={cmd.id} id={`palette-cmd-${cmd.id}`}
- className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all"
- style={{
- background: i === selected ?'rgba(0,145,255,0.08)' :'transparent',
- borderLeft: i === selected ?'2px solid #0091FF' :'2px solid transparent',
- }}
- onClick={() => execute(cmd)}
- onMouseEnter={() => setSelected(i)}>
- <span className="text-base w-6 text-center">{cmd.icon}</span>
- <span className="flex-1 text-sm" style={{ color: cmd.danger ?'#F87171' : i === selected ?'white' :'#CBD5E1' }}>
- {cmd.label}
- </span>
- <div className="flex gap-1 shrink-0">
- {cmd.shortcut.split('').map((k, j) => <Kbd key={j}>{k}</Kbd>)}
- </div>
- </button>
- ))
- )}
- </div>
- <div className="px-4 py-2.5 border-t flex items-center gap-4 text-xs text-slate-600" style={{ borderColor:'rgba(0,0,0,0.06)' }}>
- <span><Kbd></Kbd> navigate</span>
- <span><Kbd></Kbd> run</span>
- <span><Kbd>Esc</Kbd> close</span>
- </div>
- </div>
- </div>
- )
+  {/* Results */}
+  <motion.div className="max-h-80 overflow-y-auto py-2"
+  initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.03 } } }}>
+  {filtered.length === 0 ? (
+  <div className="text-center py-8 text-slate-500 text-sm">No commands found</div>
+  ) : (
+  filtered.map((cmd, i) => (
+  <motion.button key={cmd.id} id={`palette-cmd-${cmd.id}`}
+  variants={{ hidden: { opacity: 0, x: -8 }, visible: { opacity: 1, x: 0 } }}
+  className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all"
+  style={{
+  background: i === selected ?'rgba(0,145,255,0.1)' :'transparent',
+  borderLeft: i === selected ?'2px solid #0091FF' :'2px solid transparent',
+  }}
+  onClick={() => execute(cmd)}
+  onMouseEnter={() => setSelected(i)}>
+  <span className="text-base w-6 text-center">{cmd.icon}</span>
+  <span className="flex-1 text-sm" style={{ color: cmd.danger ?'#F87171' : i === selected ?'#E2E8F0' :'#94A3B8' }}>
+  {cmd.label}
+  </span>
+  <div className="flex gap-1 shrink-0">
+  {cmd.shortcut.split('').map((k, j) => <Kbd key={j}>{k}</Kbd>)}
+  </div>
+  </motion.button>
+  ))
+  )}
+  </motion.div>
+  <div className="px-4 py-2.5 border-t flex items-center gap-4 text-xs text-slate-500" style={{ borderColor:'rgba(255,255,255,0.06)' }}>
+  <span><Kbd></Kbd> navigate</span>
+  <span><Kbd></Kbd> run</span>
+  <span><Kbd>Esc</Kbd> close</span>
+  </div>
+  </motion.div>
+  </motion.div>
+  )
 }
 
-/* â”€â”€â”€ Main Hook + Provider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-import { useRef } from'react'
+/* """ Main Hook + Provider """""""""""""""""""""""""""""""""""""""""""""" */
 
 export function useCommandPalette(navigate) {
  const [paletteOpen, setPaletteOpen] = useState(false)

@@ -1,4 +1,4 @@
-"""OrQuanta Agentic v1.0 — Agents Package."""
+"""OrQuanta Agentic v1.0  -  Agents Package."""
 from .master_orchestrator import MasterOrchestrator
 from .scheduler_agent import SchedulerAgent
 from .cost_optimizer_agent import CostOptimizerAgent

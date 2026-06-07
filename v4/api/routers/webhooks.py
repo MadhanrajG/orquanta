@@ -1,5 +1,5 @@
 """
-OrQuanta — Webhook Automation Router (OpenClaw-inspired)
+OrQuanta  -  Webhook Automation Router (OpenClaw-inspired)
 
 Endpoints:
   POST   /api/v1/webhooks              Register a webhook
@@ -38,13 +38,13 @@ router = APIRouter(prefix="/api/v1/webhooks", tags=["webhooks"])
 WEBHOOK_SIGNING_SECRET = os.getenv("WEBHOOK_SIGNING_SECRET", secrets.token_hex(32))
 APP_URL = os.getenv("APP_URL", "https://orquanta.com")
 
-# ─── In-memory store (replace with DB in production) ─────────────────────────
-_webhooks: dict[str, dict] = {}       # id → webhook record
-_inbound_tokens: dict[str, str] = {}  # token → user_id
-_deliveries: dict[str, list] = {}     # webhook_id → [delivery records]
+# --- In-memory store (replace with DB in production) -------------------------
+_webhooks: dict[str, dict] = {}       # id -> webhook record
+_inbound_tokens: dict[str, str] = {}  # token -> user_id
+_deliveries: dict[str, list] = {}     # webhook_id -> [delivery records]
 
 
-# ─── Schemas ─────────────────────────────────────────────────────────────────
+# --- Schemas -----------------------------------------------------------------
 
 class WebhookCreate(BaseModel):
     url: HttpUrl
@@ -67,7 +67,7 @@ class WebhookOut(BaseModel):
 CurrentUser = Annotated[dict, Depends(get_current_user)]
 
 
-# ─── Routes ──────────────────────────────────────────────────────────────────
+# --- Routes ------------------------------------------------------------------
 
 @router.post("", response_model=WebhookOut, status_code=201)
 async def create_webhook(body: WebhookCreate, user: CurrentUser):
@@ -89,7 +89,7 @@ async def create_webhook(body: WebhookCreate, user: CurrentUser):
     _webhooks[wid] = record
     _inbound_tokens[token] = user["sub"]
     _deliveries[wid] = []
-    logger.info(f"[Webhooks] Registered {wid} → {body.url} for {user['sub']}")
+    logger.info(f"[Webhooks] Registered {wid} -> {body.url} for {user['sub']}")
     return _to_out(record)
 
 
@@ -149,7 +149,7 @@ async def get_deliveries(webhook_id: str, user: CurrentUser):
 @router.post("/inbound/{token}", status_code=202)
 async def inbound_trigger(token: str, request: Request):
     """
-    Inbound webhook — external systems POST here to trigger an OrQuanta job.
+    Inbound webhook  -  external systems POST here to trigger an OrQuanta job.
 
     Expected JSON body:
       { "goal": "Fine-tune LLaMA 3 8B...", "budget_usd": 50, "gpu_type": "A100" }
@@ -182,12 +182,12 @@ async def inbound_trigger(token: str, request: Request):
         "goal_id": goal_id,
         "status": "accepted",
         "goal": goal[:120],
-        "message": "Goal accepted — check dashboard for status",
+        "message": "Goal accepted  -  check dashboard for status",
         "dashboard_url": f"{APP_URL}/app",
     }
 
 
-# ─── Internal: fire a webhook ────────────────────────────────────────────────
+# --- Internal: fire a webhook ------------------------------------------------
 
 async def dispatch_event(event_type: str, data: dict[str, Any], user_id: str | None = None) -> None:
     """
@@ -251,7 +251,7 @@ async def _fire_webhook(
     hook["last_delivery"] = delivery["attempted_at"]
     hook["delivery_count"] = hook.get("delivery_count", 0) + 1
 
-    logger.info(f"[Webhooks] {delivery['status']} → {hook['url']} ({delivery.get('http_status')})")
+    logger.info(f"[Webhooks] {delivery['status']} -> {hook['url']} ({delivery.get('http_status')})")
     return success, delivery.get("http_status") or 0, delivery.get("response") or ""
 
 

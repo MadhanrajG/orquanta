@@ -1,5 +1,5 @@
 """
-OrQuanta Vero — API Router
+OrQuanta Vero  -  API Router
 
 REST endpoints for the Vero Superior Intelligence Meta-Agent.
 Uses same Depends(get_current_user) auth pattern as goals.py / jobs.py.
@@ -106,10 +106,10 @@ async def vero_status(user: dict = Depends(get_current_user)) -> dict[str, Any]:
             ],
         }
     except Exception as exc:
-        logger.warning(f"[Vero API] /status — Vero initializing: {exc}")
+        logger.warning(f"[Vero API] /status  -  Vero initializing: {exc}")
         return {
             "vero_status": "initializing",
-            "message": "Vero is starting up — loops not yet completed. Check back in 15 seconds.",
+            "message": "Vero is starting up  -  loops not yet completed. Check back in 15 seconds.",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "agent_summary": {"healthy": 0, "degraded": 0, "critical": 0, "total_corrective_goals_injected": 0},
             "user_intelligence": {"active_sessions": 0, "dau": 0, "mau": 0, "login_trend": "stable", "total_logins_today": 0},
@@ -149,7 +149,7 @@ async def vero_agent_report(user: dict = Depends(get_current_user)) -> dict[str,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as exc:
-        logger.warning(f"[Vero API] /agent-report — Vero not yet running: {exc}")
+        logger.warning(f"[Vero API] /agent-report  -  Vero not yet running: {exc}")
         # Return placeholder data so UI renders
         agents = [
             {"name": "master_orchestrator", "label": "OrMind"},
@@ -323,3 +323,135 @@ async def vero_inject_goal(
     except Exception as exc:
         logger.error(f"[Vero API] /inject-goal error: {exc}")
         raise HTTPException(status_code=503, detail=f"Goal injection failed: {exc}")
+
+
+# ---------------------------------------------------------------------------
+# Self-Improvement Endpoints
+# ---------------------------------------------------------------------------
+
+@router.get("/self-improvement/status", summary="Recursive AI self-improvement engine status")
+async def self_improvement_status(user: dict = Depends(get_current_user)) -> dict[str, Any]:
+    """
+    Returns the full self-improvement report: policy evolution history,
+    prompt template performance, and agent reflection log.
+
+    Updated in real-time as goals complete and agents reflect.
+    """
+    try:
+        from v4.agents.self_improvement_engine import get_self_improvement_engine
+        engine = get_self_improvement_engine()
+        report = engine.get_report()
+        return {
+            "policy": {
+                "version": report.policy_version,
+                "weights": report.policy_weights,
+                "total_mutations": report.total_mutations,
+                "last_mutation_cause": report.last_mutation_cause,
+                "last_mutation_at": report.last_mutation_at,
+                "history": report.policy_history,
+            },
+            "prompt_evolution": {
+                "total_evolutions": report.total_evolutions,
+                "templates_evolved": report.templates_evolved,
+                "template_stats": report.template_stats,
+            },
+            "reflections": {
+                "total_reflections": report.total_reflections,
+                "avg_improvement_per_reflection": report.avg_improvement_per_reflection,
+                "recent": report.recent_reflections,
+            },
+            "health": {
+                "status": report.improvement_health,
+                "learning_velocity_per_hr": report.learning_velocity,
+            },
+            "generated_at": report.generated_at,
+        }
+    except Exception as exc:
+        logger.warning(f"[Vero API] /self-improvement/status: {exc}")
+        return {
+            "policy": {"version": 1, "weights": {"cost": 0.60, "perf": 0.25, "risk": 0.15},
+                       "total_mutations": 0, "last_mutation_cause": "none", "last_mutation_at": "", "history": []},
+            "prompt_evolution": {"total_evolutions": 0, "templates_evolved": [], "template_stats": []},
+            "reflections": {"total_reflections": 0, "avg_improvement_per_reflection": 0.0, "recent": []},
+            "health": {"status": "initializing", "learning_velocity_per_hr": 0.0},
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+
+@router.get("/self-improvement/history", summary="Policy mutation history (last 100 snapshots)")
+async def self_improvement_history(user: dict = Depends(get_current_user)) -> dict[str, Any]:
+    """Returns the full policy mutation history for audit and visualization."""
+    try:
+        from v4.agents.self_improvement_engine import get_self_improvement_engine
+        engine = get_self_improvement_engine()
+        return {
+            "policy_version": engine.policy.version,
+            "total_mutations": engine.policy.total_mutations,
+            "history": [
+                {
+                    "version": s.version,
+                    "weights": s.weights,
+                    "cause": s.cause,
+                    "performance_score": s.performance_score,
+                    "cost_efficiency_delta": s.cost_efficiency_delta,
+                    "timestamp": s.timestamp,
+                }
+                for s in engine.policy.history
+            ],
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"History unavailable: {exc}")
+
+
+@router.post("/self-improvement/trigger", summary="Admin: trigger manual reflection (admin)")
+async def trigger_self_improvement(user: dict = Depends(get_current_user)) -> dict[str, Any]:
+    """
+    Admin: Manually trigger a policy decay cycle and log a reflection entry.
+    Useful for testing or forcing an improvement cycle.
+    """
+    _require_admin(user)
+    try:
+        from v4.agents.self_improvement_engine import get_self_improvement_engine
+        engine = get_self_improvement_engine()
+
+        # Force policy decay
+        prev_version = engine.policy.version
+        engine.policy.decay()
+
+        return {
+            "status": "triggered",
+            "policy_version_before": prev_version,
+            "policy_version_after": engine.policy.version,
+            "current_weights": engine.policy.weights,
+            "total_mutations": engine.policy.total_mutations,
+            "triggered_by": user.get("email"),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Trigger failed: {exc}")
+
+
+@router.post("/self-improvement/rollback/{version}", summary="Admin: rollback policy to version (admin)")
+async def rollback_policy(
+    version: int,
+    user: dict = Depends(get_current_user),
+) -> dict[str, Any]:
+    """Admin: rollback the routing policy to a specific version."""
+    _require_admin(user)
+    try:
+        from v4.agents.self_improvement_engine import get_self_improvement_engine
+        engine = get_self_improvement_engine()
+        success = engine.policy.rollback(version)
+        if not success:
+            raise HTTPException(status_code=404, detail=f"Version {version} not found in history")
+        return {
+            "status": "rolled_back",
+            "current_version": engine.policy.version,
+            "weights": engine.policy.weights,
+            "rolled_back_by": user.get("email"),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Rollback failed: {exc}")

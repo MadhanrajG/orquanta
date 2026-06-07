@@ -7,13 +7,13 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #050505;
-            --panel-bg: rgba(20, 20, 25, 0.7);
-            --neon-blue: #00f3ff;
-            --neon-purple: #bc13fe;
-            --neon-green: #0aff00;
-            --neon-red: #ff003c;
-            --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+            --bg-dark: #F8FAFC;
+            --panel-bg: rgba(255, 255, 255, 0.95);
+            --neon-blue: #0091FF;
+            --neon-purple: #7B2FFF;
+            --neon-green: #10B981;
+            --neon-red: #EF4444;
+            --glass-border: 1px solid rgba(0, 0, 0, 0.08);
         }
         
         * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--neon-blue) var(--bg-dark); }
@@ -22,12 +22,10 @@
             margin: 0;
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-dark);
-            color: #fff;
+            color: #1E293B;
             height: 100vh;
             overflow: hidden;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(0, 243, 255, 0.05) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(188, 19, 254, 0.05) 0%, transparent 20%);
+            background-image: none;
         }
 
         /* GRID LAYOUT */
@@ -53,7 +51,7 @@
             backdrop-filter: blur(10px);
         }
 
-        .logo { font-family: 'JetBrains Mono'; font-weight: 800; font-size: 1.5rem; letter-spacing: -1px; }
+        .logo { font-family: 'JetBrains Mono'; font-weight: 800; font-size: 1.5rem; letter-spacing: -1px; color: #0F172A; }
         .logo span { color: var(--neon-purple); }
         
         .status-badge {
@@ -82,13 +80,13 @@
         }
 
         .metric-card {
-            background: rgba(255,255,255,0.03);
+            background: rgba(0, 0, 0, 0.02);
             padding: 15px;
             border-radius: 8px;
             border-left: 3px solid var(--neon-blue);
         }
-        .metric-label { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-        .metric-value { font-size: 1.8rem; font-family: 'JetBrains Mono'; font-weight: 700; margin-top: 5px; }
+        .metric-label { font-size: 0.75rem; color: #64748B; text-transform: uppercase; letter-spacing: 1px; }
+        .metric-value { font-size: 1.8rem; font-family: 'JetBrains Mono'; font-weight: 700; margin-top: 5px; color: #0F172A; }
 
         /* MAIN VIEW - JOBS */
         .main-view {
@@ -109,32 +107,32 @@
         }
 
         .job-card {
-            background: rgba(0,0,0,0.4);
-            border: 1px solid #333;
+            background: rgba(0,0,0,0.02);
+            border: 1px solid rgba(0,0,0,0.08);
             border-radius: 8px;
             padding: 15px;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
         }
-        .job-card:hover { border-color: var(--neon-blue); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .job-card:hover { border-color: var(--neon-blue); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
         .job-card.running { border-left: 3px solid var(--neon-green); }
         .job-card.pending { border-left: 3px solid var(--neon-blue); }
         .job-card.failed { border-left: 3px solid var(--neon-red); }
 
         .job-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .job-id { font-family: 'JetBrains Mono'; color: #aaa; font-size: 0.85rem; }
-        .job-gpu { font-size: 0.9rem; font-weight: 600; color: #fff; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; }
+        .job-id { font-family: 'JetBrains Mono'; color: #64748B; font-size: 0.85rem; }
+        .job-gpu { font-size: 0.9rem; font-weight: 600; color: #0F172A; background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 4px; }
         
-        .progress-bar { height: 4px; background: #333; border-radius: 2px; margin-top: 10px; overflow: hidden; }
+        .progress-bar { height: 4px; background: #E2E8F0; border-radius: 2px; margin-top: 10px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--neon-purple); width: 0%; transition: width 0.5s; box-shadow: 0 0 10px var(--neon-purple); }
 
         /* LOGS PANEL - MATRIX STYLE */
         .logs-panel {
             grid-column: 2 / 3;
             grid-row: 3 / 4;
-            background: #000;
-            border: var(--glass-border);
+            background: #0F172A;
+            border: 1px solid rgba(0,0,0,0.12);
             border-radius: 12px;
             padding: 15px;
             font-family: 'JetBrains Mono', monospace;
@@ -169,17 +167,17 @@
         .msg.user { background: rgba(0, 243, 255, 0.1); border: 1px solid rgba(0, 243, 255, 0.2); align-self: flex-end; text-align: right; }
 
         .input-area { display: flex; gap: 10px; }
-        input { flex-grow: 1; background: rgba(0,0,0,0.3); border: 1px solid #444; padding: 10px; border-radius: 6px; color: #fff; outline: none; transition: border 0.3s; }
+        input { flex-grow: 1; background: #FFFFFF; border: 1px solid rgba(0,0,0,0.12); padding: 10px; border-radius: 6px; color: #0F172A; outline: none; transition: border 0.3s; }
         input:focus { border-color: var(--neon-blue); }
-        button { background: var(--neon-blue); color: #000; border: none; padding: 10px 15px; border-radius: 6px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-        button:hover { box-shadow: 0 0 15px var(--neon-blue); transform: scale(1.05); }
+        button { background: var(--neon-blue); color: #fff; border: none; padding: 10px 15px; border-radius: 6px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        button:hover { box-shadow: 0 0 15px rgba(0,145,255,0.3); transform: scale(1.05); }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         
         /* SCROLLBAR */
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #000; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: #F1F5F9; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--neon-blue); }
 
     </style>
@@ -188,19 +186,19 @@
     <div class="container">
         <!-- HEADER -->
         <header>
-            <div class="logo">Boma<span>X</span> <span style="font-size: 0.8rem; opacity: 0.5; font-weight: 400;">v3.1 Autonomous IO</span></div>
+            <div class="logo">OrQuanta <span style="font-size: 0.8rem; opacity: 0.5; font-weight: 400; color: #64748B;">v3.1 Autonomous IO</span></div>
             <div class="status-badge">
                 <div class="status-dot"></div>
                 SYSTEM HEALTHY
             </div>
-            <div style="font-family: 'JetBrains Mono'; font-size: 0.9rem;">
-                <span style="color: #666;">CREDITS:</span> $9,842.50
+            <div style="font-family: 'JetBrains Mono'; font-size: 0.9rem; color: #334155;">
+                <span style="color: #64748B;">CREDITS:</span> $9,842.50
             </div>
         </header>
 
         <!-- SIDEBAR -->
         <div class="sidebar">
-            <h3 style="margin:0; opacity: 0.7;">CLUSTER STATUS</h3>
+            <h3 style="margin:0; color: #64748B;">CLUSTER STATUS</h3>
             
             <div class="metric-card">
                 <div class="metric-label">Active Jobs</div>
@@ -220,7 +218,7 @@
                 <div class="metric-value" id="revenue-rate">$0.00</div>
             </div>
 
-            <div style="margin-top: auto; opacity: 0.5; font-size: 0.8rem;">
+            <div style="margin-top: auto; color: #94A3B8; font-size: 0.8rem;">
                 <div>OrMind Status: <span style="color: var(--neon-blue);">ONLINE</span></div>
                 <div>Synapses: <span id="synapse-count">3,892</span></div>
                 <div>Learning Rate: 0.015</div>
@@ -269,7 +267,7 @@
 
             <div class="input-area">
                 <input type="text" id="user-input" placeholder="Command the infrastructure..." onkeypress="handleKey(event)">
-                <button onclick="sendEx()">🚀</button>
+                <button onclick="sendEx()"></button>
             </div>
         </div>
     </div>
@@ -312,7 +310,7 @@
                 el.innerHTML = `
                     <div class="job-header">
                         <span class="job-id">${job.job_id.substring(0,8)}</span>
-                        <span class="job-gpu">${job.gpu_type} ×${job.gpu_count}</span>
+                        <span class="job-gpu">${job.gpu_type} x${job.gpu_count}</span>
                     </div>
                     <div style="font-size: 0.9rem; opacity: 0.8;">${job.status.toUpperCase()}</div>
                     <div class="progress-bar">
@@ -419,7 +417,7 @@
                     body: JSON.stringify({ gpu_type: gpu, gpu_count: count })
                 });
                 const job = await res.json();
-                addChatMsg(`✅ <b>Job ${job.job_id.substring(0,8)} Deployed.</b><br>Monitor execution in the grid.`, 'ai');
+                addChatMsg(` <b>Job ${job.job_id.substring(0,8)} Deployed.</b><br>Monitor execution in the grid.`, 'ai');
             } catch (e) {
                 addChatMsg(`Deployment Failed: ${e}`, 'ai');
             }

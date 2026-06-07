@@ -1,9 +1,11 @@
-﻿import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, createContext, useContext, Component } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useAppStore } from './store'
 import {
     LayoutDashboard, Target, Server, DollarSign,
     ScrollText, Cpu, Zap, LogOut, Menu, X, AlertTriangle, Leaf, Gift, BarChart2,
-    Settings, HelpCircle, Loader2, CreditCard, Globe, Brain, Wand2, Crown, Clock
+    Settings, HelpCircle, Loader2, CreditCard, Globe, Brain, Wand2, Crown, Clock, TrendingUp, Layers
 } from 'lucide-react'
 import Dashboard from './pages/Dashboard.jsx'
 import GoalSubmit from './pages/GoalSubmit.jsx'
@@ -20,11 +22,13 @@ import BillingPage from './pages/BillingPage.jsx'
 import NemoClawPage from './pages/NemoClawPage.jsx'
 import UIXAgentPage from './pages/UIXAgentPage.jsx'
 import HelpPage from './pages/HelpPage.jsx'
+import SelfImprovementPage from './pages/SelfImprovementPage.jsx'
+import ModelHubPage from './pages/ModelHubPage.jsx'
 import OrQuantaAssistant from './components/OrQuantaAssistant.jsx'
 import { CommandPalette, ShortcutsModal, useCommandPalette } from './components/CommandPalette.jsx'
 import OnboardingWizard from './components/OnboardingWizard.jsx'
 
-/* Ã¢â€â‚¬Ã¢â€â‚¬ Error Boundary Ã¢â‚¬â€ catches unhandled render errors across all routes Ã¢â€â‚¬Ã¢â€â‚¬ */
+/* "" Error Boundary " catches unhandled render errors across all routes "" */
 class ErrorBoundary extends Component {
     constructor(props) { super(props); this.state = { hasError: false, error: null } }
     static getDerivedStateFromError(error) { return { hasError: true, error } }
@@ -37,14 +41,14 @@ class ErrorBoundary extends Component {
     render() {
         if (this.state.hasError) return (
             <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC', color: '#0F172A', flexDirection: 'column', gap: 16, padding: 24 }}>
-                <AlertTriangle size={40} color="#f59e0b" />
+                <AlertTriangle size={40} color="#F59E0B" />
                 <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', color: '#0F172A' }}>Something went wrong</h2>
-                <p style={{ color: '#94a3b8', fontSize: 14, maxWidth: 400, textAlign: 'center' }}>
+                <p style={{ color: '#64748B', fontSize: 14, maxWidth: 400, textAlign: 'center' }}>
                     An unexpected error occurred. Please refresh the page or contact support.
                 </p>
                 <button
                     onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload() }}
-                    style={{ padding: '10px 24px', background: 'linear-gradient(135deg,#3a52eb,#7a9bfa)', border: 'none', borderRadius: 8, color: '#ffffff', cursor: 'pointer', fontSize: 14 }}
+                    style={{ padding: '10px 24px', background: 'linear-gradient(135deg,#7C6BF0,#9B8BF4)', border: 'none', borderRadius: 8, color: '#ffffff', cursor: 'pointer', fontSize: 14 }}
                 >
                     Reload App
                 </button>
@@ -54,7 +58,7 @@ class ErrorBoundary extends Component {
     }
 }
 
-/* Ã¢â€â‚¬Ã¢â€â‚¬ JWT expiry helper Ã¢â‚¬â€ decode exp claim without a library Ã¢â€â‚¬Ã¢â€â‚¬ */
+/* "" JWT expiry helper " decode exp claim without a library "" */
 function isTokenExpired(token) {
     if (!token) return true
     try {
@@ -63,14 +67,14 @@ function isTokenExpired(token) {
     } catch { return true }
 }
 
-/* Ã¢â€â‚¬Ã¢â€â‚¬ Auth Context Ã¢â€â‚¬Ã¢â€â‚¬ */
+/* "" Auth Context "" */
 export const AuthContext = createContext(null)
 export const useAuth = () => useContext(AuthContext)
 
 function AuthProvider({ children }) {
     const [token, setToken] = useState(() => {
         const t = localStorage.getItem('orquanta_token')
-        // Evict expired token on load Ã¢â‚¬â€ don't silently accept stale auth
+        // Evict expired token on load " don't silently accept stale auth
         if (t && isTokenExpired(t)) {
             localStorage.removeItem('orquanta_token')
             localStorage.removeItem('orquanta_user')
@@ -82,7 +86,7 @@ function AuthProvider({ children }) {
         try { return JSON.parse(localStorage.getItem('orquanta_user')) } catch { return null }
     })
 
-    // OAuth redirect token capture Ã¢â‚¬â€ handles ?token=xxx from /auth/google or /auth/github
+    // OAuth redirect token capture " handles ?token=xxx from /auth/google or /auth/github
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
         const oauthToken = params.get('token')
@@ -147,7 +151,7 @@ function AuthProvider({ children }) {
     )
 }
 
-/* Ã¢â€â‚¬Ã¢â€â‚¬ Login Page Ã¢â€â‚¬Ã¢â€â‚¬ */
+/* "" Login Page "" */
 function LoginPage() {
     const { login } = useAuth()
     const [mode, setMode] = useState('login')
@@ -185,15 +189,15 @@ function LoginPage() {
 
     return (
         <div className="auth-page">
-            <div style={{ position: 'absolute', top: '20%', left: '20%', width: '500px', height: '500px', background: 'rgba(82,113,245,0.07)', borderRadius: '50%', filter: 'blur(100px)', pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', bottom: '20%', right: '20%', width: '350px', height: '350px', background: 'rgba(139,92,246,0.06)', borderRadius: '50%', filter: 'blur(80px)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', top: '20%', left: '20%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(124,107,240,0.08) 0%, transparent 70%)', borderRadius: '50%', filter: 'blur(120px)', pointerEvents: 'none', animation: 'glowBreathe 6s ease-in-out infinite' }} />
+            <div style={{ position: 'absolute', bottom: '20%', right: '20%', width: '350px', height: '350px', background: 'radial-gradient(circle, rgba(155,139,244,0.08) 0%, transparent 70%)', borderRadius: '50%', filter: 'blur(100px)', pointerEvents: 'none', animation: 'glowBreathe 8s ease-in-out infinite reverse' }} />
             <div style={{ width: '100%', maxWidth: '440px', padding: '0 16px', position: 'relative', zIndex: 1 }}>
                 <div className="auth-card fade-in">
                     <div className="auth-logo">
-                        {/* Value Proposition Ã¢â‚¬â€ GPU expert hero message */}
+                        {/* Value Proposition " GPU expert hero message */}
                         <div className="login-value-strip">
                             <div className="login-headline">$0.013 / hr</div>
-                            <div className="login-subline">GPU Cloud Ã‚Â· Orchestrated by 5 AI Agents Ã‚Â· 67% Below AWS</div>
+                            <div className="login-subline">GPU Cloud - Orchestrated by 5 AI Agents - 67% Below AWS</div>
                             <div className="login-pills">
                                 <span className="login-pill">Auto-Routing</span>
                                 <span className="login-pill">NemoClaw AI</span>
@@ -202,8 +206,8 @@ function LoginPage() {
                             </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', marginBottom: '6px' }}>
-                            <div style={{ width: 40, height: 40, background: 'linear-gradient(135deg,rgba(0,145,255,0.1),rgba(123,47,255,0.1))', border: '1px solid rgba(0,145,255,0.2)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Cpu size={20} color="#0091FF" />
+                            <div style={{ width: 40, height: 40, background: 'linear-gradient(135deg,rgba(124,107,240,0.12),rgba(155,139,244,0.12))', border: '1px solid rgba(124,107,240,0.2)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Cpu size={20} color="#7C6BF0" />
                             </div>
                             <div style={{ textAlign: 'left' }}>
                                 <div className="logo-text">OrQuanta</div>
@@ -211,14 +215,14 @@ function LoginPage() {
                             </div>
                         </div>
                     </div>
-                    <div style={{ display: 'flex', background: 'rgba(0,0,0,0.03)', borderRadius: 10, padding: 4, marginBottom: 24, border: '1px solid rgba(0,0,0,0.08)' }}>
+                    <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: 10, padding: 4, marginBottom: 24, border: '1px solid #E2E8F0' }}>
                         {[['login', 'Sign In'], ['register', 'Create Account']].map(([m, label]) => (
                             <button key={m} onClick={() => switchMode(m)} style={{
                                 flex: 1, padding: '8px 0', borderRadius: 7, border: 'none', cursor: 'pointer',
                                 fontSize: 14, fontWeight: 600, transition: 'all 0.2s',
-                                background: mode === m ? 'linear-gradient(135deg,#3a52eb,#5a72fb)' : 'transparent',
-                                color: mode === m ? '#fff' : 'var(--text-muted)',
-                                boxShadow: mode === m ? '0 2px 12px rgba(58,82,235,0.4)' : 'none',
+                                background: mode === m ? 'linear-gradient(135deg,#7C6BF0,#9B8BF4)' : 'transparent',
+                                color: mode === m ? '#fff' : '#94A3B8',
+                                boxShadow: mode === m ? '0 2px 16px rgba(124,107,240,0.25)' : 'none',
                             }}>{label}</button>
                         ))}
                     </div>
@@ -262,37 +266,37 @@ function LoginPage() {
 
                     {/* OAuth SSO buttons */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0 12px' }}>
-                        <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
-                        <span style={{ color: '#64748b', fontSize: 12 }}>or continue with</span>
-                        <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.08)' }} />
+                        <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
+                        <span style={{ color: '#94A3B8', fontSize: 12 }}>or continue with</span>
+                        <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
                     </div>
                     <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
                         <a href="/auth/google/login" style={{
                             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            gap: 8, padding: '10px 0', borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)',
-                            background: 'rgba(0,0,0,0.02)', color: '#334155', fontSize: 13,
-                            textDecoration: 'none', fontWeight: 500,
+                            gap: 8, padding: '10px 0', borderRadius: 8, border: '1px solid #E2E8F0',
+                            background: '#F8FAFC', color: '#475569', fontSize: 13,
+                            textDecoration: 'none', fontWeight: 500, transition: 'all 0.2s',
                         }}>
                             <svg width="15" height="15" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
                             Google
                         </a>
                         <a href="/auth/github/login" style={{
                             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            gap: 8, padding: '10px 0', borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)',
-                            background: 'rgba(0,0,0,0.02)', color: '#334155', fontSize: 13,
-                            textDecoration: 'none', fontWeight: 500,
+                            gap: 8, padding: '10px 0', borderRadius: 8, border: '1px solid #E2E8F0',
+                            background: '#F8FAFC', color: '#475569', fontSize: 13,
+                            textDecoration: 'none', fontWeight: 500, transition: 'all 0.2s',
                         }}>
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="#334155"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="#475569"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
                             GitHub
                         </a>
                     </div>
 
-                    <div style={{ marginTop: 4, paddingTop: 16, borderTop: '1px solid rgba(0,0,0,0.06)', textAlign: 'center' }}>
+                    <div style={{ marginTop: 4, paddingTop: 16, borderTop: '1px solid #E2E8F0', textAlign: 'center' }}>
                         <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
                             Want to explore first?{' '}
                             <button
                                 onClick={() => switchMode('register')}
-                                style={{ color: '#7a9bfa', background: 'none', border: 'none', fontWeight: 600, fontSize: 13, cursor: 'pointer', padding: 0, textDecoration: 'underline', textUnderlineOffset: 2 }}
+                                style={{ color: '#7C6BF0', background: 'none', border: 'none', fontWeight: 600, fontSize: 13, cursor: 'pointer', padding: 0, textDecoration: 'underline', textUnderlineOffset: 2 }}
                             >
                                 Start free trial
                             </button>
@@ -309,38 +313,40 @@ function LoginPage() {
     )
 }
 
-/* Ã¢â€â‚¬Ã¢â€â‚¬ Carbon Tracker (Coming Soon) Ã¢â€â‚¬Ã¢â€â‚¬ */
+/* "" Carbon Tracker (Coming Soon) "" */
 function CarbonTrackerPage() {
     return (
         <div className="space-y-6 animate-fade-in">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">Carbon Tracker</h1>
+                <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Carbon Tracker</h1>
                 <p className="text-slate-400 text-sm mt-0.5">Route workloads to the greenest regions automatically</p>
             </div>
             <div className="glass-card p-8 text-center relative overflow-hidden">
-                <div className="absolute inset-0 opacity-5" style={{ background: 'radial-gradient(ellipse at 50% 0%, #00FF88, transparent 70%)' }} />
-                <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}><Leaf size={52} color="#00FF88" /></div>
-                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', marginBottom: 12, color: '#0F172A' }}>Carbon-Aware Scheduling</h2>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: 28, maxWidth: 480, margin: '0 auto 28px' }}>
+                <div className="absolute inset-0 opacity-5" style={{ background: 'radial-gradient(ellipse at 50% 0%, #10b981, transparent 70%)' }} />
+                <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}><Leaf size={48} color="#10b981" /></div>
+                <h2 style={{ fontSize: '1.4rem', marginBottom: 12, color: 'var(--text-primary)', fontWeight: 700 }}>Carbon-Aware Scheduling</h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.7, maxWidth: 480, margin: '0 auto 24px' }}>
                     OrQuanta will automatically detect real-time carbon intensity per region
                     and shift your GPU jobs to the lowest-carbon available locations.
                 </p>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 20px', border: '1px solid rgba(0,255,136,0.3)', borderRadius: 999, background: 'rgba(0,255,136,0.06)', color: '#00FF88', fontSize: 13 }}>
-                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#00FF88', display: 'inline-block', animation: 'pulse 2s infinite' }} />
-                    In Development Ã¢â‚¬â€ Available in v1.1
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 18px', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 999, background: 'rgba(16,185,129,0.06)', color: '#059669', fontSize: 13, fontWeight: 500 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'pulse 2s infinite' }} />
+                    In Development — Available in v1.1
                 </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
-                    { icon: Zap, title: 'Real-Time Carbon Intensity', desc: 'gCO2/kWh tracked per region via ElectricityMaps API', color: '#00FF88' },
-                    { icon: Globe, title: 'Green Region Routing', desc: 'Automatic job migration to lowest-carbon providers', color: '#00D4FF' },
-                    { icon: BarChart2, title: 'Emissions Reporting', desc: 'Monthly carbon footprint reports & offset tracking', color: '#7B2FFF' },
+                    { icon: Zap,      title: 'Real-Time Carbon Intensity', desc: 'gCO2/kWh tracked per region via ElectricityMaps API', color: '#10b981' },
+                    { icon: Globe,    title: 'Green Region Routing',       desc: 'Automatic job migration to lowest-carbon providers',  color: '#3b82f6' },
+                    { icon: BarChart2, title: 'Emissions Reporting',       desc: 'Monthly carbon footprint reports and offset tracking', color: '#8b5cf6' },
                 ].map(c => (
-                    <div key={c.title} className="glass-card p-5" style={{ opacity: 0.75 }}>
-                        <div style={{ marginBottom: 12 }}><c.icon size={28} color={c.color} /></div>
-                        <h3 className="font-semibold text-gray-900 text-sm mb-1.5">{c.title}</h3>
+                    <div key={c.title} className="glass-card p-5">
+                        <div style={{ marginBottom: 12, width: 40, height: 40, borderRadius: 10, background: c.color + '12', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <c.icon size={20} color={c.color} />
+                        </div>
+                        <h3 className="font-semibold text-sm mb-1.5" style={{ color: 'var(--text-primary)' }}>{c.title}</h3>
                         <p className="text-xs text-slate-500 leading-relaxed">{c.desc}</p>
-                        <div className="mt-3 h-0.5 rounded-full" style={{ background: `${c.color}30` }} />
+                        <div className="mt-3 h-0.5 rounded-full" style={{ background: c.color + '25' }} />
                     </div>
                 ))}
             </div>
@@ -348,7 +354,7 @@ function CarbonTrackerPage() {
     )
 }
 
-/* Ã¢â€â‚¬Ã¢â€â‚¬ Live savings from platform metrics Ã¢â€â‚¬Ã¢â€â‚¬ */
+/* "" Live savings from platform metrics "" */
 function useLiveSavings() {
     const { token } = useAuth()
     const [savings, setSavings] = useState(null)
@@ -360,10 +366,10 @@ function useLiveSavings() {
             .then(d => {
                 if (!d || cancelled) return
                 const spent = d.governor_spend?.daily_spend_usd ?? 0
-                // AWS on-demand is ~2.5Ãƒâ€” our routed price on average
+                // AWS on-demand is ~2.5"" our routed price on average
                 const awsEquivalent = spent * 2.5
                 const saved = awsEquivalent - spent
-                setSavings(saved > 0 ? `$${saved.toFixed(2)} saved` : 'Tracking savingsÃ¢â‚¬Â¦')
+                setSavings(saved > 0 ? `$${saved.toFixed(2)} saved` : 'Tracking savings...')
             })
             .catch(() => {})
         return () => { cancelled = true }
@@ -371,50 +377,52 @@ function useLiveSavings() {
     return savings
 }
 
-/* Ã¢â€â‚¬Ã¢â€â‚¬ Navigation Sidebar Ã¢â€â‚¬Ã¢â€â‚¬ */
+/* "" Navigation Sidebar "" */
 const VeroIcon = () => <Crown size={16} style={{ minWidth: 16, flexShrink: 0 }} />
 
-/* Ã¢â€â‚¬Ã¢â€â‚¬ Grouped nav structure Ã¢â€â‚¬Ã¢â€â‚¬ */
+/* "" Grouped nav structure "" */
 const NAV_GROUPS = [
   {
     label: 'Compute',
     items: [
-      { to: '/',         icon: LayoutDashboard, label: 'Dashboard',     exact: true },
-      { to: '/goals',    icon: Target,          label: 'Submit Goal' },
-      { to: '/agents',   icon: Zap,             label: 'Agent Monitor',  badge: { text: 'LIVE', cls: 'nav-badge-cyan' }, dot: true },
-      { to: '/jobs',      icon: Server,          label: 'Job Manager' },
-      { to: '/schedules', icon: Clock,           label: 'Schedules' },
+      { to: '/', icon: LayoutDashboard, label: 'Dashboard', exact: true },
+      { to: '/goals', icon: Target, label: 'Submit Goal' },
+      { to: '/agents', icon: Zap, label: 'Agent Monitor', badge: { text: 'LIVE', cls: 'nav-badge-cyan' }, dot: true },
+      { to: '/jobs', icon: Server, label: 'Job Manager' },
+      { to: '/schedules', icon: Clock, label: 'Schedules' },
     ]
   },
   {
     label: 'Finance',
     items: [
-      { to: '/costs',    icon: DollarSign,       label: 'Cost Analytics' },
-      { to: '/pricing',  icon: BarChart2,        label: 'Live Pricing',  badge: { text: 'LIVE', cls: 'nav-badge-cyan' } },
-      { to: '/billing',  icon: CreditCard,       label: 'Billing & Plans' },
-      { to: '/free',     icon: Gift,             label: 'Free GPU',       badge: { text: 'FREE', cls: 'nav-badge-green' } },
+      { to: '/costs', icon: DollarSign, label: 'Cost Analytics' },
+      { to: '/pricing', icon: BarChart2, label: 'Live Pricing', badge: { text: 'LIVE', cls: 'nav-badge-cyan' } },
+      { to: '/billing', icon: CreditCard, label: 'Billing & Plans' },
+      { to: '/free', icon: Gift, label: 'Free GPU', badge: { text: 'FREE', cls: 'nav-badge-green' } },
     ]
   },
   {
     label: 'Intelligence',
     items: [
-      { to: '/nemoclaw', icon: Brain,            label: 'NemoClaw',       badge: { text: 'AI', cls: 'nav-badge-violet' } },
-      { to: '/vero',     icon: VeroIcon,         label: 'Vero',           badge: { text: 'META', cls: 'nav-badge-violet' } },
-      { to: '/uix',      icon: Wand2,            label: 'UIXAgent' },
+      { to: '/models', icon: Layers, label: 'AI Models', badge: { text: '24+', cls: 'nav-badge-cyan' } },
+      { to: '/nemoclaw', icon: Brain, label: 'NemoClaw', badge: { text: 'AI', cls: 'nav-badge-violet' } },
+      { to: '/vero', icon: VeroIcon, label: 'Vero', badge: { text: 'META', cls: 'nav-badge-violet' } },
+      { to: '/uix', icon: Wand2, label: 'UIXAgent' },
+      { to: '/self-improvement', icon: TrendingUp, label: 'Self-Improve', badge: { text: 'NEW', cls: 'nav-badge-green' } },
     ]
   },
   {
     label: 'Compliance',
     items: [
-      { to: '/audit',    icon: ScrollText,       label: 'Audit Log' },
-      { to: '/carbon',   icon: Leaf,             label: 'Carbon Tracker' },
+      { to: '/audit', icon: ScrollText, label: 'Audit Log' },
+      { to: '/carbon', icon: Leaf, label: 'Carbon Tracker' },
     ]
   },
   {
     label: 'Account',
     items: [
-      { to: '/settings', icon: Settings,         label: 'Settings' },
-      { to: '/help',     icon: HelpCircle,       label: 'Help Center' },
+      { to: '/settings', icon: Settings, label: 'Settings' },
+      { to: '/help', icon: HelpCircle, label: 'Help Center' },
     ]
   },
 ]
@@ -437,8 +445,8 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
                 data-mobile-open={mobileOpen}
                 style={{
                     width: w, minHeight: '100vh',
-                    background: 'var(--surface-800)',
-                    borderRight: '1px solid var(--border)',
+                    background: '#0C1A3A',
+                    borderRight: '1px solid rgba(255,255,255,0.08)',
                     display: 'flex', flexDirection: 'column',
                     position: 'fixed', top: 0, left: 0,
                     zIndex: 50,
@@ -447,22 +455,22 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
                 }}
             >
                 {/* Logo */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '18px 14px 12px', borderBottom: '1px solid var(--border)', minHeight: 64 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '18px 14px 12px', borderBottom: '1px solid rgba(255,255,255,0.08)', minHeight: 64 }}>
                     <div style={{
                         width: 32, height: 32, minWidth: 32,
-                        background: 'linear-gradient(135deg,#0091FF20,#7B2FFF20)',
-                        border: '1px solid rgba(0,145,255,0.2)',
+                        background: 'linear-gradient(135deg,rgba(124,107,240,0.2),rgba(155,139,244,0.2))',
+                        border: '1px solid rgba(124,107,240,0.3)',
                         borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
                     }}>
-                        <Cpu size={16} color="#0091FF" />
+                        <Cpu size={16} color="#9B8BF4" />
                     </div>
                     {!collapsed && (
                         <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 800, fontSize: 13.5, color: 'var(--text-primary)', whiteSpace: 'nowrap', letterSpacing: '-0.02em' }}>OrQuanta</div>
-                            <div style={{ fontSize: 9.5, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 1 }}>GPU Cloud Ã‚Â· AI-Powered</div>
+                            <div style={{ fontWeight: 800, fontSize: 13.5, color: '#FFFFFF', whiteSpace: 'nowrap', letterSpacing: '-0.02em' }}>OrQuanta</div>
+                            <div style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 1 }}>GPU Cloud - AI-Powered</div>
                         </div>
                     )}
-                    <button onClick={onToggle} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexShrink: 0, padding: 3, borderRadius: 6 }}>
+                    <button onClick={onToggle} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', flexShrink: 0, padding: 3, borderRadius: 6 }}>
                         {collapsed ? <Menu size={15} /> : <X size={15} />}
                     </button>
                 </div>
@@ -471,10 +479,10 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
                 {!collapsed && (
                     <div className="sidebar-savings" style={{ marginTop: 8 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <DollarSign size={13} color="var(--success)" style={{ flexShrink: 0 }} />
+                            <DollarSign size={13} color="#10B981" style={{ flexShrink: 0 }} />
                             <div>
-                                <div className="sidebar-savings-amount">{liveSavings ?? 'Ã¢â‚¬â€'}</div>
-                                <div className="sidebar-savings-label">vs AWS on-demand Ã‚Â· live</div>
+                                <div className="sidebar-savings-amount">{liveSavings ?? '"'}</div>
+                                <div className="sidebar-savings-label">vs AWS on-demand - live</div>
                             </div>
                         </div>
                     </div>
@@ -510,22 +518,22 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
                 </nav>
 
                 {/* User footer */}
-                <div style={{ padding: '10px 10px 14px', borderTop: '1px solid var(--border)' }}>
+                <div style={{ padding: '10px 10px 14px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
                         <div className="user-avatar" style={{ flexShrink: 0, width: 30, height: 30, fontSize: 11 }}>
                             {user?.email?.[0]?.toUpperCase() || 'A'}
                         </div>
                         {!collapsed && (
                             <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <div style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     {user?.email?.split('@')[0] || 'Admin'}
                                 </div>
-                                <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{user?.role === 'admin' ? 'Ã¢Å¡Â¡ Admin Ã‚Â· Active' : 'Member Ã‚Â· Active'}</div>
+                                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{user?.role === 'admin' ? 'Admin - Active' : 'Member - Active'}</div>
                             </div>
                         )}
-                        <button onClick={logout} title="Logout" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', flexShrink: 0, padding: 4, borderRadius: 6, transition: 'color 0.2s' }}
+                        <button onClick={logout} title="Logout" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', flexShrink: 0, padding: 4, borderRadius: 6, transition: 'color 0.2s' }}
                             onMouseEnter={e => e.currentTarget.style.color = '#f87171'}
-                            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
                         >
                             <LogOut size={13} />
                         </button>
@@ -537,7 +545,7 @@ function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
 }
 
 
-/* Ã¢â€â‚¬Ã¢â€â‚¬ Protected App Layout Ã¢â€â‚¬Ã¢â€â‚¬ */
+/* "" Protected App Layout "" */
 const ROUTE_TITLES = {
     '/': 'Dashboard',
     '/goals': 'Submit Goal',
@@ -558,7 +566,8 @@ const ROUTE_TITLES = {
 }
 
 function AppLayout() {
-    const [collapsed, setCollapsed] = useState(false)
+    const collapsed = useAppStore((s) => s.sidebarCollapsed)
+    const toggleSidebar = useAppStore((s) => s.toggleSidebar)
     const [mobileOpen, setMobileOpen] = useState(false)
     const [isMobile, setIsMobile] = useState(
         () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
@@ -570,10 +579,10 @@ function AppLayout() {
     // Per-route document.title
     useEffect(() => {
         const page = ROUTE_TITLES[location.pathname] || 'Dashboard'
-        document.title = `OrQuanta Ã¢â‚¬â€ ${page}`
+        document.title = `OrQuanta " ${page}`
     }, [location.pathname])
 
-    // matchMedia keeps sidebar correct across zoom levels Ã¢â‚¬â€ window.innerWidth is zoom-sensitive
+    // matchMedia keeps sidebar correct across zoom levels " window.innerWidth is zoom-sensitive
     useEffect(() => {
         const mq = window.matchMedia('(max-width: 767px)')
         const handler = (e) => setIsMobile(e.matches)
@@ -587,7 +596,7 @@ function AppLayout() {
         <div style={{ display: 'flex', minHeight: '100vh' }}>
             <Sidebar
                 collapsed={collapsed}
-                onToggle={() => setCollapsed(c => !c)}
+                onToggle={toggleSidebar}
                 mobileOpen={mobileOpen}
                 onMobileClose={() => setMobileOpen(false)}
             />
@@ -595,19 +604,19 @@ function AppLayout() {
             {isMobile && (
                 <div style={{
                     position: 'fixed', top: 0, left: 0, right: 0, height: 56,
-                    background: 'var(--surface-800)',
-                    borderBottom: '1px solid var(--border)',
+                    background: '#0C1A3A',
+                    borderBottom: '1px solid rgba(255,255,255,0.08)',
                     display: 'flex', alignItems: 'center',
                     padding: '0 16px', gap: 12, zIndex: 48,
                 }}>
-                    <button onClick={() => setMobileOpen(true)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}>
+                    <button onClick={() => setMobileOpen(true)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', display: 'flex' }}>
                         <Menu size={20} />
                     </button>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 26, height: 26, background: 'linear-gradient(135deg,#3a52eb,#7a9bfa)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ width: 26, height: 26, background: 'linear-gradient(135deg,#7C6BF0,#9B8BF4)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Cpu size={13} color="#fff" />
                         </div>
-                        <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>OrQuanta</span>
+                        <span style={{ fontWeight: 700, fontSize: 14, color: '#FFFFFF' }}>OrQuanta</span>
                     </div>
                 </div>
             )}
@@ -618,8 +627,9 @@ function AppLayout() {
                 padding: isMobile ? '76px 16px 24px' : 28,
                 minHeight: '100vh',
                 transition: 'margin-left 0.25s ease',
+                background: '#F8FAFC',
             }}>
-                {/* Per-route error boundary Ã¢â‚¬â€ crash in one page doesn't kill the shell */}
+                {/* Per-route error boundary " crash in one page doesn't kill the shell */}
                 <ErrorBoundary>
                     <Routes>
                         <Route path="/" element={<Dashboard />} />
@@ -637,6 +647,8 @@ function AppLayout() {
                         <Route path="/vero" element={<VeroControl />} />
                         <Route path="/nemoclaw" element={<NemoClawPage />} />
                         <Route path="/uix" element={<UIXAgentPage />} />
+                        <Route path="/self-improvement" element={<SelfImprovementPage />} />
+                        <Route path="/models" element={<ModelHubPage />} />
                         <Route path="/help" element={<HelpPage />} />
                         <Route path="*" element={<Navigate to="/" />} />
                     </Routes>
@@ -651,7 +663,7 @@ function AppLayout() {
     )
 }
 
-/* Ã¢â€â‚¬Ã¢â€â‚¬ Root App Ã¢â€â‚¬Ã¢â€â‚¬ */
+/* "" Root App "" */
 export default function App() {
     return (
         <ErrorBoundary>

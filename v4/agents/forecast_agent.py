@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — Forecast Agent
+OrQuanta Agentic v1.0  -  Forecast Agent
 
 GPU demand forecasting and proactive capacity planning:
 - Historical job pattern analysis

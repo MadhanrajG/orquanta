@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — Cost Optimizer Agent
+OrQuanta Agentic v1.0  -  Cost Optimizer Agent
 
 Real-time cost intelligence across GPU providers:
 - Spot price monitoring across AWS/GCP/Azure/CoreWeave
@@ -60,7 +60,7 @@ class CostOptimizerAgent:
         self.tools = ToolRegistry()
         self.governor = get_governor()
 
-        # Price history: provider:gpu:region → deque of (timestamp, price)
+        # Price history: provider:gpu:region -> deque of (timestamp, price)
         self._price_history: dict[str, deque] = defaultdict(
             lambda: deque(maxlen=PRICE_HISTORY_WINDOW)
         )
@@ -141,7 +141,7 @@ class CostOptimizerAgent:
         if budget_usd and total > budget_usd:
             await self.tools.send_alert(
                 message=(
-                    f"⚠️ Cheapest option (${total:.2f}) exceeds budget of ${budget_usd:.2f} "
+                    f" Cheapest option (${total:.2f}) exceeds budget of ${budget_usd:.2f} "
                     f"for {gpu_type} over {required_hours}h."
                 ),
                 severity="warning",

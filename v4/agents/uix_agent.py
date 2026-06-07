@@ -1,21 +1,21 @@
 """
-OrQuanta UIXAgent — Autonomous UI/UX Diagnostic & Auto-Fix System
+OrQuanta UIXAgent  -  Autonomous UI/UX Diagnostic & Auto-Fix System
 
 UIXAgent is a specialist agent that autonomously:
   1. Crawls every route in the OrQuanta frontend
   2. Inspects the DOM for UX issues (missing states, broken buttons, bad styling)
-  3. Computes a per-page UX Score (0–100) across 6 rubric categories
+  3. Computes a per-page UX Score (0-100) across 6 rubric categories
   4. Generates a structured UXAuditReport with ranked, severity-graded issues
   5. Proposes "safe" code fixes (styling, empty states, aria labels)
   6. Applies auto-approved patches or queues them for user review
 
 Scoring Rubric:
-  Visual Consistency   25% — button styles, color tokens, spacing
-  Empty State UX       20% — every list/table must have designed empty state
-  Loading States       15% — async operations must show skeleton/spinner
-  Responsiveness       20% — no overflow at 375px / 768px / 1440px
-  Interaction Feedback 10% — all buttons give visual press feedback
-  Accessibility        10% — aria-labels on icon buttons, contrast ≥ 4.5:1
+  Visual Consistency   25%  -  button styles, color tokens, spacing
+  Empty State UX       20%  -  every list/table must have designed empty state
+  Loading States       15%  -  async operations must show skeleton/spinner
+  Responsiveness       20%  -  no overflow at 375px / 768px / 1440px
+  Interaction Feedback 10%  -  all buttons give visual press feedback
+  Accessibility        10%  -  aria-labels on icon buttons, contrast ≥ 4.5:1
 
 Usage::
     agent = get_uix_agent()
@@ -40,7 +40,7 @@ from uuid import uuid4
 
 logger = logging.getLogger("orquanta.uix_agent")
 
-# ── Constants ──────────────────────────────────────────────────────────────────
+# -- Constants ------------------------------------------------------------------
 
 FRONTEND_SRC = Path(__file__).parent.parent / "frontend" / "src"
 PAGES_DIR = FRONTEND_SRC / "pages"
@@ -62,7 +62,7 @@ APP_ROUTES = [
 ]
 
 
-# ── Data Models ────────────────────────────────────────────────────────────────
+# -- Data Models ----------------------------------------------------------------
 
 class Severity(str, Enum):
     CRITICAL = "critical"
@@ -138,7 +138,7 @@ class UXAuditReport:
     summary: str
 
 
-# ── Heuristic Rules ────────────────────────────────────────────────────────────
+# -- Heuristic Rules ------------------------------------------------------------
 
 @dataclass
 class Rule:
@@ -147,7 +147,7 @@ class Rule:
     category: Category
     severity: Severity
     score_impact: int
-    check: Any               # Callable[[str, str], bool] — content → issue_found
+    check: Any               # Callable[[str, str], bool]  -  content -> issue_found
     title: str
     description: str
     fix_description: str
@@ -158,7 +158,7 @@ def _make_rules() -> list[Rule]:
     """Define all UIXAgent heuristic inspection rules."""
     return [
 
-        # ── Visual Consistency ─────────────────────────────────────────────
+        # -- Visual Consistency ---------------------------------------------
         Rule(
             rule_id="VC001",
             name="unstyled_button",
@@ -182,12 +182,12 @@ def _make_rules() -> list[Rule]:
             score_impact=4,
             check=lambda src: len(re.findall(r"color:\s*'#[0-9a-fA-F]{3,6}'", src)) > 15,
             title="Excessive inline color values",
-            description="More than 15 inline hex color values found — should use CSS design tokens.",
+            description="More than 15 inline hex color values found  -  should use CSS design tokens.",
             fix_description="Extract repeated color values into CSS variables (--accent-purple, --accent-cyan).",
             auto_fixable=False,
         ),
 
-        # ── Empty State UX ──────────────────────────────────────────────────
+        # -- Empty State UX --------------------------------------------------
         Rule(
             rule_id="ES001",
             name="missing_empty_state",
@@ -222,7 +222,7 @@ def _make_rules() -> list[Rule]:
             auto_fixable=False,
         ),
 
-        # ── Loading States ──────────────────────────────────────────────────
+        # -- Loading States --------------------------------------------------
         Rule(
             rule_id="LS001",
             name="fetch_no_spinner",
@@ -241,7 +241,7 @@ def _make_rules() -> list[Rule]:
             auto_fixable=False,
         ),
 
-        # ── Responsiveness ──────────────────────────────────────────────────
+        # -- Responsiveness --------------------------------------------------
         Rule(
             rule_id="RS001",
             name="fixed_width_pixels",
@@ -250,7 +250,7 @@ def _make_rules() -> list[Rule]:
             score_impact=7,
             check=lambda src: len(re.findall(r"width:\s*\d{3,4}px", src)) > 5,
             title="Multiple fixed pixel widths",
-            description="More than 5 elements with hardcoded pixel widths — breaks responsive layout.",
+            description="More than 5 elements with hardcoded pixel widths  -  breaks responsive layout.",
             fix_description="Replace fixed px widths with max-w-*, min-w-*, or percentage values.",
             auto_fixable=False,
         ),
@@ -267,7 +267,7 @@ def _make_rules() -> list[Rule]:
             auto_fixable=False,
         ),
 
-        # ── Interaction Feedback ────────────────────────────────────────────
+        # -- Interaction Feedback --------------------------------------------
         Rule(
             rule_id="IF001",
             name="no_hover_state",
@@ -298,7 +298,7 @@ def _make_rules() -> list[Rule]:
             auto_fixable=False,
         ),
 
-        # ── Accessibility ────────────────────────────────────────────────────
+        # -- Accessibility ----------------------------------------------------
         Rule(
             rule_id="AC001",
             name="icon_button_no_aria",
@@ -328,7 +328,7 @@ def _make_rules() -> list[Rule]:
                 "placeholder" in src
             ),
             title="Inputs without associated labels",
-            description="Input elements rely on placeholder text only — not accessible.",
+            description="Input elements rely on placeholder text only  -  not accessible.",
             fix_description="Add <label htmlFor='...'> or aria-label='...' to all inputs.",
             auto_fixable=False,
         ),
@@ -340,14 +340,14 @@ def _make_rules() -> list[Rule]:
             score_impact=4,
             check=lambda src: "focus:" not in src and ":focus" not in src and "focus-visible" not in src,
             title="No keyboard focus indicators",
-            description="No focus styles found — keyboard navigation is invisible.",
+            description="No focus styles found  -  keyboard navigation is invisible.",
             fix_description="Add focus:ring-2 focus:ring-violet-500 to interactive elements.",
             auto_fixable=False,
         ),
     ]
 
 
-# ── UIXAgent Core ──────────────────────────────────────────────────────────────
+# -- UIXAgent Core --------------------------------------------------------------
 
 class UIXAgent:
     """
@@ -419,7 +419,7 @@ class UIXAgent:
         self._generate_patches(all_issues)
 
         logger.info(
-            f"[UIXAgent] Audit complete in {elapsed:.1f}s — "
+            f"[UIXAgent] Audit complete in {elapsed:.1f}s  -  "
             f"Score: {overall}/100 | Issues: {len(all_issues)} | "
             f"Auto-fixable: {auto_fixable}"
         )
@@ -430,7 +430,7 @@ class UIXAgent:
         if file_path and file_path.exists():
             source = file_path.read_text(encoding="utf-8", errors="ignore")
         else:
-            source = ""  # Carbon tracker is inline — no separate file
+            source = ""  # Carbon tracker is inline  -  no separate file
 
         issues: list[UXIssue] = []
 
@@ -563,7 +563,7 @@ class UIXAgent:
         )
 
 
-# ── Singleton ──────────────────────────────────────────────────────────────────
+# -- Singleton ------------------------------------------------------------------
 
 _uix_agent: UIXAgent | None = None
 

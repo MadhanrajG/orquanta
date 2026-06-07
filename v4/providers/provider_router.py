@@ -1,11 +1,11 @@
 """
-OrQuanta Agentic v1.0 — Intelligent Provider Router
+OrQuanta Agentic v1.0  -  Intelligent Provider Router
 
 The ProviderRouter is the single point of entry for all cloud operations.
 It:
   1. Compares spot prices across RunPod, Lambda Labs, AWS, GCP, Azure, CoreWeave in parallel
   2. Picks the cheapest available provider for each GPU type
-  3. Fails over: RunPod → Lambda → CoreWeave → AWS → GCP → Azure on any error
+  3. Fails over: RunPod -> Lambda -> CoreWeave -> AWS -> GCP -> Azure on any error
   4. Tracks total spend and saves estimates vs on-demand
 
 Used by the SchedulerAgent and CostOptimizerAgent.
@@ -33,7 +33,8 @@ from .runpod_provider import RunPodProvider
 
 logger = logging.getLogger("orquanta.providers.router")
 
-USE_REAL_PROVIDERS = os.getenv("USE_REAL_PROVIDERS", "false").lower() == "true"
+def _use_real_providers() -> bool:
+    return os.getenv("USE_REAL_PROVIDERS", "false").lower() == "true"
 
 
 @dataclass
@@ -88,7 +89,7 @@ class ProviderRouter:
         self._total_instances_launched: int = 0
         self._total_cost_saved_usd: float = 0.0
 
-        if USE_REAL_PROVIDERS:
+        if _use_real_providers():
             self._init_providers()
         else:
             self._init_mock_providers()
@@ -139,7 +140,7 @@ class ProviderRouter:
                 loaded.append(name)
             except Exception as exc:
                 logger.warning(f"[Router] {name} provider unavailable in mock mode: {exc}")
-        logger.info(f"[Router] Mock mode — {len(loaded)}/6 providers loaded: {loaded}")
+        logger.info(f"[Router] Mock mode  -  {len(loaded)}/6 providers loaded: {loaded}")
 
     # ------------------------------------------------------------------
     # Core routing operations
@@ -153,7 +154,7 @@ class ProviderRouter:
     ) -> list[SpotPrice]:
         """Fetch spot prices from ALL providers in parallel and return sorted list."""
         # In demo mode, always return full 5-provider mock data
-        if not USE_REAL_PROVIDERS:
+        if not _use_real_providers():
             return self._mock_prices(gpu_type, regions)
 
         tasks = {
@@ -227,7 +228,7 @@ class ProviderRouter:
                 continue
 
             logger.info(
-                f"[Router] Trying {provider_name} for {gpu_count}×{gpu_type} "
+                f"[Router] Trying {provider_name} for {gpu_count}x{gpu_type} "
                 f"@ ${price_opt.current_price_usd_hr:.2f}/hr in {price_opt.region}"
             )
             try:
@@ -258,8 +259,8 @@ class ProviderRouter:
                 self._total_cost_saved_usd += max(0.0, savings)
 
                 logger.info(
-                    f"[Router] ✅ Launched {gpu_count}×{gpu_type} on {provider_name} "
-                    f"({price_opt.region}) — ${price_opt.current_price_usd_hr:.3f}/hr "
+                    f"[Router]  Launched {gpu_count}x{gpu_type} on {provider_name} "
+                    f"({price_opt.region})  -  ${price_opt.current_price_usd_hr:.3f}/hr "
                     f"(saved ${savings:.3f}/hr vs on-demand)"
                 )
                 return instance, decision
@@ -278,7 +279,7 @@ class ProviderRouter:
                 continue
 
         raise InsufficientCapacityError(
-            f"All providers failed to launch {gpu_count}×{gpu_type}. "
+            f"All providers failed to launch {gpu_count}x{gpu_type}. "
             f"Last error: {last_exc}"
         )
 
@@ -375,7 +376,7 @@ class ProviderRouter:
     def _mock_prices(self, gpu_type: str, regions: list[str] | None) -> list[SpotPrice]:
         """Return realistic simulated prices for demo/test mode.
 
-        Returns 18 price points across 6 providers × 3 regions each,
+        Returns 18 price points across 6 providers x 3 regions each,
         with realistic regional variance to look like real spot market data.
         RunPod is the cheapest provider for H100 and A100 workloads.
         """
@@ -397,27 +398,27 @@ class ProviderRouter:
             return round(base * (1 + random.uniform(-pct, pct)), 2)
 
         mock = [
-            # RunPod — 3 datacenters, very low interruption, cheapest H100/A100
+            # RunPod  -  3 datacenters, very low interruption, cheapest H100/A100
             SpotPrice("runpod",    "US-TX-3",      gpu_type, "NVIDIA H100 SXM",  _v(runpod_price, 0.01), od_price, "high",   2.0),
             SpotPrice("runpod",    "US-CA-3",      gpu_type, "NVIDIA H100 SXM",  _v(runpod_price, 0.02), od_price, "high",   2.0),
             SpotPrice("runpod",    "EU-RO-1",      gpu_type, "NVIDIA H100 SXM",  _v(runpod_price * 0.97, 0.02), od_price, "medium", 3.0),
-            # Lambda Labs — 3 regions, low interruption, on-demand
+            # Lambda Labs  -  3 regions, low interruption, on-demand
             SpotPrice("lambda",    "us-tx-3",      gpu_type, "gpu_1x_a100",     _v(lambda_price, 0.01), od_price, "high",   0.0),
             SpotPrice("lambda",    "us-west-2",    gpu_type, "gpu_1x_a100",     _v(lambda_price, 0.02), od_price, "high",   0.0),
             SpotPrice("lambda",    "us-east-1",    gpu_type, "gpu_1x_a100",     _v(lambda_price, 0.02), od_price, "medium", 0.0),
-            # AWS — 3 regions, moderate spot interruption
+            # AWS  -  3 regions, moderate spot interruption
             SpotPrice("aws",       "us-east-1",    gpu_type, "p5.48xlarge",     _v(od_price * 0.68),    od_price, "high",   5.0),
             SpotPrice("aws",       "us-west-2",    gpu_type, "p5.48xlarge",     _v(od_price * 0.71),    od_price, "high",   7.0),
             SpotPrice("aws",       "eu-west-1",    gpu_type, "p5.48xlarge",     _v(od_price * 0.74),    od_price, "medium", 8.0),
-            # GCP — 3 regions, higher interruption but cheapest spot
+            # GCP  -  3 regions, higher interruption but cheapest spot
             SpotPrice("gcp",       "us-central1",  gpu_type, "a3-highgpu-1g",   _v(od_price * 0.30),    od_price, "high",  15.0),
             SpotPrice("gcp",       "europe-west4", gpu_type, "a3-highgpu-1g",   _v(od_price * 0.32),    od_price, "high",  18.0),
             SpotPrice("gcp",       "asia-east1",   gpu_type, "a3-highgpu-1g",   _v(od_price * 0.34),    od_price, "medium",12.0),
-            # CoreWeave — 3 regions, no interruption (dedicated)
+            # CoreWeave  -  3 regions, no interruption (dedicated)
             SpotPrice("coreweave", "ORD1",         gpu_type, "cw-vgpu",         _v(cw_price, 0.03),     od_price, "high",   0.0),
             SpotPrice("coreweave", "LAS1",         gpu_type, "cw-vgpu",         _v(cw_price, 0.04),     od_price, "high",   0.0),
             SpotPrice("coreweave", "EWR1",         gpu_type, "cw-vgpu",         _v(cw_price, 0.05),     od_price, "medium", 0.0),
-            # Azure — 3 regions, moderate interruption
+            # Azure  -  3 regions, moderate interruption
             SpotPrice("azure",     "eastus",       gpu_type, "ND96isr_H100_v5", _v(od_price * 0.70),    od_price, "medium",10.0),
             SpotPrice("azure",     "westus2",      gpu_type, "ND96isr_H100_v5", _v(od_price * 0.72),    od_price, "medium",12.0),
             SpotPrice("azure",     "westeurope",   gpu_type, "ND96isr_H100_v5", _v(od_price * 0.75),    od_price, "low",   14.0),
@@ -425,7 +426,7 @@ class ProviderRouter:
         return sorted(mock, key=lambda p: p.current_price_usd_hr)
 
 
-# Singleton — shared across the application
+# Singleton  -  shared across the application
 _router: ProviderRouter | None = None
 
 def get_router() -> ProviderRouter:

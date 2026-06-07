@@ -1,16 +1,17 @@
-﻿import { useState, useEffect, useRef } from'react'
+import { useState, useEffect, useRef } from'react'
+import { motion } from 'framer-motion'
 import { useAuth } from'../App.jsx'
 import AgentHealthCard from '../components/AgentHealthCard.jsx'
 
 const API = import.meta.env.VITE_API_URL ||''
 
-/* â”€â”€â”€ Agent node positions (SVG viewBox 0 0 600 400) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* """ Agent node positions (SVG viewBox 0 0 600 400) """"""""""""""""""" */
 const AGENT_NODES = [
- { key:'master_orchestrator', label:'OrMind', sub:'Orchestrator', x: 300, y: 180, icon:'', color:'#0091FF', size: 46 },
- { key:'scheduler_agent', label:'Scheduler', sub:'EDF Queue', x: 140, y: 100, icon:'', color:'#7B2FFF', size: 36 },
- { key:'cost_optimizer_agent', label:'Cost AI', sub:'Optimizer', x: 460, y: 100, icon:'', color:'#F59E0B', size: 36 },
- { key:'healing_agent', label:'Healing', sub:'Self-Repair', x: 120, y: 290, icon:'', color:'#10B981', size: 36 },
- { key:'forecast_agent', label:'Forecast', sub:'Demand AI', x: 480, y: 290, icon:'', color:'#F472B6', size: 36 },
+ { key:'master_orchestrator', label:'OrMind', sub:'Orchestrator', x: 300, y: 180, icon:'OQ', color:'#7C6BF0', size: 46 },
+ { key:'scheduler_agent', label:'Scheduler', sub:'EDF Queue', x: 140, y: 100, icon:'SC', color:'#8b5cf6', size: 36 },
+ { key:'cost_optimizer_agent', label:'Cost AI', sub:'Optimizer', x: 460, y: 100, icon:'CO', color:'#f59e0b', size: 36 },
+ { key:'healing_agent', label:'Healing', sub:'Self-Repair', x: 120, y: 290, icon:'HL', color:'#10b981', size: 36 },
+ { key:'forecast_agent', label:'Forecast', sub:'Demand AI', x: 480, y: 290, icon:'FC', color:'#ec4899', size: 36 },
 ]
 
 const EDGES = [
@@ -20,7 +21,7 @@ const EDGES = [
  ['master_orchestrator','forecast_agent'],
 ]
 
-/* â”€â”€â”€ Pulse line component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* """ Pulse line component """""""""""""""""""""""""""""""""""""""""""""" */
 function PulseLine({ x1, y1, x2, y2, color, active }) {
  const len = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
  return (
@@ -39,7 +40,7 @@ function PulseLine({ x1, y1, x2, y2, color, active }) {
  )
 }
 
-/* â”€â”€â”€ Agent thought stream â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* """ Agent thought stream """""""""""""""""""""""""""""""""""""""""""""" */
 const ALL_THOUGHTS = {
  master_orchestrator: [
 'Goal received: "Fine-tune Mistral 7B, budget $50"',
@@ -99,15 +100,15 @@ function ThoughtStream({ agentKey, color }) {
  {visible.map((thought, i) => (
  <div key={thought} className="flex items-start gap-2 transition-all duration-500"
  style={{ opacity: Math.max(0.2, 1 - i * 0.22) }}>
- <span className="text-xs mt-px" style={{ color }}></span>
- <p className="text-xs text-slate-400 leading-relaxed">{thought}</p>
+ <div style={{ width: 4, height: 4, borderRadius: '50%', background: color, marginTop: 5, flexShrink: 0 }} />
+ <p className="text-xs text-slate-500 leading-relaxed">{thought}</p>
  </div>
  ))}
  </div>
  )
 }
 
-/* â”€â”€â”€ Main Agent Monitor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* """ Main Agent Monitor """""""""""""""""""""""""""""""""""""""""""""""""" */
 export default function AgentMonitor() {
  const [activeNode, setActiveNode] = useState('master_orchestrator')
  const [activeEdges, setActiveEdges] = useState([])
@@ -126,18 +127,22 @@ export default function AgentMonitor() {
  const selectedNode = AGENT_NODES.find(n => n.key === activeNode)
 
  return (
- <div className="space-y-5 animate-fade-in">
+  <motion.div
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+    className="space-y-5 animate-fade-in">
  <AgentHealthCard />
  <div>
- <h1 className="text-xl font-bold text-gray-900">Agent Monitor</h1>
+ <h1 className="text-xl font-bold text-slate-800">Agent Monitor</h1>
  <p className="text-slate-500 text-sm mt-1">Real-time neural network view of 5 active OrQuanta agents</p>
  </div>
 
  <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
- {/* â”€â”€ Neural Network SVG â”€â”€ */}
+ {/* "" Neural Network SVG "" */}
  <div className="xl:col-span-2 glass-card p-5">
  <div className="flex items-center justify-between mb-4">
- <span className="text-sm font-semibold text-gray-900">Agent Network</span>
+ <span className="text-sm font-semibold text-slate-800">Agent Network</span>
  <div className="flex items-center gap-2">
  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
  <span className="text-xs text-emerald-600">5 agents active</span>
@@ -148,7 +153,7 @@ export default function AgentMonitor() {
  {/* Background grid */}
  <defs>
  <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
- <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(0,0,0,0.02)" strokeWidth="1" />
+ <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(12,26,58,0.05)" strokeWidth="1" />
  </pattern>
  </defs>
  <rect width="600" height="400" fill="url(#grid)" />
@@ -178,7 +183,7 @@ export default function AgentMonitor() {
  )}
  {/* Main circle */}
  <circle cx={node.x} cy={node.y} r={node.size}
- fill={`${node.color}15`}
+ fill={`${node.color}12`}
  stroke={isSelected ? node.color : `${node.color}40`}
  strokeWidth={isSelected ? 2 : 1}
  style={{ filter: isSelected ? `drop-shadow(0 0 12px ${node.color})` :'none' }} />
@@ -189,12 +194,12 @@ export default function AgentMonitor() {
  </text>
  {/* Label */}
  <text x={node.x} y={node.y + node.size + 14} textAnchor="middle"
- fill={isSelected ?'white' :'#64748b'} fontSize={10} fontWeight={isSelected ? 600 : 400}
+ fill={isSelected ? node.color : '#475569'} fontSize={10} fontWeight={isSelected ? 600 : 400}
  fontFamily="Inter, sans-serif">
  {node.label}
  </text>
  <text x={node.x} y={node.y + node.size + 26} textAnchor="middle"
- fill="#94a3b8" fontSize={8.5} fontFamily="Inter, sans-serif">
+ fill="#94A3B8" fontSize={8.5} fontFamily="Inter, sans-serif">
  {node.sub}
  </text>
  {/* Pulse dot */}
@@ -206,21 +211,21 @@ export default function AgentMonitor() {
  })}
  </svg>
  </div>
- <p className="text-xs text-center mt-2" style={{ color:'#94a3b8' }}>Click any agent node to see live reasoning</p>
+ <p className="text-xs text-center mt-2" style={{ color:'#94A3B8' }}>Click any agent node to see live reasoning</p>
  </div>
 
- {/* â”€â”€ Agent detail panel â”€â”€ */}
+ {/* "" Agent detail panel "" */}
  <div className="flex flex-col gap-4">
  {selectedNode && (
  <div className="glass-card p-5 flex-1"
  style={{ border: `1px solid ${selectedNode.color}20` }}>
  <div className="flex items-center gap-3 mb-4">
  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
- style={{ background: `${selectedNode.color}15`, border: `1px solid ${selectedNode.color}30` }}>
+ style={{ background: `${selectedNode.color}12`, border: `1px solid ${selectedNode.color}30` }}>
  {selectedNode.icon}
  </div>
  <div>
- <div className="font-semibold text-gray-900">{selectedNode.label}</div>
+ <div className="font-semibold text-slate-800">{selectedNode.label}</div>
  <div className="text-xs" style={{ color: selectedNode.color }}>{selectedNode.sub} . Active</div>
  </div>
  </div>
@@ -236,9 +241,9 @@ export default function AgentMonitor() {
  { label:'Uptime', value:'99.97%' },
  ].map(stat => (
  <div key={stat.label} className="rounded-lg p-2.5 text-center"
- style={{ background: `${selectedNode.color}12`, border: `1px solid ${selectedNode.color}25` }}>
- <div className="text-sm font-bold text-gray-900">{stat.value}</div>
- <div className="text-xs" style={{ color:'#94a3b8' }}>{stat.label}</div>
+ style={{ background: `${selectedNode.color}08`, border: `1px solid ${selectedNode.color}20` }}>
+ <div className="text-sm font-bold text-slate-800" style={{ fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: 'tabular-nums' }}>{stat.value}</div>
+ <div className="text-xs" style={{ color:'#475569' }}>{stat.label}</div>
  </div>
  ))}
  </div>
@@ -251,14 +256,14 @@ export default function AgentMonitor() {
  <div className="space-y-2">
  {AGENT_NODES.map(node => (
  <button key={node.key} onClick={() => setActiveNode(node.key)}
- className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left transition-all hover:bg-white/5"
+ className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left transition-all hover:bg-slate-50"
  style={{
- background: activeNode === node.key ? `${node.color}0F` :'transparent',
- border: `1px solid ${activeNode === node.key ? node.color +'25' :'transparent'}`,
+ background: activeNode === node.key ? `${node.color}0A` :'transparent',
+ border: `1px solid ${activeNode === node.key ? node.color +'20' :'transparent'}`,
  }}>
  <span className="text-sm">{node.icon}</span>
  <span className="text-xs font-medium flex-1"
- style={{ color: activeNode === node.key ?'white' :'#94a3b8' }}>{node.label}</span>
+ style={{ color: activeNode === node.key ?'#0F172A' :'#475569' }}>{node.label}</span>
  <div className="flex items-center gap-1">
  <span className="w-1.5 h-1.5 rounded-full" style={{ background: node.color, boxShadow: `0 0 4px ${node.color}` }} />
  <span className="text-xs" style={{ color: node.color }}>Active</span>
@@ -269,11 +274,11 @@ export default function AgentMonitor() {
  </div>
  </div>
  </div>
- </div>
+ </motion.div>
  )
 }
 
-/* â”€â”€â”€ Local hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* """ Local hook """""""""""""""""""""""""""""""""""""""""""""""""""""""" */
 import { useContext } from'react'
 import { AuthContext } from'../App.jsx'
 function useApi(endpoint) {

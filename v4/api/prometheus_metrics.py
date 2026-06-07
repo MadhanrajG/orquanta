@@ -1,5 +1,5 @@
 """
-OrQuanta — Prometheus Metrics Middleware
+OrQuanta  -  Prometheus Metrics Middleware
 =========================================
 Exposes /metrics endpoint for Grafana Cloud monitoring.
 
@@ -10,7 +10,7 @@ Tracks:
   - Provider latency by provider name
   - Cost accrued (gauge)
 
-Usage in v4/api/main.py — already imported via this module.
+Usage in v4/api/main.py  -  already imported via this module.
 Install: pip install prometheus-client
 """
 from __future__ import annotations
@@ -34,11 +34,11 @@ try:
     )
     _prometheus_available = True
 except ImportError:
-    logger.warning("prometheus-client not installed — /metrics endpoint disabled. Run: pip install prometheus-client")
+    logger.warning("prometheus-client not installed  -  /metrics endpoint disabled. Run: pip install prometheus-client")
 
 
 if _prometheus_available:
-    # ── Metric definitions ────────────────────────────────────────────────────
+    # -- Metric definitions ----------------------------------------------------
     HTTP_REQUESTS_TOTAL = Counter(
         "orquanta_http_requests_total",
         "Total HTTP requests",
@@ -161,7 +161,7 @@ def get_metrics_response() -> Response:
     )
 
 
-# ── Helper functions for other modules to record metrics ─────────────────────
+# -- Helper functions for other modules to record metrics ---------------------
 
 def record_job_submitted(gpu_type: str, provider: str):
     if _prometheus_available:

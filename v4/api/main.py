@@ -273,7 +273,19 @@ async def lifespan(_app: FastAPI):
     cron_task = _asyncio.create_task(cron_scheduler.run())
     logger.info("[CronScheduler] Recurring job scheduler started.")
 
-    logger.info("All agents started. Platform ready.")
+    # -- Start Recursive AI Self-Improvement Engine --
+    try:
+        from ..agents.self_improvement_engine import get_self_improvement_engine
+        improvement_engine = get_self_improvement_engine()
+        await improvement_engine.start(interval_s=120.0)
+        logger.info(
+            "[SelfImprovement] ONLINE  -  PolicyMutation + PromptEvolution + AgentReflection active. "
+            f"Policy v{improvement_engine.policy.version} loaded."
+        )
+    except Exception as exc:
+        logger.warning(f"[SelfImprovement] Failed to start (non-fatal): {exc}")
+
+    logger.info("All agents started. Recursive AI self-improvement ACTIVE. Platform ready.")
 
     yield
 

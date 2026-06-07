@@ -1,34 +1,35 @@
-﻿/**
- * VeroControl â€” Full-page Vero Command Center
+/**
+ * VeroControl "" Full-page Vero Command Center
  *
  * 4-panel layout:
- * 1. Agent Health Grid     â€” live KPI scores for all 5 agents
- * 2. User Intelligence     â€” login counter, DAU/MAU, session analytics
- * 3. Market Trends         â€” GPU price signals + UI recommendations
- * 4. Vero Decision Log     â€” NeMoClaw-style reasoning trace
+ * 1. Agent Health Grid "" live KPI scores for all 5 agents
+ * 2. User Intelligence "" login counter, DAU/MAU, session analytics
+ * 3. Market Trends "" GPU price signals + UI recommendations
+ * 4. Vero Decision Log "" NeMoClaw-style reasoning trace
  *
  * Polls /api/v1/vero/status every 10s.
  * Market trends polled separately from /api/v1/vero/market-trends every 30s.
  */
 
 import { useState, useEffect, useContext, useRef } from 'react'
+import { motion } from 'framer-motion'
 import { AuthContext } from '../App.jsx'
 
 const API = import.meta.env.VITE_API_URL || ''
 
 const AGENT_META = {
-    master_orchestrator:  { label: 'OrMind',    icon: '', color: '#0091FF' },
-    scheduler_agent:       { label: 'Scheduler', icon: '', color: '#7B2FFF' },
-    cost_optimizer_agent:  { label: 'Cost AI',   icon: '', color: '#F59E0B' },
-    healing_agent:         { label: 'Healer',    icon: '', color: '#10B981' },
-    forecast_agent:        { label: 'Forecast',  icon: '', color: '#F472B6' },
+    master_orchestrator: { label: 'OrMind', icon: '', color: '#0091FF' },
+    scheduler_agent: { label: 'Scheduler', icon: '', color: '#7B2FFF' },
+    cost_optimizer_agent: { label: 'Cost AI', icon: '', color: '#F59E0B' },
+    healing_agent: { label: 'Healer', icon: '', color: '#10B981' },
+    forecast_agent: { label: 'Forecast', icon: '', color: '#F472B6' },
 }
 
 const URGENCY_COLOR = { critical: '#ef4444', high: '#F59E0B', medium: '#0091FF', low: '#64748b' }
 const URGENCY_EMOJI = { critical: '', high: '', medium: '', low: '' }
 const SEV_COLOR = { critical: '#ef4444', warning: '#F59E0B', info: '#0091FF' }
 
-/* â”€â”€ Reusable stat card â”€â”€ */
+/* "" Reusable stat card "" */
 function KpiBar({ label, value, color }) {
     return (
         <div style={{ marginBottom: 6 }}>
@@ -36,7 +37,7 @@ function KpiBar({ label, value, color }) {
                 <span style={{ fontSize: 11, color: '#64748b' }}>{label}</span>
                 <span style={{ fontSize: 11, fontWeight: 600, color }}>{(value * 100).toFixed(0)}%</span>
             </div>
-            <div style={{ height: 4, borderRadius: 999, background: 'rgba(0,0,0,0.06)' }}>
+            <div style={{ height: 4, borderRadius: 999, background: 'rgba(255,255,255,0.06)' }}>
                 <div style={{
                     height: '100%', borderRadius: 999,
                     width: `${Math.min(value * 100, 100)}%`,
@@ -49,13 +50,13 @@ function KpiBar({ label, value, color }) {
     )
 }
 
-/* â”€â”€ Agent health card â”€â”€ */
+/* "" Agent health card "" */
 function AgentCard({ kpi, onInject }) {
     const meta = AGENT_META[kpi.name] || { label: kpi.name, icon: '', color: '#64748b' }
     const statusColor = kpi.status === 'healthy' ? '#10B981' : kpi.status === 'degraded' ? '#F59E0B' : '#ef4444'
     return (
         <div style={{
-            background: 'rgba(0,0,0,0.02)',
+            background: 'rgba(255,255,255,0.03)',
             border: `1px solid ${meta.color}20`,
             borderRadius: 14, padding: '14px 16px',
             position: 'relative', overflow: 'hidden',
@@ -108,7 +109,7 @@ function AgentCard({ kpi, onInject }) {
     )
 }
 
-/* â”€â”€ Main Component â”€â”€ */
+/* "" Main Component "" */
 export default function VeroControl() {
     const { token } = useContext(AuthContext)
     const [status, setStatus] = useState(null)
@@ -169,9 +170,13 @@ export default function VeroControl() {
     const decisions = status?.recent_decisions || []
 
     return (
-        <div className="space-y-5 animate-fade-in" style={{ color: 'var(--text-primary)' }}>
+        <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="space-y-5 animate-fade-in" style={{ color: 'var(--text-primary)' }}>
 
-            {/* â”€â”€ Header â”€â”€ */}
+            {/* "" Header "" */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                     <div style={{
@@ -187,7 +192,7 @@ export default function VeroControl() {
                             Vero Command Center
                         </h1>
                         <p style={{ fontSize: 13, color: '#64748b' }}>
-                            Superior Intelligence Meta-Agent Â· NeMoClaw Architecture
+                            Superior Intelligence Meta-Agent - NeMoClaw Architecture
                         </p>
                     </div>
                 </div>
@@ -208,12 +213,12 @@ export default function VeroControl() {
                         {status?.vero_status || 'initializing'}
                     </span>
                     <span style={{ color: '#64748b', fontSize: 12 }}>
-                        {status ? `${status.loops_completed} cycles Â· ${Math.floor(status.uptime_seconds / 60)}m uptime` : 'Booting...'}
+                        {status ? `${status.loops_completed} cycles - ${Math.floor(status.uptime_seconds / 60)}m uptime` : 'Booting...'}
                     </span>
                 </div>
             </div>
 
-            {/* â”€â”€ Row 1: Summary KPIs â”€â”€ */}
+            {/* "" Row 1: Summary KPIs "" */}
             {status && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
                     {[
@@ -224,7 +229,7 @@ export default function VeroControl() {
                         { label: 'UI Trends', value: marketIntel.ui_recommendations_count ?? 0, color: '#F59E0B', icon: '' },
                     ].map(({ label, value, color, icon }) => (
                         <div key={label} style={{
-                            background: 'rgba(0,0,0,0.02)',
+                            background: 'rgba(255,255,255,0.03)',
                             border: `1px solid ${color}20`,
                             borderRadius: 12, padding: '14px 16px', textAlign: 'center',
                         }}>
@@ -236,7 +241,7 @@ export default function VeroControl() {
                 </div>
             )}
 
-            {/* â”€â”€ Row 2: Agent Health Grid + Goal Inject â”€â”€ */}
+            {/* "" Row 2: Agent Health Grid + Goal Inject "" */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16 }}>
 
                 {/* Agent health grid */}
@@ -274,8 +279,8 @@ export default function VeroControl() {
                             value={injectAgent}
                             onChange={e => setInjectAgent(e.target.value)}
                             style={{
-                                width: '100%', background: 'rgba(0,0,0,0.4)',
-                                border: '1px solid rgba(0,0,0,0.06)', borderRadius: 8,
+                                width: '100%', background: 'rgba(255,255,255,0.04)',
+                                border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8,
                                 color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13,
                             }}
                         >
@@ -292,7 +297,7 @@ export default function VeroControl() {
                             placeholder="e.g. Reinitialise scheduler queue and reset priority scoring..."
                             rows={4}
                             style={{
-                                width: '100%', background: 'rgba(0,0,0,0.4)',
+                                width: '100%', background: 'rgba(255,255,255,0.04)',
                                 border: '1px solid rgba(0,145,255,0.2)', borderRadius: 8,
                                 color: 'var(--text-primary)', padding: '10px 12px', fontSize: 12,
                                 resize: 'vertical', fontFamily: 'inherit', outline: 'none',
@@ -304,12 +309,12 @@ export default function VeroControl() {
                         disabled={injecting || !injectGoal.trim()}
                         style={{
                             width: '100%', padding: '10px',
-                            background: injecting ? 'rgba(0,0,0,0.04)' : 'linear-gradient(135deg, #7B2FFF, #0091FF)',
+                            background: injecting ? 'rgba(255,255,255,0.04)' : 'linear-gradient(135deg, #7B2FFF, #0091FF)',
                             border: 'none', borderRadius: 10, color: 'var(--text-primary)',
                             fontWeight: 700, fontSize: 13, cursor: injecting ? 'not-allowed' : 'pointer',
                         }}
                     >
-                        {injecting ? 'Injecting...' : ' Inject via Vero'}
+                        {injecting ? 'Injecting...' : 'Inject via Vero'}
                     </button>
                     {injectMsg && (
                         <div style={{
@@ -332,7 +337,7 @@ export default function VeroControl() {
                              User Intelligence
                         </div>
                         {[
-                            ['Active Sessions', userIntel.active_sessions ?? 'â€”', '#0091FF'],
+                            ['Active Sessions', userIntel.active_sessions ?? '""', '#0091FF'],
                             ['DAU/MAU', `${userIntel.dau ?? 0}/${userIntel.mau ?? 0}`, '#7B2FFF'],
                             ['Login Trend', userIntel.login_trend ?? 'stable', userIntel.login_trend === 'rising' ? '#10B981' : '#64748b'],
                             ['GPU Price Trend', marketIntel.gpu_price_trend ?? 'stable', marketIntel.gpu_price_trend === 'dropping' ? '#10B981' : '#F59E0B'],
@@ -346,7 +351,7 @@ export default function VeroControl() {
                 </div>
             </div>
 
-            {/* â”€â”€ Row 3: Market Trends + Decision Log â”€â”€ */}
+            {/* "" Row 3: Market Trends + Decision Log "" */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
 
                 {/* Market trends */}
@@ -404,7 +409,7 @@ export default function VeroControl() {
                                 <div style={{ fontSize: 12, color: 'var(--text-primary)', marginBottom: 4 }}>{rec.change}</div>
                                 <div style={{ fontSize: 11, color: '#64748b' }}>{rec.rationale}</div>
                                 <div style={{ marginTop: 6, fontSize: 10, color: '#475569' }}>
-                                    Signal: {rec.data_signal} Â· Confidence: {(rec.confidence * 100).toFixed(0)}%
+                                    Signal: {rec.data_signal} - Confidence: {(rec.confidence * 100).toFixed(0)}%
                                 </div>
                             </div>
                         ))}
@@ -425,7 +430,7 @@ export default function VeroControl() {
                     <div ref={logRef} style={{ flex: 1, overflowY: 'auto', maxHeight: 480, display: 'flex', flexDirection: 'column', gap: 8 }}>
                         {decisions.length === 0 ? (
                             <div style={{ padding: 20, textAlign: 'center', color: '#64748b', fontSize: 13 }}>
-                                Vero decision log is empty â€” decisions will appear as Vero monitors agents.
+                                Vero decision log is empty "" decisions will appear as Vero monitors agents.
                             </div>
                         ) : decisions.map(d => (
                             <div key={d.id} style={{
@@ -452,7 +457,7 @@ export default function VeroControl() {
                                 <div style={{ fontSize: 11, color: '#64748b', lineHeight: 1.5 }}>{d.reasoning}</div>
                                 <div style={{ fontSize: 10, color: '#475569', marginTop: 4 }}>
                                     Target: <span style={{ color: '#94a3b8' }}>{d.target}</span>
-                                    &nbsp;Â·&nbsp;
+                                    &nbsp; - &nbsp;
                                     {new Date(d.timestamp).toLocaleTimeString()}
                                 </div>
                             </div>
@@ -460,7 +465,7 @@ export default function VeroControl() {
                     </div>
                 </div>
             </div>
-        </div>
+        </motion.div>
     )
 }
 

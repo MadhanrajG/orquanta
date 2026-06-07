@@ -1,21 +1,21 @@
 """
-OrQuanta — Live GPU Price Aggregator
+OrQuanta  -  Live GPU Price Aggregator
 ======================================
 Polls Lambda Labs, RunPod, and Vast.ai simultaneously every 60 seconds.
 Returns unified, sorted price table across all providers.
 
 Endpoint: GET /api/v1/pricing
-  ?gpu_type=a100    — filter by GPU model (optional)
-  ?max_price=2.50   — max $/hr  (optional)
-  ?min_vram=40      — min VRAM in GB (optional)
-  ?provider=lambda  — filter by provider (optional)
+  ?gpu_type=a100     -  filter by GPU model (optional)
+  ?max_price=2.50    -  max $/hr  (optional)
+  ?min_vram=40       -  min VRAM in GB (optional)
+  ?provider=lambda   -  filter by provider (optional)
 
 Response: { updated_at, providers_polled, listings: [ {...} ] }
 
 Also exposes:
-  GET /api/v1/pricing/summary    — cheapest per GPU class
-  GET /api/v1/pricing/providers  — which providers are live vs degraded
-  POST /api/v1/pricing/compare   — compare two specific instances
+  GET /api/v1/pricing/summary     -  cheapest per GPU class
+  GET /api/v1/pricing/providers   -  which providers are live vs degraded
+  POST /api/v1/pricing/compare    -  compare two specific instances
 """
 from __future__ import annotations
 
@@ -34,14 +34,14 @@ from fastapi.responses import JSONResponse
 logger = logging.getLogger("orquanta.pricing")
 router  = APIRouter(prefix="/api/v1/pricing", tags=["pricing"])
 
-# ─── Cache ────────────────────────────────────────────────────────────────────
+# --- Cache --------------------------------------------------------------------
 _CACHE_TTL   = 60    # seconds
 _cache_ts    = 0.0
 _cache_data: list[dict] = []
-_provider_health: dict[str, str] = {}  # provider → "ok" | "degraded" | "offline"
+_provider_health: dict[str, str] = {}  # provider -> "ok" | "degraded" | "offline"
 
 
-# ─── GPU Listing ──────────────────────────────────────────────────────────────
+# --- GPU Listing --------------------------------------------------------------
 
 @dataclass
 class GpuListing:
@@ -68,12 +68,12 @@ class GpuListing:
         return d
 
 
-# ─── Lambda Labs Fetcher ──────────────────────────────────────────────────────
+# --- Lambda Labs Fetcher ------------------------------------------------------
 
 async def _fetch_lambda(client: httpx.AsyncClient) -> list[GpuListing]:
     key = os.getenv("LAMBDA_LABS_API_KEY", "")
     if not key:
-        logger.debug("[Pricing/Lambda] No API key — using public catalog fallback")
+        logger.debug("[Pricing/Lambda] No API key  -  using public catalog fallback")
         return _lambda_fallback()
 
     try:
@@ -131,18 +131,18 @@ async def _fetch_lambda(client: httpx.AsyncClient) -> list[GpuListing]:
 
 
 def _lambda_fallback() -> list[GpuListing]:
-    """Known Lambda Labs prices as of March 2026 — used when API key not set."""
+    """Known Lambda Labs prices as of March 2026  -  used when API key not set."""
     return [
         GpuListing("lambda","Lambda Labs","gpu_1x_a10","A10 24GB",1,24,30,200,0.75,"us-texas-1","available",False,["on-demand"]),
         GpuListing("lambda","Lambda Labs","gpu_1x_a100","A100 80GB",1,80,30,200,1.99,"us-texas-1","available",False,["on-demand"]),
         GpuListing("lambda","Lambda Labs","gpu_1x_h100_pcie","H100 PCIe 80GB",1,80,30,200,2.99,"us-east-1","available",False,["on-demand"]),
         GpuListing("lambda","Lambda Labs","gpu_1x_h100_sxm5","H100 SXM5 80GB",1,80,26,200,3.29,"us-midwest-1","limited",False,["SXM","NVLink"]),
-        GpuListing("lambda","Lambda Labs","gpu_8x_a100","8× A100 80GB",8,80,124,1800,14.32,"us-texas-1","available",False,["NVLink","InfiniBand"]),
-        GpuListing("lambda","Lambda Labs","gpu_8x_h100_sxm5","8× H100 SXM5",8,80,208,1800,24.80,"us-midwest-1","limited",False,["SXM","NVLink","InfiniBand"]),
+        GpuListing("lambda","Lambda Labs","gpu_8x_a100","8x A100 80GB",8,80,124,1800,14.32,"us-texas-1","available",False,["NVLink","InfiniBand"]),
+        GpuListing("lambda","Lambda Labs","gpu_8x_h100_sxm5","8x H100 SXM5",8,80,208,1800,24.80,"us-midwest-1","limited",False,["SXM","NVLink","InfiniBand"]),
     ]
 
 
-# ─── RunPod Fetcher ───────────────────────────────────────────────────────────
+# --- RunPod Fetcher -----------------------------------------------------------
 
 async def _fetch_runpod(client: httpx.AsyncClient) -> list[GpuListing]:
     """RunPod pricing via GraphQL API (no auth required for public listings)."""
@@ -214,10 +214,10 @@ def _runpod_fallback() -> list[GpuListing]:
     ]
 
 
-# ─── Vast.ai Fetcher ──────────────────────────────────────────────────────────
+# --- Vast.ai Fetcher ----------------------------------------------------------
 
 async def _fetch_vastai(client: httpx.AsyncClient) -> list[GpuListing]:
-    """Vast.ai public offers API — no auth for read."""
+    """Vast.ai public offers API  -  no auth for read."""
     try:
         r = await client.get(
             "https://console.vast.ai/api/v0/bundles/"
@@ -271,18 +271,18 @@ def _vastai_fallback() -> list[GpuListing]:
     ]
 
 
-# ─── AWS spot pricing stub ────────────────────────────────────────────────────
+# --- AWS spot pricing stub ----------------------------------------------------
 
 def _aws_spot_fallback() -> list[GpuListing]:
     """AWS on-demand prices for reference / comparison."""
     return [
         GpuListing("aws","AWS (on-demand)","p3.2xlarge","V100 16GB",1,16,8,61,3.06,"us-east-1","available",False,["on-demand","reference"]),
-        GpuListing("aws","AWS (on-demand)","p4d.24xlarge","8× A100 40GB",8,40,96,1152,32.77,"us-east-1","available",False,["on-demand","reference"]),
-        GpuListing("aws","AWS (on-demand)","p5.48xlarge","8× H100 80GB",8,80,192,2048,98.32,"us-east-1","limited",False,["on-demand","reference"]),
+        GpuListing("aws","AWS (on-demand)","p4d.24xlarge","8x A100 40GB",8,40,96,1152,32.77,"us-east-1","available",False,["on-demand","reference"]),
+        GpuListing("aws","AWS (on-demand)","p5.48xlarge","8x H100 80GB",8,80,192,2048,98.32,"us-east-1","limited",False,["on-demand","reference"]),
     ]
 
 
-# ─── Aggregator ───────────────────────────────────────────────────────────────
+# --- Aggregator ---------------------------------------------------------------
 
 async def _refresh_cache() -> None:
     global _cache_ts, _cache_data
@@ -317,7 +317,7 @@ async def _get_listings() -> list[dict]:
     return _cache_data
 
 
-# ─── Routes ───────────────────────────────────────────────────────────────────
+# --- Routes -------------------------------------------------------------------
 
 @router.get("")
 @router.get("/")
@@ -351,7 +351,7 @@ async def get_pricing(
         "providers_polled":  list({l["provider"] for l in listings}),
         "total_listings":    len(listings),
         "listings":          listings[:limit],
-        "orquanta_tip":      "Submit a goal at /api/v1/goals — OrQuanta picks the cheapest available GPU automatically.",
+        "orquanta_tip":      "Submit a goal at /api/v1/goals  -  OrQuanta picks the cheapest available GPU automatically.",
     })
 
 
@@ -367,7 +367,7 @@ async def get_pricing_summary():
         "A100 40GB":             lambda l: "a100" in l["gpu_model"].lower() and l["vram_gb"] <= 40 and l["gpu_count"] == 1,
         "A100 80GB":             lambda l: "a100" in l["gpu_model"].lower() and l["vram_gb"] >= 80 and l["gpu_count"] == 1,
         "H100 80GB":             lambda l: "h100" in l["gpu_model"].lower() and l["gpu_count"] == 1,
-        "8× H100 (cluster)":    lambda l: "h100" in l["gpu_model"].lower() and l["gpu_count"] >= 8,
+        "8x H100 (cluster)":    lambda l: "h100" in l["gpu_model"].lower() and l["gpu_count"] >= 8,
     }
 
     summary = {}
@@ -417,7 +417,7 @@ async def get_pricing_live(
     provider:  str | None   = Query(None),
     limit:     int           = Query(50, le=200),
 ):
-    """Alias for GET /api/v1/pricing — ensures /pricing/live always returns data."""
+    """Alias for GET /api/v1/pricing  -  ensures /pricing/live always returns data."""
     return await get_pricing(
         gpu_type=gpu_type, max_price=max_price,
         min_vram=min_vram, provider=provider, limit=limit,
@@ -426,7 +426,7 @@ async def get_pricing_live(
 
 @router.get("/status")
 async def get_pricing_status():
-    """Quick health check — how many listings are cached right now."""
+    """Quick health check  -  how many listings are cached right now."""
     listings = await _get_listings()
     return {
         "cached_listings": len(listings),

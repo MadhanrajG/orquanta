@@ -27,53 +27,53 @@ export const BRAND = {
 };
 
 export const COLORS = {
- // ─── Brand Colors ───────────────────────────────────────────
- primary: "#0091FF", // Quantum Blue - CTAs, links, active states
- secondary: "#7B2FFF", // Deep Purple - gradients, highlights
+ // --- Brand Colors -------------------------------------------
+ primary: "#7C6BF0", // Intelligent Lavender - CTAs, links, active states
+ secondary: "#0C1A3A", // Deep Navy - headings, sidebar
 
- // ─── Backgrounds ────────────────────────────────────────────
- background: "#FFFFFF", // White - page background
- surface: "#F8FAFC", // Light Gray - cards, modals
- surfaceAlt: "#F1F5F9", // Slightly darker surface
- border: "#E2E8F0", // Card borders, dividers
+ // --- Backgrounds --------------------------------------------
+ background: "#F8FAFC", // Off-White Canvas - page background
+ surface: "#FFFFFF", // White - cards, panels
+ surfaceAlt: "#F1F5F9", // Slightly gray - alt surface
+ border: "#E2E8F0", // Light borders
 
- // ─── Semantic Colors ─────────────────────────────────────────
- success: "#10B981", // Emerald - job complete, healthy status
- warning: "#F59E0B", // Amber - cost alerts, spend warnings
- error: "#EF4444", // Alert Red - failures, critical
- info: "#0091FF", // Same as primary for info banners
+ // --- Semantic Colors -----------------------------------------
+ success: "#10B981", // Telemetry Green - healthy, online
+ warning: "#F59E0B", // Telemetry Amber - cost alerts
+ error: "#EF4444", // Telemetry Red - failures, critical
+ info: "#7C6BF0", // Same as primary
 
- // ─── Text ────────────────────────────────────────────────────
+ // --- Text ----------------------------------------------------
  textPrimary: "#0F172A",
  textSecondary: "#475569",
  textMuted: "#94A3B8",
  textInverse: "#FFFFFF",
 
- // ─── GPU Provider Colors (for charts) ────────────────────────
+ // --- GPU Provider Colors (for charts) ------------------------
  aws: "#FF9900",
  gcp: "#4285F4",
- azure: "#0078D4",
- coreweave: "#0091FF",
+ azure: "#00D4FF",
+ coreweave: "#A78BFA",
 };
 
 export const GRADIENTS = {
- primary: "linear-gradient(135deg, #0091FF 0%, #7B2FFF 100%)",
- primaryReverse: "linear-gradient(135deg, #7B2FFF 0%, #0091FF 100%)",
- hero: "linear-gradient(135deg, #0091FF 0%, #7B2FFF 50%, #F8FAFC 100%)",
+ primary: "linear-gradient(135deg, #7C6BF0 0%, #9B8BF4 100%)",
+ primaryReverse: "linear-gradient(135deg, #9B8BF4 0%, #7C6BF0 100%)",
+ hero: "linear-gradient(135deg, #7C6BF0 0%, #9B8BF4 50%, #F8FAFC 100%)",
  card: "linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)",
- success: "linear-gradient(135deg, #10B981 0%, #0091FF 100%)",
+ success: "linear-gradient(135deg, #10B981 0%, #7C6BF0 100%)",
  danger: "linear-gradient(135deg, #EF4444 0%, #F59E0B 100%)",
- surface: "linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%)",
+ surface: "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
 };
 
 export const SHADOWS = {
- primary: "0 4px 24px rgba(0, 145, 255, 0.12)",
- primaryStrong: "0 8px 40px rgba(0, 145, 255, 0.18)",
- purple: "0 4px 24px rgba(123, 47, 255, 0.12)",
- card: "0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04)",
- cardHover: "0 4px 24px rgba(0, 145, 255, 0.08)",
- success: "0 4px 16px rgba(16, 185, 129, 0.12)",
- error: "0 4px 16px rgba(239, 68, 68, 0.12)",
+ primary: "0 4px 24px rgba(124, 107, 240, 0.15)",
+ primaryStrong: "0 8px 40px rgba(124, 107, 240, 0.25)",
+ purple: "0 4px 24px rgba(124, 107, 240, 0.15)",
+ card: "0 2px 8px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0,0,0,0.04)",
+ cardHover: "0 8px 32px rgba(124, 107, 240, 0.12)",
+ success: "0 4px 16px rgba(16, 185, 129, 0.15)",
+ error: "0 4px 16px rgba(239, 68, 68, 0.15)",
 };
 
 export const TYPOGRAPHY = {
@@ -145,8 +145,8 @@ export const BREAKPOINTS = {
 export const AGENTS = {
  master_orchestrator: { name: "OrMind Orchestrator", color: COLORS.primary, icon: "" },
  scheduler_agent: { name: "Scheduler", color: COLORS.secondary, icon: "" },
- cost_optimizer_agent: { name: "Cost Optimizer", color: "#00FF88", icon: "" },
- healing_agent: { name: "Healing Agent", color: "#FFB800", icon: "" },
+ cost_optimizer_agent: { name: "Cost Optimizer", color: "#10B981", icon: "" },
+ healing_agent: { name: "Healing Agent", color: "#F59E0B", icon: "" },
  audit_agent: { name: "Audit Agent", color: "#8892A4", icon: "" },
 };
 

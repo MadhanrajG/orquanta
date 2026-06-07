@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — CoreWeave GPU Provider
+OrQuanta Agentic v1.0  -  CoreWeave GPU Provider
 
 CoreWeave specializes in bare-metal GPU-native cloud at lowest H100 prices.
 Integration via CoreWeave's REST API + Kubernetes workload submission.
@@ -94,9 +94,9 @@ class CoreWeaveProvider(BaseGPUProvider):
     for job submission. CoreWeave offers the cheapest H100 pricing globally.
 
     Requires env vars:
-      COREWEAVE_API_KEY   — Bearer token for REST API
-      COREWEAVE_NAMESPACE — Kubernetes namespace (e.g., tenant-orquanta)
-      COREWEAVE_KUBE_API  — Kubernetes API endpoint
+      COREWEAVE_API_KEY    -  Bearer token for REST API
+      COREWEAVE_NAMESPACE  -  Kubernetes namespace (e.g., tenant-orquanta)
+      COREWEAVE_KUBE_API   -  Kubernetes API endpoint
     """
 
     PROVIDER_NAME = "coreweave"
@@ -176,7 +176,7 @@ class CoreWeaveProvider(BaseGPUProvider):
         gpu_type: str,
         gpu_count: int = 1,
         region: str | None = None,
-        spot: bool = False,  # CoreWeave doesn't have spot — always fixed pricing
+        spot: bool = False,  # CoreWeave doesn't have spot  -  always fixed pricing
         tags: dict[str, str] | None = None,
     ) -> GPUInstance:
         """Submit a GPU pod to CoreWeave via Kubernetes API."""

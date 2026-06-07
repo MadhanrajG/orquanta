@@ -1,12 +1,12 @@
 """
-OrQuanta Agentic v1.0 — RunPod GPU Cloud Provider
+OrQuanta Agentic v1.0  -  RunPod GPU Cloud Provider
 ===================================================
 
 Real integration with RunPod's GPU Cloud using the official runpod-python SDK.
-RunPod offers two compute models — both are supported here:
+RunPod offers two compute models  -  both are supported here:
 
-  1. GPU Pods    — on-demand / spot VMs (like AWS EC2 for AI). Cheapest H100 @ ~$2.49/hr.
-  2. Serverless — scale-to-zero GPU workers billed per second of compute. Zero idle cost.
+  1. GPU Pods     -  on-demand / spot VMs (like AWS EC2 for AI). Cheapest H100 @ ~$2.49/hr.
+  2. Serverless  -  scale-to-zero GPU workers billed per second of compute. Zero idle cost.
 
 API docs : https://docs.runpod.io/sdks/python/overview
 SDK repo : https://github.com/runpod/runpod-python
@@ -58,13 +58,17 @@ from v4.providers.base_provider import (
 
 logger = logging.getLogger("orquanta.providers.runpod")
 
-RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY", "")
+# Read at runtime via _get_api_key() so env vars set after import are picked up
+def _get_api_key() -> str:
+    return os.getenv("RUNPOD_API_KEY", "")
 
-# ──────────────────────────────────────────────────────────────────────────────
+SDK_CALL_TIMEOUT = int(os.getenv("RUNPOD_SDK_TIMEOUT", "30"))  # seconds
+
+# ------------------------------------------------------------------------------
 # GPU type catalog with pricing (updated March 2026, spot pricing)
 # RunPod doesn't expose a public pricing REST API; we embed the current market
 # rate table and refresh it here when the SDK gains pricing endpoints.
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 
 GPU_CATALOG: dict[str, dict[str, Any]] = {
     "NVIDIA H100 SXM": {
@@ -157,7 +161,7 @@ GPU_CATALOG: dict[str, dict[str, Any]] = {
     },
 }
 
-# Normalize common OrQuanta GPU type names → RunPod catalog keys
+# Normalize common OrQuanta GPU type names -> RunPod catalog keys
 GPU_TYPE_ALIASES: dict[str, str] = {
     "H100": "NVIDIA H100 SXM",
     "h100": "NVIDIA H100 SXM",
@@ -181,9 +185,9 @@ GPU_TYPE_ALIASES: dict[str, str] = {
 
 # RunPod datacenter regions (datacenters, not cloud regions like AWS)
 RUNPOD_DATACENTERS = [
-    "US-TX-3",    # Dallas, TX — primary US datacenter
+    "US-TX-3",    # Dallas, TX  -  primary US datacenter
     "US-CA-3",    # Los Angeles, CA
-    "EU-RO-1",    # Romania — low cost EU region
+    "EU-RO-1",    # Romania  -  low cost EU region
     "EU-SE-1",    # Sweden
     "CA-MTL-1",   # Montreal, Canada
 ]
@@ -214,25 +218,27 @@ class RunPodProvider(BaseGPUProvider):
 
     def __init__(self) -> None:
         super().__init__()
-        self._api_key = RUNPOD_API_KEY
+        self._api_key = _get_api_key()
         self._sdk_initialized = False
-        self._pod_cache: dict[str, dict] = {}   # pod_id → meta
+        self._pod_cache: dict[str, dict] = {}   # pod_id -> meta
         self._price_cache_ts: float = 0.0
 
         if self._api_key:
             self._init_sdk()
 
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
     # SDK initialization
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
 
     def _init_sdk(self) -> None:
         """Initialize the runpod SDK with the API key."""
+        # Re-read key at init time so env vars set after module import are picked up
+        self._api_key = _get_api_key()
         try:
             import runpod
             runpod.api_key = self._api_key
             self._sdk_initialized = True
-            logger.info("[RunPod] SDK initialized ✓")
+            logger.info("[RunPod] SDK initialized OK")
         except ImportError:
             logger.warning(
                 "[RunPod] runpod-python SDK not installed. "
@@ -247,28 +253,41 @@ class RunPodProvider(BaseGPUProvider):
         """Return the initialized runpod module or raise."""
         if not self._sdk_initialized:
             self._init_sdk()
+        if not self._sdk_initialized:
+            raise ProviderPermanentError("[RunPod] SDK not initialized - check RUNPOD_API_KEY")
         import runpod
         return runpod
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # BaseGPUProvider — abstract methods
-    # ──────────────────────────────────────────────────────────────────────────
+    async def _sdk_call(self, fn, *args, **kwargs):
+        """Execute a synchronous RunPod SDK function with a timeout."""
+        loop = asyncio.get_event_loop()
+        return await asyncio.wait_for(
+            loop.run_in_executor(None, lambda: fn(*args, **kwargs)),
+            timeout=SDK_CALL_TIMEOUT,
+        )
+
+    # --------------------------------------------------------------------------
+    # BaseGPUProvider  -  abstract methods
+    # --------------------------------------------------------------------------
 
     async def is_available(self) -> bool:
         """Return True if RunPod API is reachable and key is valid."""
         if not self._api_key:
-            logger.debug("[RunPod] RUNPOD_API_KEY not set — mock mode")
+            logger.debug("[RunPod] RUNPOD_API_KEY not set - mock mode")
             return False
         if not self._sdk_initialized:
-            logger.warning("[RunPod] SDK not initialized — unavailable")
+            self._init_sdk()
+        if not self._sdk_initialized:
+            logger.warning("[RunPod] SDK not initialized - unavailable")
             return False
         try:
             runpod = self._get_sdk()
-            # Lightweight connectivity check — list pods returns empty list even with no pods
-            loop = asyncio.get_event_loop()
-            await loop.run_in_executor(None, runpod.get_pods)
-            logger.info("[RunPod] API healthy ✓")
+            await self._sdk_call(runpod.get_pods)
+            logger.info("[RunPod] API healthy OK")
             return True
+        except asyncio.TimeoutError:
+            logger.warning("[RunPod] API connectivity timeout")
+            return False
         except Exception as exc:
             logger.warning(f"[RunPod] is_available check failed: {exc}")
             return False
@@ -281,8 +300,7 @@ class RunPodProvider(BaseGPUProvider):
         t0 = time.monotonic()
         try:
             runpod = self._get_sdk()
-            loop = asyncio.get_event_loop()
-            pods = await loop.run_in_executor(None, runpod.get_pods)
+            pods = await self._sdk_call(runpod.get_pods)
             latency = (time.monotonic() - t0) * 1000
             self._record_call("list_instances", region or "global", latency, success=True)
 
@@ -352,30 +370,29 @@ class RunPodProvider(BaseGPUProvider):
         t0 = time.monotonic()
         try:
             runpod = self._get_sdk()
-            loop = asyncio.get_event_loop()
 
             # Build pod creation kwargs
             create_kwargs = dict(
                 name=pod_name,
-                image_name=DEFAULT_POD_IMAGE,
+                image_name=(tags or {}).get("image", DEFAULT_POD_IMAGE),
                 gpu_type_id=gpu_type_id,
                 cloud_type="COMMUNITY" if spot else "SECURE",
                 gpu_count=gpu_count,
-                container_disk_in_gb=50,
-                volume_in_gb=20,
-                volume_mount_path="/workspace",
-                ports="8888/http,22/tcp",
+                container_disk_in_gb=20,
+                volume_in_gb=0,
+                ports="8888/http",
                 env={
                     "RUNPOD_POD_ID": "{{RUNPOD_POD_ID}}",
                     "ORQUANTA_JOB": pod_name,
                 },
             )
+            # Inject docker_args for container-native execution
+            if (tags or {}).get("docker_args"):
+                create_kwargs["docker_args"] = tags["docker_args"]
             if region:
                 create_kwargs["data_center_id"] = datacenter
 
-            pod = await loop.run_in_executor(
-                None, lambda: runpod.create_pod(**create_kwargs)
-            )
+            pod = await self._sdk_call(lambda: runpod.create_pod(**create_kwargs))
 
             latency = (time.monotonic() - t0) * 1000
             self._record_call("spin_up", datacenter, latency, success=True)
@@ -385,8 +402,8 @@ class RunPodProvider(BaseGPUProvider):
             self._pod_cache[pod_id] = {**pod, "catalog_key": catalog_key}
 
             logger.info(
-                f"[RunPod] ✅ Pod {pod_id} ({gpu_count}×{catalog_key}) launching "
-                f"@ ${cost_hr:.3f}/hr — {datacenter}"
+                f"[RunPod] Pod {pod_id} ({gpu_count}x{catalog_key}) launching "
+                f"@ ${cost_hr:.3f}/hr - {datacenter}"
             )
 
             return GPUInstance(
@@ -413,7 +430,7 @@ class RunPodProvider(BaseGPUProvider):
             err_str = str(exc).lower()
             if "no available" in err_str or "capacity" in err_str:
                 raise InsufficientCapacityError(
-                    f"[RunPod] No capacity for {gpu_count}×{gpu_type} in {datacenter}: {exc}"
+                    f"[RunPod] No capacity for {gpu_count}x{gpu_type} in {datacenter}: {exc}"
                 )
             raise ProviderTemporaryError(f"[RunPod] spin_up failed: {exc}") from exc
 
@@ -426,14 +443,11 @@ class RunPodProvider(BaseGPUProvider):
         t0 = time.monotonic()
         try:
             runpod = self._get_sdk()
-            loop = asyncio.get_event_loop()
-            await loop.run_in_executor(
-                None, lambda: runpod.terminate_pod(instance_id)
-            )
+            await self._sdk_call(lambda: runpod.terminate_pod(instance_id))
             self._pod_cache.pop(instance_id, None)
             latency = (time.monotonic() - t0) * 1000
             self._record_call("terminate", region or "global", latency, success=True)
-            logger.info(f"[RunPod] ✅ Terminated pod {instance_id}")
+            logger.info(f"[RunPod] Terminated pod {instance_id}")
             return True
         except Exception as exc:
             latency = (time.monotonic() - t0) * 1000
@@ -472,7 +486,7 @@ class RunPodProvider(BaseGPUProvider):
         """
         Return RunPod spot/on-demand prices for the requested GPU type.
 
-        RunPod doesn't publish a real-time pricing API endpoint — we use the
+        RunPod doesn't publish a real-time pricing API endpoint  -  we use the
         embedded catalog (updated March 2026). Entries are returned for each
         RunPod datacenter with slight regional variance.
         """
@@ -511,9 +525,9 @@ class RunPodProvider(BaseGPUProvider):
         prices.sort(key=lambda p: p.current_price_usd_hr)
         return prices
 
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
     # RunPod-specific extras
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
 
     async def stop_pod(self, pod_id: str) -> bool:
         """
@@ -527,7 +541,7 @@ class RunPodProvider(BaseGPUProvider):
             runpod = self._get_sdk()
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(None, lambda: runpod.stop_pod(pod_id))
-            logger.info(f"[RunPod] 🔴 Stopped pod {pod_id} (volume preserved)")
+            logger.info(f"[RunPod] Stopped pod {pod_id} (volume preserved)")
             return True
         except Exception as exc:
             logger.error(f"[RunPod] stop_pod {pod_id} failed: {exc}")
@@ -546,7 +560,7 @@ class RunPodProvider(BaseGPUProvider):
             await loop.run_in_executor(
                 None, lambda: runpod.resume_pod(pod_id, gpu_count=gpu_count)
             )
-            logger.info(f"[RunPod] ▶️ Resumed pod {pod_id}")
+            logger.info(f"[RunPod] Resumed pod {pod_id}")
             return True
         except Exception as exc:
             logger.error(f"[RunPod] resume_pod {pod_id} failed: {exc}")
@@ -558,12 +572,47 @@ class RunPodProvider(BaseGPUProvider):
             return {"id": pod_id, "desiredStatus": "RUNNING", "mock": True}
         try:
             runpod = self._get_sdk()
-            loop = asyncio.get_event_loop()
-            pod = await loop.run_in_executor(None, lambda: runpod.get_pod(pod_id))
+            pod = await self._sdk_call(lambda: runpod.get_pod(pod_id))
             return pod or {"id": pod_id, "desiredStatus": "UNKNOWN"}
+        except asyncio.TimeoutError:
+            logger.warning(f"[RunPod] get_pod_status {pod_id}: timeout")
+            return {"id": pod_id, "desiredStatus": "UNKNOWN", "error": "timeout"}
         except Exception as exc:
             logger.warning(f"[RunPod] get_pod_status {pod_id}: {exc}")
             return {"id": pod_id, "desiredStatus": "UNKNOWN", "error": str(exc)}
+
+    async def wait_for_pod_ready(self, pod_id: str, timeout_s: int = 300) -> dict[str, Any]:
+        """Poll pod status until it reaches RUNNING state or times out."""
+        deadline = time.monotonic() + timeout_s
+        logger.info(f"[RunPod] Waiting for pod {pod_id} to reach RUNNING state (timeout={timeout_s}s)")
+        while time.monotonic() < deadline:
+            status = await self.get_pod_status(pod_id)
+            desired = status.get("desiredStatus", "UNKNOWN")
+            runtime = status.get("runtime")
+            # Pod is RUNNING when runtime has uptime
+            if desired == "RUNNING" and runtime and runtime.get("uptimeInSeconds", 0) > 0:
+                logger.info(f"[RunPod] Pod {pod_id} is RUNNING (uptime={runtime.get('uptimeInSeconds', 0)}s)")
+                return status
+            if desired in ("EXITED", "TERMINATED", "DEAD"):
+                raise ProviderPermanentError(f"[RunPod] Pod {pod_id} entered terminal state: {desired}")
+            logger.debug(f"[RunPod] Pod {pod_id} status={desired} - waiting...")
+            await asyncio.sleep(5)
+        raise ProviderTemporaryError(f"[RunPod] Pod {pod_id} not ready within {timeout_s}s")
+
+    async def list_orquanta_pods(self) -> list[dict[str, Any]]:
+        """List all pods that were created by OrQuanta (tagged with orquanta_ prefix)."""
+        if not self._api_key or not self._sdk_initialized:
+            return []
+        try:
+            runpod = self._get_sdk()
+            pods = await self._sdk_call(runpod.get_pods)
+            return [
+                pod for pod in (pods or [])
+                if (pod.get("name", "") or "").startswith("orquanta-")
+            ]
+        except Exception as exc:
+            logger.warning(f"[RunPod] list_orquanta_pods failed: {exc}")
+            return []
 
     async def get_gpu_catalog(self) -> list[dict[str, Any]]:
         """
@@ -584,9 +633,9 @@ class RunPodProvider(BaseGPUProvider):
             for k, v in GPU_CATALOG.items()
         ]
 
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
     # Helpers
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
 
     def _resolve_gpu_type(self, gpu_type: str) -> str:
         """Normalize an external GPU type string to a RunPod catalog key."""
@@ -612,9 +661,9 @@ class RunPodProvider(BaseGPUProvider):
         }
         return mapping.get(raw_status.upper(), raw_status.lower())
 
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
     # Mock / demo helpers (when RUNPOD_API_KEY is not set)
-    # ──────────────────────────────────────────────────────────────────────────
+    # --------------------------------------------------------------------------
 
     def _mock_spin_up(
         self,
@@ -632,7 +681,7 @@ class RunPodProvider(BaseGPUProvider):
         dc = region or "US-TX-3"
 
         logger.info(
-            f"[RunPod] DEMO: Mock pod {pod_id} ({gpu_count}×{catalog_key}) "
+            f"[RunPod] DEMO: Mock pod {pod_id} ({gpu_count}x{catalog_key}) "
             f"@ ${cost:.3f}/hr in {dc}"
         )
         self._pod_cache[pod_id] = {"catalog_key": catalog_key, "mock": True}

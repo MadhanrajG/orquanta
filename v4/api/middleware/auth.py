@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — JWT Authentication Middleware
+OrQuanta Agentic v1.0  -  JWT Authentication Middleware
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ if not _JWT_SECRET_RAW:
             "Set JWT_SECRET_KEY in your Render/Railway environment variables."
         )
     _JWT_SECRET_RAW = "dev-secret-local-only"
-    logger.warning("JWT_SECRET_KEY not set — using ephemeral dev secret (non-production mode)")
+    logger.warning("JWT_SECRET_KEY not set  -  using ephemeral dev secret (non-production mode)")
 JWT_SECRET = _JWT_SECRET_RAW
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_HOURS = int(os.getenv("JWT_EXPIRE_HOURS", "24"))
@@ -113,7 +113,7 @@ async def get_current_user(
     if credentials and credentials.scheme.lower() == "bearer":
         token = credentials.credentials
         if token.startswith("sk-orq-"):
-            # User API key — look up in DB
+            # User API key  -  look up in DB
             try:
                 from ..routers.api_keys import lookup_api_key
                 user = lookup_api_key(token)
@@ -135,7 +135,7 @@ async def get_current_user(
             return {
                 "sub": "legacy-api-user",
                 "email": "api@orquanta.internal",
-                "role": "user",  # FIX-10: was "admin" — legacy key must not grant admin
+                "role": "user",  # FIX-10: was "admin"  -  legacy key must not grant admin
                 "auth_method": "api_key",
             }
 
@@ -157,7 +157,7 @@ async def require_admin(user: dict = Depends(get_current_user)) -> dict[str, Any
 
 
 # ---------------------------------------------------------------------------
-# User store — PostgreSQL (prod) with SQLite fallback (local dev)
+# User store  -  PostgreSQL (prod) with SQLite fallback (local dev)
 # ---------------------------------------------------------------------------
 
 import hashlib
@@ -174,7 +174,7 @@ if _USE_PG:
         import psycopg2.extras
         logger.info("Auth: PostgreSQL mode (DATABASE_URL detected)")
     except ImportError:
-        logger.error("psycopg2-binary not installed — falling back to SQLite")
+        logger.error("psycopg2-binary not installed  -  falling back to SQLite")
         _USE_PG = False
 
 _DB_FILE = "./orquanta.db" if not _USE_PG else None
@@ -193,7 +193,7 @@ _CREATE_USERS_TABLE = """
 
 
 def _get_db():
-    """Return a database connection — PostgreSQL in prod, SQLite in dev."""
+    """Return a database connection  -  PostgreSQL in prod, SQLite in dev."""
     if _USE_PG:
         # connect_timeout=10 prevents startup hang on cross-region connections
         conn = psycopg2.connect(
@@ -215,7 +215,7 @@ def _get_db():
 
 
 def _ph() -> str:
-    """Parameter placeholder — %s for PostgreSQL, ? for SQLite."""
+    """Parameter placeholder  -  %s for PostgreSQL, ? for SQLite."""
     return "%s" if _USE_PG else "?"
 
 
@@ -262,7 +262,7 @@ def register_user(email: str, password: str, name: str = "") -> dict[str, Any]:
             conn.execute(sql, params)
             conn.commit()
 
-        logger.info(f"User registered: {email} (id={user_id}) — {'PostgreSQL' if _USE_PG else 'SQLite'}")
+        logger.info(f"User registered: {email} (id={user_id})  -  {'PostgreSQL' if _USE_PG else 'SQLite'}")
         return {"id": user_id, "email": email.lower(), "name": display_name,
                 "hashed_pw": hashed, "salt": salt, "role": "user", "created_at": created_at}
     finally:

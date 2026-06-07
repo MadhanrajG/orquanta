@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — Kubernetes Job Runner
+OrQuanta Agentic v1.0  -  Kubernetes Job Runner
 
 Submits GPU workloads as Kubernetes Jobs with:
 - nvidia.com/gpu resource requests
@@ -61,7 +61,7 @@ class KubernetesRunner:
     def __init__(self) -> None:
         self._token: str = self._load_token()
         self._api = KUBE_API
-        self._active_jobs: dict[str, str] = {}  # job_id → k8s job name
+        self._active_jobs: dict[str, str] = {}  # job_id -> k8s job name
 
     def _load_token(self) -> str:
         """Load service account token for in-cluster auth, or use env var."""

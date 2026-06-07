@@ -1,5 +1,5 @@
 /**
- * AgentHealthCard — Live Safety Governor stats widget
+ * AgentHealthCard - Live Safety Governor stats widget
  *
  * Polls /admin/safety/status every 10s and displays:
  * - Daily spend vs cap
@@ -10,6 +10,7 @@
  * Shown at the top of AgentMonitor page.
  */
 import { useState, useEffect, useContext } from 'react'
+import { motion } from 'framer-motion'
 import { AlertTriangle, ShieldCheck, DollarSign, Activity } from 'lucide-react'
 import { AuthContext } from '../App.jsx'
 
@@ -30,7 +31,7 @@ export default function AgentHealthCard() {
                     setData(await r.json())
                 }
             } catch {
-                // Non-fatal — endpoint requires admin role
+                // Non-fatal - endpoint requires admin role
             } finally {
                 setLoading(false)
             }
@@ -52,7 +53,10 @@ export default function AgentHealthCard() {
         : 0
 
     return (
-        <div
+        <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="glass-card p-4 mb-4"
             style={{
                 border: isEmergencyStop
@@ -70,12 +74,12 @@ export default function AgentHealthCard() {
                         : <ShieldCheck size={16} color="#10B981" />
                     }
                     <span style={{ fontWeight: 700, fontSize: 13, color: isEmergencyStop ? '#ef4444' : '#10B981' }}>
-                        {isEmergencyStop ? '🛑 Emergency Stop Active' : '✅ NeMo Guardrails Active'}
+                        {isEmergencyStop ? 'Emergency Stop Active' : 'NeMo Guardrails Active'}
                     </span>
                 </div>
                 <span style={{
-                    fontSize: 11, color: '#64748b', background: 'rgba(0,0,0,0.03)',
-                    padding: '2px 10px', borderRadius: 999, border: '1px solid rgba(0,0,0,0.08)'
+                    fontSize: 11, color: '#64748b', background: 'rgba(255,255,255,0.03)',
+                    padding: '2px 10px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.06)'
                 }}>
                     PolicyRails v{policy.version || '1.0'}
                 </span>
@@ -92,7 +96,7 @@ export default function AgentHealthCard() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
                 {/* Daily Spend */}
-                <div style={{ background: 'rgba(0,0,0,0.02)', borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 10, padding: '10px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                         <DollarSign size={12} color="#F59E0B" />
                         <span style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1 }}>Daily Spend</span>
@@ -103,7 +107,7 @@ export default function AgentHealthCard() {
                     <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
                         of ${(policy.budget_rails?.daily_spend_cap_usd || 5000).toLocaleString()} cap
                     </div>
-                    <div style={{ marginTop: 6, height: 4, borderRadius: 999, background: 'rgba(0,0,0,0.06)' }}>
+                    <div style={{ marginTop: 6, height: 4, borderRadius: 999, background: 'rgba(255,255,255,0.06)' }}>
                         <div style={{
                             height: '100%', borderRadius: 999,
                             width: `${Math.min(spendPct, 100)}%`,
@@ -114,7 +118,7 @@ export default function AgentHealthCard() {
                 </div>
 
                 {/* Actions Logged */}
-                <div style={{ background: 'rgba(0,0,0,0.02)', borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 10, padding: '10px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                         <Activity size={12} color="#0091FF" />
                         <span style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1 }}>Actions Logged</span>
@@ -123,12 +127,12 @@ export default function AgentHealthCard() {
                         {gov.total_actions_logged || 0}
                     </div>
                     <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
-                        {gov.successful_actions || 0} success · {gov.failed_actions || 0} failed
+                        {gov.successful_actions || 0} success - {gov.failed_actions || 0} failed
                     </div>
                 </div>
 
                 {/* Auto-approve threshold */}
-                <div style={{ background: 'rgba(0,0,0,0.02)', borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 10, padding: '10px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                         <ShieldCheck size={12} color="#7B2FFF" />
                         <span style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1 }}>Auto-Approve</span>
@@ -140,7 +144,7 @@ export default function AgentHealthCard() {
                 </div>
 
                 {/* Blocked Actions */}
-                <div style={{ background: 'rgba(0,0,0,0.02)', borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 10, padding: '10px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                         <AlertTriangle size={12} color="#F472B6" />
                         <span style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1 }}>Blocked Actions</span>
@@ -151,6 +155,6 @@ export default function AgentHealthCard() {
                     <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>permanently blocked</div>
                 </div>
             </div>
-        </div>
+        </motion.div>
     )
 }

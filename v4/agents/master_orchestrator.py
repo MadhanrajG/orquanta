@@ -1,8 +1,8 @@
 """
-OrQuanta Agentic v1.0 — Master Orchestrator
+OrQuanta Agentic v1.0  -  Master Orchestrator
 
 Central brain of the OrQuanta platform. Uses the ReAct pattern
-(Reason → Act → Observe → Repeat) to:
+(Reason -> Act -> Observe -> Repeat) to:
 1. Accept natural-language goals from users
 2. Decompose them into concrete sub-tasks via LLM
 3. Dispatch to specialist agents via Redis Streams
@@ -24,6 +24,7 @@ from .llm_reasoning_engine import LLMReasoningEngine
 from .memory_manager import MemoryManager
 from .safety_governor import get_governor
 from .tool_registry import ToolRegistry
+from .self_improvement_engine import get_self_improvement_engine
 
 logger = logging.getLogger("orquanta.orchestrator")
 
@@ -114,6 +115,7 @@ class MasterOrchestrator:
         }
         self._running = False
         self._redis = None
+        self._improvement = get_self_improvement_engine()
         logger.info("MasterOrchestrator initialised.")
 
     async def start(self) -> None:
@@ -148,7 +150,7 @@ class MasterOrchestrator:
         self._goals[goal_id] = execution
         self._save_goal(execution)
 
-        logger.info(f"[Orchestrator] Goal submitted: {goal_id} — '{raw_text[:80]}...'")
+        logger.info(f"[Orchestrator] Goal submitted: {goal_id}  -  '{raw_text[:80]}...'")
 
         # Kick off processing asynchronously
         asyncio.create_task(self._execute_goal(execution))
@@ -174,7 +176,7 @@ class MasterOrchestrator:
             status = g.get("status", "failed")
             if status in ("decomposing", "running"):
                 ex.status = "failed"
-                ex.result = {"error": "Server restarted — goal was interrupted."}
+                ex.result = {"error": "Server restarted  -  goal was interrupted."}
             else:
                 ex.status = status
             self._goals[ex.goal_id] = ex
@@ -206,7 +208,7 @@ class MasterOrchestrator:
     # ------------------------------------------------------------------
 
     def _save_goal(self, ex: GoalExecution) -> None:
-        """Persist goal state to DB. Fire-and-forget — never raises."""
+        """Persist goal state to DB. Fire-and-forget  -  never raises."""
         try:
             from ..database.persistence import upsert_goal
             upsert_goal(ex.to_dict())
@@ -301,6 +303,12 @@ class MasterOrchestrator:
             ex.log_reasoning("OBSERVE", "Goal completed successfully.")
             self._save_goal(ex)
 
+            # Recursive self-improvement: reflect on outcome and mutate policy
+            asyncio.create_task(
+                self._improvement.reflect_on_goal(ex.to_dict(), self.llm),
+                name=f"reflect-{ex.goal_id[:8]}"
+            )
+
             # Store outcome in memory for future goals
             await self.memory.store_event({
                 "type": "goal_completed",
@@ -323,6 +331,11 @@ class MasterOrchestrator:
             ex.log_reasoning("ERROR", str(exc))
             self._save_goal(ex)
             logger.error(f"[ReAct] Goal {ex.goal_id} FAILED: {exc}", exc_info=True)
+            # Reflect on failure to improve future policy
+            asyncio.create_task(
+                self._improvement.reflect_on_goal(ex.to_dict(), self.llm),
+                name=f"reflect-fail-{ex.goal_id[:8]}"
+            )
 
         finally:
             for agent in self._agent_status:
@@ -339,7 +352,7 @@ class MasterOrchestrator:
 
         self._agent_status[agent] = "acting"
         ex.log_reasoning("ACT", f"Dispatching task {task_id} to {agent}: {action}")
-        logger.info(f"[Orchestrator] Task {task_id} → {agent}.{action}")
+        logger.info(f"[Orchestrator] Task {task_id} -> {agent}.{action}")
 
         try:
             result = await self._call_agent(agent, action, params)
@@ -428,9 +441,9 @@ class MasterOrchestrator:
         # Simple policy: abort if >50% of tasks failed
         fail_rate = len(ex.failed_tasks) / max(len(ex.tasks), 1)
         if fail_rate > 0.5:
-            logger.warning(f"[Orchestrator] Goal {ex.goal_id}: fail rate {fail_rate:.0%} — aborting.")
+            logger.warning(f"[Orchestrator] Goal {ex.goal_id}: fail rate {fail_rate:.0%}  -  aborting.")
             return False
-        logger.info(f"[Orchestrator] Goal {ex.goal_id}: fail rate {fail_rate:.0%} — continuing.")
+        logger.info(f"[Orchestrator] Goal {ex.goal_id}: fail rate {fail_rate:.0%}  -  continuing.")
         return True
 
     # ------------------------------------------------------------------

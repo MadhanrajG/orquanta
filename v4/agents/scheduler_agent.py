@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — Scheduler Agent
+OrQuanta Agentic v1.0  -  Scheduler Agent
 
 Intelligent GPU job queue manager with:
 - Priority scoring using LLM + heuristics
@@ -146,7 +146,7 @@ class SchedulerAgent:
         )
     """
 
-    # Max intent length accepted — prevents LLM prompt inflation / injection attacks
+    # Max intent length accepted  -  prevents LLM prompt inflation / injection attacks
     _MAX_INTENT_LEN = 500
 
     def __init__(self) -> None:
@@ -156,7 +156,7 @@ class SchedulerAgent:
         self.governor = get_governor()
 
         self._queue: list[ScheduledJob] = []  # min-heap (inverted priority)
-        self._bins: dict[str, GPUBin] = {}    # instance_id → GPUBin
+        self._bins: dict[str, GPUBin] = {}    # instance_id -> GPUBin
         self._all_jobs: dict[str, ScheduledJob] = {}
         self._running = False
         self._lock = asyncio.Lock()           # Guards queue + bins mutations
@@ -202,7 +202,7 @@ class SchedulerAgent:
 
         job_id = f"job-{str(uuid4())[:8]}"
 
-        # Score priority using LLM (outside lock — I/O bound)
+        # Score priority using LLM (outside lock  -  I/O bound)
         priority = await self._score_priority(
             intent=intent,
             required_vram_gb=required_vram_gb,
@@ -494,7 +494,7 @@ def _estimate_provision_cost(job: ScheduledJob) -> float:
 
 
 # ---------------------------------------------------------------------------
-# Singleton — one shared instance across all routers and the lifespan
+# Singleton  -  one shared instance across all routers and the lifespan
 # ---------------------------------------------------------------------------
 
 _scheduler: SchedulerAgent | None = None

@@ -1,4 +1,4 @@
-"""OrQuanta Agentic v1.0 — Agents Router."""
+"""OrQuanta Agentic v1.0  -  Agents Router."""
 from __future__ import annotations
 import logging
 from typing import Any

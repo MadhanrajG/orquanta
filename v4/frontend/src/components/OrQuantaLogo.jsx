@@ -1,4 +1,5 @@
 import React, { useState } from'react';
+import { motion } from 'framer-motion';
 
 /**
  * OrQuantaLogo - SVG Logo Component
@@ -170,18 +171,22 @@ const OrQuantaLogo = ({
  };
 
  if (variant ==='icon') {
- return (
- <div
- className={className}
- style={{ display:'inline-flex', ...style }}
- onMouseEnter={() => setHovered(true)}
- onMouseLeave={() => setHovered(false)}
- role="img"
- aria-label="OrQuanta"
- >
- <OQIcon />
- </div>
- );
+  return (
+  <motion.div
+  className={className}
+  style={{ display:'inline-flex', ...style }}
+  onMouseEnter={() => setHovered(true)}
+  onMouseLeave={() => setHovered(false)}
+  role="img"
+  aria-label="OrQuanta"
+  initial={{ opacity: 0, scale: 0.9 }}
+  animate={{ opacity: 1, scale: 1 }}
+  transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+  whileHover={{ scale: 1.05 }}
+  >
+  <OQIcon />
+  </motion.div>
+  );
  }
 
  if (variant ==='wordmark') {
@@ -198,19 +203,23 @@ const OrQuantaLogo = ({
  }
 
  // Default:'full' - icon + wordmark
- return (
- <div
- className={className}
- style={wordmarkStyles}
- onMouseEnter={() => setHovered(true)}
- onMouseLeave={() => setHovered(false)}
- role="img"
- aria-label="OrQuanta"
- >
- <OQIcon />
- <span style={textStyles}>OrQuanta</span>
- </div>
- );
+  return (
+  <motion.div
+  className={className}
+  style={wordmarkStyles}
+  onMouseEnter={() => setHovered(true)}
+  onMouseLeave={() => setHovered(false)}
+  role="img"
+  aria-label="OrQuanta"
+  initial={{ opacity: 0, scale: 0.9 }}
+  animate={{ opacity: 1, scale: 1 }}
+  transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+  whileHover={{ scale: 1.02 }}
+  >
+  <OQIcon />
+  <span style={textStyles}>OrQuanta</span>
+  </motion.div>
+  );
 };
 
 export default OrQuantaLogo;

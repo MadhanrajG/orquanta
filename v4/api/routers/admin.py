@@ -1,15 +1,15 @@
 """
-OrQuanta Agentic v1.0 — Admin API Router
+OrQuanta Agentic v1.0  -  Admin API Router
 
 Admin-only endpoints (require role='admin'):
-  GET  /admin/stats           — Platform-wide metrics
-  GET  /admin/customers       — All customers with plan/spend data
-  POST /admin/customers/{id}/impersonate — Get temp token for debugging
-  GET  /admin/health          — Full platform health (all services)
-  POST /admin/services/{name}/restart — Restart a service
-  GET  /admin/revenue         — MRR and growth metrics
-  GET  /admin/audit           — Platform-wide audit log (across all orgs)
-  POST /admin/emergency-stop  — Kill all running instances
+  GET  /admin/stats            -  Platform-wide metrics
+  GET  /admin/customers        -  All customers with plan/spend data
+  POST /admin/customers/{id}/impersonate  -  Get temp token for debugging
+  GET  /admin/health           -  Full platform health (all services)
+  POST /admin/services/{name}/restart  -  Restart a service
+  GET  /admin/revenue          -  MRR and growth metrics
+  GET  /admin/audit            -  Platform-wide audit log (across all orgs)
+  POST /admin/emergency-stop   -  Kill all running instances
 
 All endpoints:
   - RequireAdmin middleware enforces role='admin'
@@ -35,7 +35,7 @@ logger = logging.getLogger("orquanta.api.admin")
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
-# ─── Admin auth dependency ────────────────────────────────────────────────────
+# --- Admin auth dependency ----------------------------------------------------
 
 def require_admin(request: Request) -> dict[str, Any]:
     """Dependency that enforces admin role."""
@@ -47,7 +47,7 @@ def require_admin(request: Request) -> dict[str, Any]:
     return user
 
 
-# ─── Schemas ─────────────────────────────────────────────────────────────────
+# --- Schemas -----------------------------------------------------------------
 
 class ImpersonateResponse(BaseModel):
     temp_token: str
@@ -65,7 +65,7 @@ class EmergencyStopRequest(BaseModel):
     confirm: str   # Must be "CONFIRM_EMERGENCY_STOP"
 
 
-# ─── Stats ────────────────────────────────────────────────────────────────────
+# --- Stats --------------------------------------------------------------------
 
 @router.get("/stats")
 async def get_platform_stats(
@@ -116,7 +116,7 @@ async def get_platform_stats(
     }
 
 
-# ─── Customers ────────────────────────────────────────────────────────────────
+# --- Customers ----------------------------------------------------------------
 
 @router.get("/customers")
 async def list_customers(
@@ -171,7 +171,7 @@ async def impersonate_customer(
     Generate a temporary 1-hour token to debug a customer's account.
     Fully logged in audit trail: who, when, which customer.
     """
-    # Log this immediately — impersonation must always be audited
+    # Log this immediately  -  impersonation must always be audited
     logger.warning(
         f"[ADMIN AUDIT] Admin {admin.get('email', admin.get('sub', '?'))} "
         f"impersonating org {org_id}"
@@ -188,7 +188,7 @@ async def impersonate_customer(
     )
 
 
-# ─── Platform Health ──────────────────────────────────────────────────────────
+# --- Platform Health ----------------------------------------------------------
 
 @router.get("/health")
 async def get_platform_health(
@@ -255,7 +255,7 @@ async def restart_service(
         raise HTTPException(status_code=404, detail=f"Unknown service: {service_name}. Allowed: {list(allowed_services.keys())}")
 
     logger.warning(
-        f"[ADMIN] Service restart: {service_name} by {admin.get('email')} — reason: {body.reason}"
+        f"[ADMIN] Service restart: {service_name} by {admin.get('email')}  -  reason: {body.reason}"
     )
 
     # In production: trigger ECS/K8s rolling restart or Celery worker restart
@@ -272,7 +272,7 @@ async def restart_service(
     }
 
 
-# ─── Revenue ──────────────────────────────────────────────────────────────────
+# --- Revenue ------------------------------------------------------------------
 
 @router.get("/revenue")
 async def get_revenue_metrics(
@@ -312,7 +312,7 @@ async def get_revenue_metrics(
     }
 
 
-# ─── Emergency Stop ───────────────────────────────────────────────────────────
+# --- Emergency Stop -----------------------------------------------------------
 
 @router.post("/emergency-stop")
 async def emergency_stop(
@@ -327,11 +327,11 @@ async def emergency_stop(
         )
 
     logger.critical(
-        f"[EMERGENCY STOP] Triggered by {admin.get('email')} — reason: {body.reason}"
+        f"[EMERGENCY STOP] Triggered by {admin.get('email')}  -  reason: {body.reason}"
     )
 
     # In production:
-    # 1. Set REDIS flag "emergency_stop=true" — agents check this every tick
+    # 1. Set REDIS flag "emergency_stop=true"  -  agents check this every tick
     # 2. ECS: scale all services to 0
     # 3. Terminate all running GPU instances via provider APIs
     # 4. Notify all users via email/Slack
@@ -350,7 +350,7 @@ async def emergency_stop(
     }
 
 
-# ─── Safety Governor Admin API ───────────────────────────────────────────────
+# --- Safety Governor Admin API -----------------------------------------------
 
 
 class GovernorStopRequest(BaseModel):
@@ -393,8 +393,8 @@ async def safety_governor_stop(
     """
     Trigger or clear the SafetyGovernor emergency stop.
 
-    - action="trigger" → halts all agent actions immediately
-    - action="clear"   → resume (requires SAFETY_OVERRIDE_TOKEN in override_token field)
+    - action="trigger" -> halts all agent actions immediately
+    - action="clear"   -> resume (requires SAFETY_OVERRIDE_TOKEN in override_token field)
     """
     from ....agents.safety_governor import get_governor
     gov = get_governor()
@@ -404,7 +404,7 @@ async def safety_governor_stop(
             raise HTTPException(status_code=400, detail="reason is required to trigger emergency stop")
         gov.trigger_emergency_stop(body.reason)
         logger.critical(
-            f"[SAFETY ADMIN] Emergency stop TRIGGERED by {admin.get('email')} — {body.reason}"
+            f"[SAFETY ADMIN] Emergency stop TRIGGERED by {admin.get('email')}  -  {body.reason}"
         )
         return {
             "status": "emergency_stop_active",
@@ -458,7 +458,7 @@ async def safety_agent_audit(
     }
 
 
-# ─── Platform-wide audit ──────────────────────────────────────────────────────
+# --- Platform-wide audit ------------------------------------------------------
 
 @router.get("/audit")
 async def get_platform_audit_log(
@@ -496,7 +496,7 @@ async def get_platform_audit_log(
     }
 
 
-# ─── Health helpers ───────────────────────────────────────────────────────────
+# --- Health helpers -----------------------------------------------------------
 
 async def _check_database_health() -> dict[str, Any]:
     try:
@@ -517,7 +517,7 @@ async def _check_redis_health() -> dict[str, Any]:
         info = client.info("server")
         return {"status": "ok", "latency_ms": round(ms, 1), "version": info.get("redis_version", "?")}
     except Exception as exc:
-        return {"status": "warn", "error": str(exc), "note": "Redis unavailable — degraded mode"}
+        return {"status": "warn", "error": str(exc), "note": "Redis unavailable  -  degraded mode"}
 
 
 async def _check_agents_health() -> dict[str, Any]:

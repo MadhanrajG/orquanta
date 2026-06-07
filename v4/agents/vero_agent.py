@@ -50,6 +50,20 @@ from uuid import uuid4
 
 logger = logging.getLogger("orquanta.vero")
 
+# Lazy import — avoids circular deps at module load time
+_improvement_engine: Any = None
+
+
+def _get_improvement() -> Any:
+    global _improvement_engine
+    if _improvement_engine is None:
+        try:
+            from .self_improvement_engine import get_self_improvement_engine
+            _improvement_engine = get_self_improvement_engine()
+        except Exception:
+            pass
+    return _improvement_engine
+
 
 # ---------------------------------------------------------------------------
 # Data Models
@@ -281,8 +295,9 @@ class VeroAgent:
             asyncio.create_task(self._oversight_loop(), name="vero-oversight"),
             asyncio.create_task(self._user_intelligence_loop(), name="vero-user-intel"),
             asyncio.create_task(self._market_adaptation_loop(), name="vero-market"),
+            asyncio.create_task(self._self_improvement_loop(), name="vero-self-improve"),
         ]
-        logger.info("[Vero] Started. 3 supervision loops active.")
+        logger.info("[Vero] Started. 4 supervision loops active (oversight/user/market/self-improve).")
 
     async def stop(self) -> None:
         """Gracefully stop all Vero loops."""
@@ -473,6 +488,55 @@ class VeroAgent:
             except Exception as exc:
                 logger.error(f"[Vero] Market adaptation loop error: {exc}")
             await asyncio.sleep(300)
+
+    # ------------------------------------------------------------------
+    # Loop 4: Self-Improvement Oversight (every 120s)
+    # ------------------------------------------------------------------
+
+    async def _self_improvement_loop(self) -> None:
+        """
+        Monitor the self-improvement engine every 120 seconds.
+        Triggers policy decay and logs improvement health to Vero decision log.
+        """
+        logger.info("[Vero] Self-improvement loop started (120s interval).")
+        while self._running:
+            try:
+                improvement = _get_improvement()
+                if improvement:
+                    improvement.policy.decay()
+                    report = improvement.get_report()
+
+                    # Log significant mutations as Vero decisions
+                    if report.total_mutations > 0 and report.last_mutation_at:
+                        entry = VeroDecisionEntry(
+                            id=str(uuid4())[:8],
+                            timestamp=datetime.now(timezone.utc).isoformat(),
+                            decision_type="oversight",
+                            target="self_improvement_engine",
+                            action=(
+                                f"Policy v{report.policy_version}: "
+                                f"cost={report.policy_weights.get('cost',0):.2f} "
+                                f"perf={report.policy_weights.get('perf',0):.2f} "
+                                f"risk={report.policy_weights.get('risk',0):.2f}"
+                            ),
+                            reasoning=(
+                                f"Learning velocity={report.learning_velocity:.2f} mutations/hr. "
+                                f"Health={report.improvement_health}. "
+                                f"Reflections={report.total_reflections}."
+                            ),
+                            outcome="active",
+                            severity="info",
+                        )
+                        self._decision_log.insert(0, entry)
+                        self._decision_log = self._decision_log[:50]
+
+                    logger.debug(
+                        f"[Vero] Self-improve: v{report.policy_version} "
+                        f"mutations={report.total_mutations} health={report.improvement_health}"
+                    )
+            except Exception as exc:
+                logger.warning(f"[Vero] Self-improvement loop error: {exc}")
+            await asyncio.sleep(120)
 
     # ------------------------------------------------------------------
     # Report Generation

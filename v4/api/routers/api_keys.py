@@ -1,13 +1,13 @@
 """
-OrQuanta — User API Key Management
+OrQuanta  -  User API Key Management
 
 Endpoints:
-  POST   /api/v1/api-keys          Create a new API key (returned ONCE — store it)
+  POST   /api/v1/api-keys          Create a new API key (returned ONCE  -  store it)
   GET    /api/v1/api-keys          List keys for the authenticated user (no secrets)
   DELETE /api/v1/api-keys/{key_id} Revoke a key
 
 Key format:  sk-orq-<16-char-user-prefix>-<32-char-random>
-Storage:     SHA-256 hash only — plaintext never stored after creation
+Storage:     SHA-256 hash only  -  plaintext never stored after creation
 Auth:        Bearer sk-orq-... in Authorization header works everywhere JWT does
 """
 from __future__ import annotations
@@ -32,7 +32,7 @@ _DATABASE_URL = os.getenv("DATABASE_URL", "")
 _USE_PG = _DATABASE_URL.startswith(("postgresql://", "postgres://"))
 
 
-# ─── DB helpers ───────────────────────────────────────────────────────────────
+# --- DB helpers ---------------------------------------------------------------
 
 _DDL = """
     CREATE TABLE IF NOT EXISTS api_keys (
@@ -197,7 +197,7 @@ def _revoke_key(key_id: str, user_id: str) -> bool:
         return False
 
 
-# ─── Schemas ──────────────────────────────────────────────────────────────────
+# --- Schemas ------------------------------------------------------------------
 
 class ApiKeyCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=80,
@@ -213,13 +213,13 @@ class ApiKeyOut(BaseModel):
 
 
 class ApiKeyCreated(ApiKeyOut):
-    key: str = Field(..., description="Full API key — shown ONCE, store it securely")
+    key: str = Field(..., description="Full API key  -  shown ONCE, store it securely")
 
 
-# ─── Routes ───────────────────────────────────────────────────────────────────
+# --- Routes -------------------------------------------------------------------
 
 @router.post("", response_model=ApiKeyCreated, status_code=201,
-             summary="Create API key — returned once, store immediately")
+             summary="Create API key  -  returned once, store immediately")
 async def create_api_key(
     body: ApiKeyCreate,
     user: dict = Depends(get_current_user),

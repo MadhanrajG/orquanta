@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { X, BookOpen, MessageCircle, Zap, Shield, Code2, ExternalLink,
          Search, ChevronRight, HelpCircle, Mail, Globe, FileText,
          Brain, Cpu, DollarSign, BarChart2, Layers, Wand2 } from 'lucide-react'
@@ -120,14 +121,18 @@ export default function HelpPage() {
     })).filter(s => s.items.length > 0)
 
     return (
-        <div className="space-y-6 animate-fade-in">
+        <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="space-y-6 animate-fade-in">
             {/* Header */}
             <div className="text-center py-6">
                 <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4"
                     style={{ background: 'linear-gradient(135deg, rgba(0,145,255,0.15), rgba(123,47,255,0.15))', border: '1px solid rgba(0,145,255,0.2)' }}>
                     <HelpCircle size={26} style={{ color: '#0091FF' }} />
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Help Center</h1>
+                <h1 className="text-3xl font-bold text-slate-100 mb-2">Help Center</h1>
                 <p className="text-slate-400 text-sm max-w-md mx-auto">
                     Everything you need to master OrQuanta "" the AI-native GPU cloud platform.
                 </p>
@@ -142,22 +147,22 @@ export default function HelpPage() {
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     aria-label="Search help articles"
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-gray-900"
-                    style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', outline: 'none' }}
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-slate-100"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', outline: 'none' }}
                 />
             </div>
 
             {/* Quick Links */}
             <div className="glass-card p-5">
-                <h2 className="text-gray-900 font-semibold mb-4 text-sm uppercase tracking-wide opacity-60">Quick Links</h2>
+                <h2 className="text-slate-100 font-semibold mb-4 text-sm uppercase tracking-wide opacity-60">Quick Links</h2>
                 <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}>
                     {QUICK_LINKS.map(({ icon: Icon, label, href, color }) => (
                         <a key={label} href={href} target="_blank" rel="noopener noreferrer"
                             className="flex items-center gap-2.5 p-3 rounded-xl transition-all hover:scale-105"
                             style={{ background: color + '10', border: `1px solid ${color}20`, textDecoration: 'none' }}>
                             <Icon size={14} style={{ color }} />
-                            <span className="text-sm font-medium text-gray-900">{label}</span>
-                            <ExternalLink size={10} className="ml-auto opacity-40 text-gray-900" />
+                            <span className="text-sm font-medium text-slate-100">{label}</span>
+                            <ExternalLink size={10} className="ml-auto opacity-40 text-slate-100" />
                         </a>
                     ))}
                 </div>
@@ -165,20 +170,20 @@ export default function HelpPage() {
 
             {/* Featured Pages */}
             <div className="glass-card p-5">
-                <h2 className="text-gray-900 font-semibold mb-4 text-sm uppercase tracking-wide opacity-60">Platform Features</h2>
+                <h2 className="text-slate-100 font-semibold mb-4 text-sm uppercase tracking-wide opacity-60">Platform Features</h2>
                 <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
                     {FEATURE_CARDS.map(({ Icon, label, desc, color, route }) => (
                         <a key={label} href={`/app${route}`}
                             className="flex items-start gap-3 p-3 rounded-xl transition-all hover:scale-[1.02] cursor-pointer"
-                            style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)', textDecoration: 'none' }}>
+                            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', textDecoration: 'none' }}>
                             <div className="p-1.5 rounded-lg shrink-0" style={{ background: color + '15' }}>
                                 <Icon size={14} style={{ color }} />
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-gray-900">{label}</p>
+                                <p className="text-sm font-semibold text-slate-100">{label}</p>
                                 <p className="text-xs text-slate-500 mt-0.5">{desc}</p>
                             </div>
-                            <ChevronRight size={12} className="ml-auto self-center text-slate-600" />
+                            <ChevronRight size={12} className="ml-auto self-center text-slate-500" />
                         </a>
                     ))}
                 </div>
@@ -186,7 +191,7 @@ export default function HelpPage() {
 
             {/* FAQ Accordion */}
             <div className="space-y-4">
-                <h2 className="text-gray-900 font-semibold text-sm uppercase tracking-wide opacity-60">Frequently Asked Questions</h2>
+                <h2 className="text-slate-100 font-semibold text-sm uppercase tracking-wide opacity-60">Frequently Asked Questions</h2>
                 {filtered.length === 0 && (
                     <div className="glass-card p-8 text-center">
                         <p className="text-slate-400">No results for "{search}". Try different keywords.</p>
@@ -195,7 +200,7 @@ export default function HelpPage() {
                 {filtered.map((section, si) => (
                     <div key={si} className="glass-card overflow-hidden">
                         <div className="px-5 py-3 border-b border-white/[0.06]">
-                            <h3 className="text-sm font-semibold text-gray-900">{section.section}</h3>
+                            <h3 className="text-sm font-semibold text-slate-100">{section.section}</h3>
                         </div>
                         <div>
                             {section.items.map((item, ii) => {
@@ -210,7 +215,7 @@ export default function HelpPage() {
                                             className="w-full flex items-center justify-between px-5 py-3.5 text-left transition-colors"
                                             style={{ background: isOpen ? 'rgba(0,145,255,0.04)' : 'none', cursor: 'pointer', border: 'none', color: 'var(--text-primary)' }}
                                         >
-                                            <span className="text-sm font-medium text-gray-900 pr-4">{item.q}</span>
+                                            <span className="text-sm font-medium text-slate-100 pr-4">{item.q}</span>
                                             <ChevronRight size={14} className="text-slate-500 shrink-0 transition-transform"
                                                 style={{ transform: isOpen ? 'rotate(90deg)' : 'none' }} />
                                         </button>
@@ -231,7 +236,7 @@ export default function HelpPage() {
             <div className="glass-card p-6 text-center"
                 style={{ background: 'linear-gradient(135deg, rgba(0,145,255,0.05), rgba(123,47,255,0.05))', border: '1px solid rgba(0,145,255,0.1)' }}>
                 <MessageCircle size={24} className="mx-auto mb-3" style={{ color: '#0091FF' }} />
-                <h3 className="text-gray-900 font-semibold mb-1">Still need help?</h3>
+                <h3 className="text-slate-100 font-semibold mb-1">Still need help?</h3>
                 <p className="text-slate-500 text-sm mb-4">Our team is available Mon""Fri, 9am""6pm IST</p>
                 <div className="flex items-center justify-center gap-3 flex-wrap">
                     <a href="mailto:support@orquanta.com"
@@ -245,7 +250,7 @@ export default function HelpPage() {
                     </a>
                 </div>
             </div>
-        </div>
+        </motion.div>
     )
 }
 

@@ -1,14 +1,14 @@
 """
-OrQuanta — Stripe Billing API Router
+OrQuanta  -  Stripe Billing API Router
 =====================================
 Handles:
-  GET  /api/v1/billing/plans              — Return available plans + pricing
-  GET  /api/v1/billing/subscription       — Get current user's subscription
-  POST /api/v1/billing/checkout           — Create Stripe checkout session
-  POST /api/v1/billing/portal             — Create customer portal session
-  POST /api/v1/webhooks/stripe            — Stripe webhook endpoint
-  POST /api/v1/billing/subscribe          — Subscribe to a plan (direct API)
-  DELETE /api/v1/billing/subscription     — Cancel subscription
+  GET  /api/v1/billing/plans               -  Return available plans + pricing
+  GET  /api/v1/billing/subscription        -  Get current user's subscription
+  POST /api/v1/billing/checkout            -  Create Stripe checkout session
+  POST /api/v1/billing/portal              -  Create customer portal session
+  POST /api/v1/webhooks/stripe             -  Stripe webhook endpoint
+  POST /api/v1/billing/subscribe           -  Subscribe to a plan (direct API)
+  DELETE /api/v1/billing/subscription      -  Cancel subscription
 
 These endpoints are already mounted in v4/api/main.py under the /api/v1/billing prefix.
 """
@@ -32,7 +32,7 @@ STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
 APP_URL = os.getenv("APP_URL", "https://orquanta.com")
 
 
-# ── Schemas ────────────────────────────────────────────────────────────────────
+# -- Schemas --------------------------------------------------------------------
 
 class SubscribeRequest(BaseModel):
     plan: str        # starter | pro | enterprise
@@ -46,18 +46,18 @@ class CheckoutRequest(BaseModel):
     cancel_url: Optional[str] = None
 
 
-# ── Dependency: get current user (simplified, uses JWT from main.py auth) ─────
+# -- Dependency: get current user (simplified, uses JWT from main.py auth) -----
 
 async def get_current_user(request: Request) -> dict:
     """Extract user info from JWT. Re-uses the main auth middleware."""
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Not authenticated")
-    # The actual JWT decode is in v4/api/security.py — mock for now
+    # The actual JWT decode is in v4/api/security.py  -  mock for now
     return {"user_id": "user-from-jwt", "org_id": "org-from-jwt", "email": "user@example.com"}
 
 
-# ── Endpoints ─────────────────────────────────────────────────────────────────
+# -- Endpoints -----------------------------------------------------------------
 
 @router.get("/plans")
 async def get_plans():
@@ -199,7 +199,7 @@ async def cancel_subscription(request: Request, at_period_end: bool = True):
         raise HTTPException(status_code=400, detail=str(exc))
 
 
-# ── Webhook ───────────────────────────────────────────────────────────────────
+# -- Webhook -------------------------------------------------------------------
 
 @webhook_router.post("/stripe")
 async def stripe_webhook(

@@ -1,4 +1,4 @@
-"""OrQuanta Agentic v1.0 — Providers package."""
+"""OrQuanta Agentic v1.0  -  Providers package."""
 from .base_provider import (
     BaseGPUProvider, GPUInstance, SpotPrice, GPUMetrics,
     ProviderError, ProviderTemporaryError, ProviderPermanentError,

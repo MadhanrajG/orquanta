@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — LLM Reasoning Engine
+OrQuanta Agentic v1.0  -  LLM Reasoning Engine
 
 Unified interface to OpenAI (GPT-4o) and Anthropic (Claude 3.5 Sonnet).
 Provides prompt templates, chain-of-thought reasoning, structured output
@@ -29,13 +29,13 @@ logger = logging.getLogger("orquanta.llm")
 class LLMProvider(str, Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
-    GROQ = "groq"   # Groq — Llama3/Mixtral at 200+ tok/s, free tier: groq.com
+    GROQ = "groq"   # Groq  -  Llama3/Mixtral at 200+ tok/s, free tier: groq.com
     MOCK = "mock"   # Used in tests / when no API key is set
     AUTO = "auto"   # Auto-detect best available provider
     NIM = "nim"     # NVIDIA Inference Microservices (Nemotron / Llama via NVIDIA API)
 
 # ---------------------------------------------------------------------------
-# TurboQuant — KV-cache compression (Google ICLR 2026, arXiv:2504.19874)
+# TurboQuant  -  KV-cache compression (Google ICLR 2026, arXiv:2504.19874)
 # PyPI: turboquant-vllm>=1.3.0  |  pip install turboquant-vllm[vllm]
 # ---------------------------------------------------------------------------
 # Benchmarked compression vs FP16 baseline (Molmo2-4B, RTX 4090, 11K tokens):
@@ -71,7 +71,7 @@ if TURBOQUANT_ENABLED:
     else:
         logger.error(
             "TURBOQUANT_ENABLED=true but 'turboquant-vllm' is not installed. "
-            "Run: pip install turboquant-vllm[vllm]  — falling back to standard inference."
+            "Run: pip install turboquant-vllm[vllm]   -  falling back to standard inference."
         )
 
 
@@ -85,7 +85,7 @@ def get_turboquant_vllm_serve_flag() -> str:
         subprocess.Popen(cmd.split())
 
     The 'turboquant-vllm' package registers the TQ4 attention backend
-    automatically via vLLM's plugin entry-point system — no code changes needed.
+    automatically via vLLM's plugin entry-point system  -  no code changes needed.
     Returns empty string when TurboQuant is unavailable (falls back silently).
     """
     if not _turboquant_available:
@@ -99,11 +99,11 @@ def make_compressed_dynamic_cache(cache: Any, head_dim: int = 128, bits: int = 4
 
     Use this when OrQuanta's own agent calls run a local HuggingFace model
     (not via vLLM serve). Pass the original `cache` object to model.generate(),
-    not the compressed wrapper — compression happens on every cache.update().
+    not the compressed wrapper  -  compression happens on every cache.update().
 
     Args:
         cache:    A transformers.DynamicCache instance.
-        head_dim: Attention head dimension (default 128 for most 7B–70B models).
+        head_dim: Attention head dimension (default 128 for most 7B-70B models).
         bits:     Quantisation bit-width. 4 (3.76x, ~97% similarity) recommended;
                   use 3 for maximum compression (1.94x, ~95% similarity).
 
@@ -246,7 +246,7 @@ Available GPUs: $available_gpus
 Current spot prices: $prices_json
 
 Consider: VRAM requirements, estimated training time, cost efficiency,
-model size (parameter count → VRAM mapping: 7B≈16GB, 13B≈28GB, 70B≈80GB).
+model size (parameter count -> VRAM mapping: 7B≈16GB, 13B≈28GB, 70B≈80GB).
 
 Reply ONLY with JSON:
 {
@@ -331,7 +331,7 @@ MOCK_RESPONSES: dict[str, Any] = {
         "alternatives": [{"provider": "aws", "gpu": "H100", "cost": 5.20}],
     },
     "healing_diagnose": {
-        "diagnosis": "MOCK: OOM — job requires 84GB but allocated 80GB.",
+        "diagnosis": "MOCK: OOM  -  job requires 84GB but allocated 80GB.",
         "action": "scale_up",
         "parameters": {"new_gpu_type": "H100", "count": 2},
         "confidence": 0.95,
@@ -384,7 +384,7 @@ class LLMReasoningEngine:
     def _init_clients(self) -> None:
         """Initialise all available LLM clients.
 
-        AUTO mode: detect from API keys (OpenAI → Anthropic → Mock).
+        AUTO mode: detect from API keys (OpenAI -> Anthropic -> Mock).
         Explicit mode: initialise the specified provider.
         Either way, we try to init ALL available clients for fallback.
         """
@@ -395,7 +395,7 @@ class LLMReasoningEngine:
                 self._openai_client = openai.AsyncOpenAI(api_key=self.cfg.openai_api_key)
                 logger.info("OpenAI client initialised (available for reasoning).")
             except ImportError:
-                logger.warning("openai package not installed — skipping OpenAI.")
+                logger.warning("openai package not installed  -  skipping OpenAI.")
 
         # Try Anthropic
         if self.cfg.anthropic_api_key:
@@ -406,19 +406,19 @@ class LLMReasoningEngine:
                 )
                 logger.info("Anthropic client initialised (available for fallback).")
             except ImportError:
-                logger.warning("anthropic package not installed — skipping Anthropic.")
+                logger.warning("anthropic package not installed  -  skipping Anthropic.")
 
-        # Try Groq (200+ tokens/s, free tier available — preferred for agent reasoning loops)
+        # Try Groq (200+ tokens/s, free tier available  -  preferred for agent reasoning loops)
         if self.cfg.groq_api_key:
             try:
                 import groq  # type: ignore
                 self._groq_client = groq.AsyncGroq(api_key=self.cfg.groq_api_key)
-                logger.info("Groq client initialised (Llama3/Mixtral — fast free-tier provider).")
+                logger.info("Groq client initialised (Llama3/Mixtral  -  fast free-tier provider).")
             except ImportError:
-                logger.warning("groq package not installed — skipping Groq.")
+                logger.warning("groq package not installed  -  skipping Groq.")
 
         # Auto-detect primary provider from available clients
-        # Priority: Groq (fastest/cheapest) → OpenAI → Anthropic → Mock
+        # Priority: Groq (fastest/cheapest) -> OpenAI -> Anthropic -> Mock
         if self.cfg.provider == LLMProvider.AUTO:
             if self._groq_client:
                 self.cfg.provider = LLMProvider.GROQ
@@ -431,7 +431,7 @@ class LLMReasoningEngine:
                 logger.info("AUTO: Selected Anthropic as primary LLM provider.")
             else:
                 self.cfg.provider = LLMProvider.MOCK
-                logger.info("AUTO: No API keys found — using MOCK provider.")
+                logger.info("AUTO: No API keys found  -  using MOCK provider.")
         elif self.cfg.provider == LLMProvider.GROQ and not self._groq_client:
             logger.warning("Groq requested but not available. Falling back.")
             self.cfg.provider = LLMProvider.OPENAI if self._openai_client else (
@@ -450,7 +450,7 @@ class LLMReasoningEngine:
             nim = get_nim_client()
             if nim.is_available:
                 self._nim_client = nim
-                logger.info("NIM client available — will be used for reason_with_nim() calls.")
+                logger.info("NIM client available  -  will be used for reason_with_nim() calls.")
         except Exception:
             pass  # NIM is optional
 
@@ -482,7 +482,7 @@ class LLMReasoningEngine:
         Call NIM for natural-language (non-JSON) reasoning.
         Used for the /api/v1/explain endpoint and rich narrative outputs.
 
-        Falls back to standard `reason()` → mock if NIM unavailable.
+        Falls back to standard `reason()` -> mock if NIM unavailable.
 
         Returns:
             Plain text string (not JSON).
@@ -504,7 +504,7 @@ class LLMReasoningEngine:
                     logger.info(f"[{agent_name}] reason_with_nim succeeded via NIM.")
                     return result
                 except Exception as exc:
-                    logger.warning(f"[{agent_name}] NIM call failed: {exc} — falling back.")
+                    logger.warning(f"[{agent_name}] NIM call failed: {exc}  -  falling back.")
 
         # Fallback: use standard reason() and convert to string
         try:
@@ -533,32 +533,67 @@ class LLMReasoningEngine:
         try:
             self._check_rate_limit(agent_name)
         except RuntimeError as exc:
-            logger.warning(f"[{agent_name}] {exc} — returning mock fallback.")
+            logger.warning(f"[{agent_name}] {exc}  -  returning mock fallback.")
             return MOCK_RESPONSES.get(template_name, {"error": "rate_limited"})
 
-        # Short-circuit for mock provider — return rich template responses without any LLM call.
+        # Short-circuit for mock provider  -  return rich template responses without any LLM call.
         # _call_llm() in mock mode returns {"mock": True} which has no task data; this is correct.
         if self.cfg.provider == LLMProvider.MOCK:
             import copy
             logger.info(f"[{agent_name}] Calling LLM ({self.cfg.provider}) template='{template_name}'")
             logger.info(f"[{agent_name}] LLM succeeded on attempt 1.")
+            # Record mock call success for telemetry
+            try:
+                from .self_improvement_engine import get_self_improvement_engine
+                get_self_improvement_engine().record_llm_call(template_name, True, True, 0.0)
+            except Exception:
+                pass
             return copy.deepcopy(MOCK_RESPONSES.get(template_name, {"reasoning": "MOCK", "tasks": []}))
 
-        prompt = self._render_template(template_name, variables)
+        # Check for evolved template variant (A/B test routing)
+        evolved_template = None
+        try:
+            from .self_improvement_engine import get_self_improvement_engine
+            _improvement = get_self_improvement_engine()
+            evolved_template = _improvement.get_evolved_template(template_name)
+        except Exception:
+            _improvement = None
+
+        if evolved_template:
+            prompt = evolved_template  # use evolved variant
+        else:
+            prompt = self._render_template(template_name, variables)
+
         logger.info(f"[{agent_name}] Calling LLM ({self.cfg.provider}) template='{template_name}'")
 
         for attempt in range(1, self.cfg.max_retries + 1):
+            t0 = time.time()
             try:
                 raw = await self._call_llm(prompt)
                 parsed = self._parse_json_response(raw)
+                latency_ms = (time.time() - t0) * 1000
                 logger.info(f"[{agent_name}] LLM succeeded on attempt {attempt}.")
+                # Record success for prompt evolution
+                try:
+                    if _improvement:
+                        _improvement.record_llm_call(template_name, True, True, latency_ms)
+                        await _improvement.maybe_evolve_template(template_name, self)
+                except Exception:
+                    pass
                 return parsed
             except Exception as exc:
+                latency_ms = (time.time() - t0) * 1000
                 logger.warning(f"[{agent_name}] LLM attempt {attempt} failed: {exc}")
+                # Record failure for prompt evolution
+                try:
+                    if _improvement:
+                        _improvement.record_llm_call(template_name, False, False, latency_ms)
+                except Exception:
+                    pass
                 if attempt == self.cfg.max_retries:
                     logger.error(f"[{agent_name}] All retries exhausted. Using mock fallback.")
                     return MOCK_RESPONSES.get(template_name, {"error": "llm_unavailable"})
-                # Non-blocking exponential backoff — never block the event loop
+                # Non-blocking exponential backoff  -  never block the event loop
                 await asyncio.sleep(2 ** attempt)
 
         return MOCK_RESPONSES.get(template_name, {"error": "llm_unavailable"})
@@ -586,7 +621,7 @@ class LLMReasoningEngine:
     async def _call_llm(self, prompt: str) -> str:
         """Dispatch to LLM with automatic fallback chain.
 
-        Chain: Primary provider → Secondary provider → Mock.
+        Chain: Primary provider -> Secondary provider -> Mock.
         This ensures the platform always returns a response.
         """
         if self.cfg.provider == LLMProvider.MOCK:
@@ -615,7 +650,7 @@ class LLMReasoningEngine:
                 primary_error = exc
                 logger.warning(f"Anthropic call failed: {exc}")
 
-        # Try fallback providers in order: Groq → OpenAI → Anthropic
+        # Try fallback providers in order: Groq -> OpenAI -> Anthropic
         if primary_error:
             if self.cfg.provider != LLMProvider.GROQ and self._groq_client:
                 try:
@@ -641,7 +676,7 @@ class LLMReasoningEngine:
         return json.dumps({"mock": True})
 
     async def _call_groq(self, prompt: str) -> str:
-        """Call Groq API (OpenAI-compatible) — Llama3-70B / Mixtral at 200+ tok/s."""
+        """Call Groq API (OpenAI-compatible)  -  Llama3-70B / Mixtral at 200+ tok/s."""
         if self._groq_client is None:
             raise RuntimeError("Groq client not initialised.")
         response = await self._groq_client.chat.completions.create(

@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — Base GPU Provider Contract
+OrQuanta Agentic v1.0  -  Base GPU Provider Contract
 
 All cloud providers (AWS, GCP, Azure, CoreWeave) must implement this
 abstract base class to guarantee a uniform interface for the ProviderRouter.
@@ -183,11 +183,11 @@ class ProviderError(Exception):
 
 
 class ProviderTemporaryError(ProviderError):
-    """Transient error — retry is safe (throttling, network, timeout)."""
+    """Transient error  -  retry is safe (throttling, network, timeout)."""
 
 
 class ProviderPermanentError(ProviderError):
-    """Permanent error — do not retry (auth failure, quota, bad config)."""
+    """Permanent error  -  do not retry (auth failure, quota, bad config)."""
 
 
 class ProviderUnavailableError(ProviderError):
@@ -281,7 +281,7 @@ class BaseGPUProvider(ABC):
     API interaction for cost tracking and auditing.
     """
 
-    # Provider metadata — override in subclass
+    # Provider metadata  -  override in subclass
     PROVIDER_NAME: str = "base"
     SUPPORTED_GPU_TYPES: list[str] = []
     REGIONS: list[str] = []
@@ -356,7 +356,7 @@ class BaseGPUProvider(ABC):
 
         if not success:
             logger.warning(
-                f"[{self.PROVIDER_NAME}] API call failed: {operation} @ {region} — {error}"
+                f"[{self.PROVIDER_NAME}] API call failed: {operation} @ {region}  -  {error}"
             )
 
     def get_call_stats(self) -> dict[str, Any]:

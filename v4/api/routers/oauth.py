@@ -1,15 +1,15 @@
 """
-OrQuanta — Google + GitHub OAuth2 Routes
+OrQuanta  -  Google + GitHub OAuth2 Routes
 
-/auth/google/login    → redirect to Google consent screen
-/auth/google/callback → exchange code, create/find user, issue JWT → redirect /app?token=xxx
-/auth/github/login    → redirect to GitHub consent screen
-/auth/github/callback → same
+/auth/google/login    -> redirect to Google consent screen
+/auth/google/callback -> exchange code, create/find user, issue JWT -> redirect /app?token=xxx
+/auth/github/login    -> redirect to GitHub consent screen
+/auth/github/callback -> same
 
-No authlib required — uses httpx (already in requirements).
+No authlib required  -  uses httpx (already in requirements).
 State parameter is HMAC-signed to prevent CSRF.
 
-Required env vars (optional — routes return 302 to /app?error=not_configured if absent):
+Required env vars (optional  -  routes return 302 to /app?error=not_configured if absent):
   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
   GITHUB_CLIENT_ID,  GITHUB_CLIENT_SECRET
   APP_URL (default: https://orquanta.com)
@@ -50,7 +50,7 @@ _GITHUB_USER_URL      = "https://api.github.com/user"
 _GITHUB_EMAILS_URL    = "https://api.github.com/user/emails"
 
 
-# ─── CSRF state helpers ────────────────────────────────────────────────────────
+# --- CSRF state helpers --------------------------------------------------------
 
 def _make_state(provider: str) -> str:
     data = json.dumps({"p": provider, "ts": int(time.time()), "n": secrets.token_hex(4)})
@@ -75,7 +75,7 @@ def _err(msg: str) -> RedirectResponse:
     return RedirectResponse(url=f"{_APP_URL}/app?error={msg}", status_code=302)
 
 
-# ─── Google ────────────────────────────────────────────────────────────────────
+# --- Google --------------------------------------------------------------------
 
 @router.get("/google/login", include_in_schema=False)
 async def google_login():
@@ -135,7 +135,7 @@ async def google_callback(code: str = "", state: str = "", error: str = ""):
         return _err("user_create_failed")
 
 
-# ─── GitHub ────────────────────────────────────────────────────────────────────
+# --- GitHub --------------------------------------------------------------------
 
 @router.get("/github/login", include_in_schema=False)
 async def github_login():
@@ -209,7 +209,7 @@ async def github_callback(code: str = "", state: str = "", error: str = ""):
         return _err("user_create_failed")
 
 
-# ─── Shared helper ─────────────────────────────────────────────────────────────
+# --- Shared helper -------------------------------------------------------------
 
 def _get_or_create_oauth_user(email: str, name: str, provider: str) -> str:
     """Find existing user or create new one; return signed JWT."""
@@ -240,7 +240,7 @@ def _get_or_create_oauth_user(email: str, name: str, provider: str) -> str:
         row = dict(row)
         return create_access_token(user_id=row["id"], email=email, role=row.get("role", "user"))
 
-    # New user — assign a random unguessable password (OAuth users never need it)
+    # New user  -  assign a random unguessable password (OAuth users never need it)
     user = register_user(
         email=email,
         password=secrets.token_urlsafe(32),

@@ -1,0 +1,6 @@
+v4/api\main.py:188:         logger.info('? NEMOCLAW ONLINE  -  ContextGraph ready, CostWatcher active, PredictivePrefetch started.')
+v4/api\routers\free_tier.py:83:                 "icon":          "?",
+v4/api\routers\free_tier.py:98:                 "icon":          "?",
+v4/api\routers\free_tier.py:114:                 "icon":          "?",
+v4/api\routers\free_tier.py:184:             "4. Click ? Run All    Free T4 GPU (30hrs/week)",
+v4/api\routers\schedules.py:255:                     "message": f"? Scheduled job triggered: {sched['goal'][:60]}",

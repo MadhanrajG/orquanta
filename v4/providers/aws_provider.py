@@ -1,12 +1,12 @@
 """
-OrQuanta Agentic v1.0 — AWS EC2 GPU Provider
+OrQuanta Agentic v1.0  -  AWS EC2 GPU Provider
 
 Real AWS integration using boto3:
 - EC2 spot + on-demand GPU instances (p3/p4/p5/g5)
 - CloudWatch GPU metrics via nvidia-smi over SSM
 - Spot instance interruption notice handling via EventBridge
-- Multi-region failover: us-east-1 → us-west-2 → eu-west-1
-- Automatic spot bid pricing (on-demand × 0.70)
+- Multi-region failover: us-east-1 -> us-west-2 -> eu-west-1
+- Automatic spot bid pricing (on-demand x 0.70)
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ from .base_provider import (
 
 logger = logging.getLogger("orquanta.providers.aws")
 
-# Map our GPU type names → EC2 instance families
+# Map our GPU type names -> EC2 instance families
 GPU_INSTANCE_MAP: dict[str, list[dict[str, Any]]] = {
     "H100": [
         {"type": "p5.48xlarge", "gpu_count": 8, "vram_gb": 640, "vcpus": 192, "ram_gb": 2048, "od_price": 98.32},
@@ -377,7 +377,7 @@ class AWSProvider(BaseGPUProvider):
         loop = asyncio.get_event_loop()
         prices: list[SpotPrice] = []
 
-        for spec in specs[:2]:  # Limit API calls — check top 2 instance types per GPU
+        for spec in specs[:2]:  # Limit API calls  -  check top 2 instance types per GPU
             instance_type = spec["type"]
             for region in regions:
                 ec2 = self._ec2(region)

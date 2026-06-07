@@ -1,4 +1,4 @@
-"""OrQuanta Agentic v1.0 — Goals Router (POST /api/v1/goals)."""
+"""OrQuanta Agentic v1.0  -  Goals Router (POST /api/v1/goals)."""
 
 from __future__ import annotations
 
@@ -78,7 +78,7 @@ async def get_goal(
     if not goal:
         raise HTTPException(status_code=404, detail=f"Goal '{goal_id}' not found.")
 
-    # Ownership check — admins see all goals, users see only their own
+    # Ownership check  -  admins see all goals, users see only their own
     if user.get("role") != "admin" and goal.get("user_id") != user["sub"]:
         raise HTTPException(status_code=404, detail=f"Goal '{goal_id}' not found.")
 
@@ -118,7 +118,7 @@ async def get_reasoning_log(
     if not goal:
         raise HTTPException(status_code=404, detail=f"Goal '{goal_id}' not found.")
 
-    # Ownership check — admins see all goals, users see only their own
+    # Ownership check  -  admins see all goals, users see only their own
     if user.get("role") != "admin" and goal.get("user_id") != user["sub"]:
         raise HTTPException(status_code=404, detail=f"Goal '{goal_id}' not found.")
 

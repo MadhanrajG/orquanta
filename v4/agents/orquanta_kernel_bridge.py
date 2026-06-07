@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — Bomax Kernel Bridge
+OrQuanta Agentic v1.0  -  Bomax Kernel Bridge
 
 Compatibility shim that wraps orquanta_kernel_final.py (v3.8) as a callable
 tool for v4.0 agents. This provides:
@@ -10,7 +10,7 @@ tool for v4.0 agents. This provides:
   this bridge can be disabled via LEGACY_BRIDGE_ENABLED=false.
 
 Architecture decision: Rather than forklift-replace the v3.8 kernel,
-we treat it as a "veteran advisor" — its policy decisions feed into
+we treat it as a "veteran advisor"  -  its policy decisions feed into
 the v4.0 CostOptimizerAgent as one signal among many.
 """
 
@@ -72,7 +72,7 @@ class BomaxKernelBridge:
             self._physics_loop_fn = physics_loop
             self._kernel_loaded = True
             logger.info(
-                f"v3.8 kernel bridge active — policy v{self._policy.version} loaded."
+                f"v3.8 kernel bridge active  -  policy v{self._policy.version} loaded."
             )
         except ImportError as exc:
             logger.warning(

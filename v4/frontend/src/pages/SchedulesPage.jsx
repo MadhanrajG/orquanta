@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { Clock, Plus, Trash2, RefreshCw, Play, Pause, ChevronDown, ChevronRight, CheckCircle, AlertCircle } from 'lucide-react'
 import { useAuth } from '../App.jsx'
 
@@ -142,11 +143,15 @@ export default function SchedulesPage() {
     const fmtDate = (iso) => iso ? new Date(iso).toLocaleString() : '""'
 
     return (
-        <div className="space-y-6 animate-fade-in">
+        <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="space-y-6 animate-fade-in">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Schedules</h1>
+                    <h1 className="text-2xl font-bold text-slate-100">Schedules</h1>
                     <p className="text-slate-400 text-sm mt-0.5">Recurring GPU jobs on a cron expression</p>
                 </div>
                 <button
@@ -174,7 +179,7 @@ export default function SchedulesPage() {
             {/* Create form */}
             {showForm && (
                 <div className="glass-card p-6 space-y-5">
-                    <h3 className="text-gray-900 font-semibold">New Schedule</h3>
+                    <h3 className="text-slate-100 font-semibold">New Schedule</h3>
                     <form onSubmit={handleCreate} className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-slate-600 mb-1.5">Goal</label>
@@ -200,8 +205,8 @@ export default function SchedulesPage() {
                                             onClick={() => setCronPreset(expr)}
                                             className="text-xs px-3 py-1.5 rounded-full border transition-all"
                                             style={{
-                                                background: isSelected ? 'rgba(82,113,245,0.2)' : 'rgba(0,0,0,0.03)',
-                                                borderColor: isSelected ? 'rgba(82,113,245,0.6)' : 'rgba(0,0,0,0.06)',
+                                                background: isSelected ? 'rgba(82,113,245,0.2)' : 'rgba(255,255,255,0.03)',
+                                                borderColor: isSelected ? 'rgba(82,113,245,0.6)' : 'rgba(255,255,255,0.06)',
                                                 color: isSelected ? '#7a9bfa' : '#94a3b8',
                                                 cursor: 'pointer',
                                             }}>
@@ -325,7 +330,7 @@ export default function SchedulesPage() {
 
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <p className="text-gray-900 font-medium text-sm leading-snug">{s.goal.length > 100 ? s.goal.slice(0, 100) + '"...' : s.goal}</p>
+                                                <p className="text-slate-100 font-medium text-sm leading-snug">{s.goal.length > 100 ? s.goal.slice(0, 100) + '"...' : s.goal}</p>
                                                 {!s.enabled && (
                                                     <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(100,116,139,0.2)', color: '#94a3b8' }}>Paused</span>
                                                 )}
@@ -409,7 +414,7 @@ export default function SchedulesPage() {
                         </div>
                     )
             }
-        </div>
+        </motion.div>
     )
 }
 

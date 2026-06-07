@@ -1,4 +1,5 @@
-﻿import { useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import { Wand2, RefreshCw, CheckCircle, AlertTriangle, Zap, Shield, Eye,
          BarChart2, Layers, ChevronRight, Play, Wrench, Award } from 'lucide-react'
 
@@ -28,7 +29,7 @@ function ScoreRing({ score, size = 80 }) {
     const color = score >= 90 ? '#10B981' : score >= 75 ? '#0091FF' : score >= 60 ? '#F59E0B' : '#ff4444'
     return (
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(0,0,0,0.04)" strokeWidth={5} />
+            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={5} />
             <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={5}
                 strokeDasharray={`${progress} ${circ}`} strokeLinecap="round"
                 transform={`rotate(-90 ${size/2} ${size/2})`}
@@ -43,10 +44,10 @@ function PageCard({ ps, onClick, selected }) {
     const gradeColor = GRADE_COLOR[ps.grade] || '#94a3b8'
     return (
         <div onClick={onClick} className="glass-card p-4 cursor-pointer transition-all"
-            style={{ border: `1px solid ${selected ? 'rgba(123,47,255,0.5)' : 'rgba(0,0,0,0.06)'}`,
+            style={{ border: `1px solid ${selected ? 'rgba(123,47,255,0.5)' : 'rgba(255,255,255,0.06)'}`,
                      boxShadow: selected ? '0 0 16px rgba(123,47,255,0.15)' : undefined }}>
             <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-gray-900 truncate">{ps.page}</p>
+                <p className="text-sm font-semibold text-slate-100 truncate">{ps.page}</p>
                 <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ background: gradeColor + '20', color: gradeColor }}>
                     {ps.grade}
                 </span>
@@ -55,7 +56,7 @@ function PageCard({ ps, onClick, selected }) {
                 <ScoreRing score={ps.overall_score} size={48} />
                 <div>
                     <p className="text-xs text-slate-500">{ps.issue_count} issue{ps.issue_count !== 1 ? 's' : ''}</p>
-                    <p className="text-xs text-slate-600 mt-0.5">{ps.route}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{ps.route}</p>
                 </div>
             </div>
         </div>
@@ -65,14 +66,14 @@ function PageCard({ ps, onClick, selected }) {
 function IssueRow({ issue }) {
     const sev = issue.severity
     return (
-        <div className="p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.03)' }}>
+        <div className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
             <div className="flex items-start gap-3">
                 <span className="mt-0.5 text-xs px-1.5 py-0.5 rounded font-medium shrink-0"
                     style={{ background: SEV_COLOR[sev] + '20', color: SEV_COLOR[sev] }}>
                     {sev.toUpperCase()}
                 </span>
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900 font-medium">{issue.title}</p>
+                    <p className="text-sm text-slate-100 font-medium">{issue.title}</p>
                     <p className="text-xs text-slate-500 mt-0.5">{issue.description}</p>
                     <p className="text-xs mt-1.5 italic" style={{ color: '#A78BFA' }}>
                         Fix: {issue.fix_description}
@@ -81,7 +82,7 @@ function IssueRow({ issue }) {
                 <div className="text-right shrink-0">
                     <p className="text-xs text-slate-500">-{issue.score_impact}pts</p>
                     {issue.auto_fixable && (
-                        <span className="text-xs" style={{ color: '#10B981' }}>âš¡ Auto</span>
+                        <span className="text-xs" style={{ color: '#10B981' }}> Auto</span>
                     )}
                 </div>
             </div>
@@ -135,7 +136,11 @@ export default function UIXAgentPage() {
     ]
 
     return (
-        <div className="space-y-6 animate-fade-in">
+        <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="space-y-6 animate-fade-in">
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
@@ -143,8 +148,8 @@ export default function UIXAgentPage() {
                         <Wand2 size={22} style={{ color: '#0091FF' }} />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">UIXAgent</h1>
-                        <p className="text-xs text-slate-500">Autonomous UI/UX Diagnostic Â· 12 rules Â· 6 categories Â· Auto-fix pipeline</p>
+                        <h1 className="text-2xl font-bold text-slate-100">UIXAgent</h1>
+                        <p className="text-xs text-slate-500">Autonomous UI/UX Diagnostic - 12 rules - 6 categories - Auto-fix pipeline</p>
                     </div>
                 </div>
                 <button onClick={runAudit} disabled={auditing}
@@ -157,18 +162,18 @@ export default function UIXAgentPage() {
 
             {error && (
                 <div className="glass-card p-3 border border-red-500/30 bg-red-500/10 flex items-center gap-2">
-                    <AlertTriangle size={14} className="text-red-600" />
-                    <p className="text-sm text-red-600">{error}</p>
+                    <AlertTriangle size={14} className="text-red-400" />
+                    <p className="text-sm text-red-400">{error}</p>
                 </div>
             )}
 
             {!report && !auditing && (
                 <div className="glass-card p-12 text-center" style={{ border: '1px solid rgba(0,145,255,0.08)' }}>
-                    <Wand2 size={48} className="mx-auto mb-4 opacity-20 text-blue-600" />
-                    <h3 className="text-gray-900 font-semibold mb-2">Ready to Diagnose</h3>
+                    <Wand2 size={48} className="mx-auto mb-4 opacity-20 text-blue-400" />
+                    <h3 className="text-slate-100 font-semibold mb-2">Ready to Diagnose</h3>
                     <p className="text-slate-500 text-sm max-w-md mx-auto">
                         UIXAgent will crawl all 13 pages, apply 12 UX heuristic rules,
-                        score each page Aâ€“F, and generate auto-fix patches â€” in seconds.
+                        score each page A""F, and generate auto-fix patches "" in seconds.
                     </p>
                 </div>
             )}
@@ -176,7 +181,7 @@ export default function UIXAgentPage() {
             {auditing && (
                 <div className="glass-card p-8 text-center space-y-3">
                     <RefreshCw size={32} className="mx-auto animate-spin" style={{ color: '#0091FF' }} />
-                    <p className="text-gray-900 font-medium">Auditing all 13 pages...</p>
+                    <p className="text-slate-100 font-medium">Auditing all 13 pages...</p>
                     <p className="text-slate-500 text-sm">Applying 12 heuristic rules across 6 UX categories</p>
                 </div>
             )}
@@ -198,13 +203,13 @@ export default function UIXAgentPage() {
                         ))}
                     </div>
 
-                    {/* â”€â”€ Overview â”€â”€ */}
+                    {/* "" Overview "" */}
                     {tab === 'overview' && (
                         <div className="space-y-5">
                             <div className="glass-card p-6 flex items-center gap-8">
                                 <ScoreRing score={report.overall_platform_score} size={100} />
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-900">Platform UX Score</h2>
+                                    <h2 className="text-2xl font-bold text-slate-100">Platform UX Score</h2>
                                     <p className="text-slate-400 text-sm mt-1">{report.summary}</p>
                                 </div>
                             </div>
@@ -226,15 +231,15 @@ export default function UIXAgentPage() {
 
                             {/* Worst pages */}
                             <div className="glass-card p-5">
-                                <h3 className="text-gray-900 font-semibold mb-3 flex items-center gap-2">
+                                <h3 className="text-slate-100 font-semibold mb-3 flex items-center gap-2">
                                     <AlertTriangle size={14} style={{ color: '#F59E0B' }} /> Lowest Scoring Pages
                                 </h3>
                                 <div className="space-y-2">
                                     {sorted_pages.slice(0, 5).map(ps => (
-                                        <div key={ps.page} className="flex items-center gap-3 p-2 rounded-lg" style={{ background: 'rgba(0,0,0,0.02)' }}>
+                                        <div key={ps.page} className="flex items-center gap-3 p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)' }}>
                                             <ScoreRing score={ps.overall_score} size={36} />
                                             <div className="flex-1">
-                                                <p className="text-sm text-gray-900">{ps.page}</p>
+                                                <p className="text-sm text-slate-100">{ps.page}</p>
                                                 <p className="text-xs text-slate-500">{ps.issue_count} issues</p>
                                             </div>
                                             <span className="text-xs font-bold" style={{ color: GRADE_COLOR[ps.grade] }}>{ps.grade}</span>
@@ -245,7 +250,7 @@ export default function UIXAgentPage() {
                         </div>
                     )}
 
-                    {/* â”€â”€ Pages Grid â”€â”€ */}
+                    {/* "" Pages Grid "" */}
                     {tab === 'pages' && (
                         <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
                             {report.page_scores.map(ps => (
@@ -256,20 +261,20 @@ export default function UIXAgentPage() {
                         </div>
                     )}
 
-                    {/* â”€â”€ Issues â”€â”€ */}
+                    {/* "" Issues "" */}
                     {tab === 'issues' && (
                         <div className="space-y-3">
                             {selectedPage && (
                                 <div className="flex items-center gap-2 text-sm">
-                                    <button onClick={() => setSelectedPage(null)} className="text-slate-500 hover:text-gray-900">All Issues</button>
-                                    <ChevronRight size={12} className="text-slate-600" />
+                                    <button onClick={() => setSelectedPage(null)} className="text-slate-500 hover:text-slate-100">All Issues</button>
+                                    <ChevronRight size={12} className="text-slate-500" />
                                     <span style={{ color: '#0091FF' }}>{selectedPage.page}</span>
                                 </div>
                             )}
                             {sel_issues.length === 0 ? (
                                 <div className="glass-card p-8 text-center">
-                                    <CheckCircle size={32} className="mx-auto mb-2 text-emerald-600" />
-                                    <p className="text-gray-900 font-medium">No issues found!</p>
+                                    <CheckCircle size={32} className="mx-auto mb-2 text-emerald-400" />
+                                    <p className="text-slate-100 font-medium">No issues found!</p>
                                 </div>
                             ) : (
                                 sel_issues.map(i => <IssueRow key={i.issue_id} issue={i} />)
@@ -277,11 +282,11 @@ export default function UIXAgentPage() {
                         </div>
                     )}
 
-                    {/* â”€â”€ Enhancements â”€â”€ */}
+                    {/* "" Enhancements "" */}
                     {tab === 'enhance' && (
                         <div className="space-y-4">
                             <div className="glass-card p-5 border border-violet-500/20">
-                                <h3 className="text-gray-900 font-semibold mb-4 flex items-center gap-2">
+                                <h3 className="text-slate-100 font-semibold mb-4 flex items-center gap-2">
                                     <Award size={16} style={{ color: '#A78BFA' }} /> Futuristic Enhancement Priorities
                                 </h3>
                                 {[
@@ -290,21 +295,21 @@ export default function UIXAgentPage() {
                                     { tier: 'T1', label: 'Fix Live Pricing 0-results', desc: 'Show mock spot prices when provider keys not configured', impact: 'Critical UX', color: '#F59E0B', time: '1 day' },
                                     { tier: 'T2', label: 'Skeleton Loading States', desc: 'Replace blank states with shimmer skeletons on all data pages', impact: 'Polish', color: '#0091FF', time: '2 days' },
                                     { tier: 'T2', label: 'Cost Savings Hero', desc: '"You saved $X this month" prominent banner on dashboard', impact: 'Retention', color: '#0091FF', time: '1 day' },
-                                    { tier: 'T2', label: 'Keyboard Shortcuts', desc: 'Global command palette already exists â€” expand with 20 shortcuts', impact: 'Power Users', color: '#0091FF', time: '1 day' },
+                                    { tier: 'T2', label: 'Keyboard Shortcuts', desc: 'Global command palette already exists "" expand with 20 shortcuts', impact: 'Power Users', color: '#0091FF', time: '1 day' },
                                     { tier: 'T3', label: 'Team Workspaces', desc: 'Multi-user GPU budgets with per-member spend tracking', impact: 'Enterprise', color: '#A78BFA', time: '2 weeks' },
                                     { tier: 'T3', label: 'pgvector ContextGraph', desc: 'Semantic search at 1M+ nodes for true institutional memory', impact: 'Moat', color: '#A78BFA', time: '2 weeks' },
                                 ].map(e => (
                                     <div key={e.label} className="flex items-start gap-3 p-3 rounded-lg mb-2"
-                                        style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.03)' }}>
+                                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                                         <span className="text-xs font-bold px-1.5 py-0.5 rounded shrink-0 mt-0.5"
                                             style={{ background: e.color + '20', color: e.color }}>{e.tier}</span>
                                         <div className="flex-1">
-                                            <p className="text-sm text-gray-900 font-medium">{e.label}</p>
+                                            <p className="text-sm text-slate-100 font-medium">{e.label}</p>
                                             <p className="text-xs text-slate-500 mt-0.5">{e.desc}</p>
                                         </div>
                                         <div className="text-right shrink-0">
                                             <p className="text-xs font-medium" style={{ color: e.color }}>{e.impact}</p>
-                                            <p className="text-xs text-slate-600">{e.time}</p>
+                                            <p className="text-xs text-slate-500">{e.time}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -313,7 +318,7 @@ export default function UIXAgentPage() {
                     )}
                 </>
             )}
-        </div>
+        </motion.div>
     )
 }
 

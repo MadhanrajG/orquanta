@@ -1,4 +1,5 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 const PLANS = [
   {
@@ -67,9 +68,9 @@ export default function BillingPage() {
     // Check URL params for success/cancel
     const params = new URLSearchParams(window.location.search);
     if (params.get('success') === 'true') {
-      setMessage('âœ… Subscription activated! Welcome to OrQuanta.');
+      setMessage('... Subscription activated! Welcome to OrQuanta.');
     } else if (params.get('cancelled') === 'true') {
-      setMessage('â„¹ï¸ Checkout cancelled. Your free trial is still active.');
+      setMessage('... Checkout cancelled. Your free trial is still active.');
     }
 
     fetchSubscription();
@@ -80,9 +81,9 @@ export default function BillingPage() {
       .catch(() => {});
     // Generate mock billing history for demo
     setBillingHistory([
-      { date: '2026-03-01', description: 'Job job-a3b2c1 â€” Fine-tune Llama 3', amount: 4.82, provider: 'RunPod' },
-      { date: '2026-02-28', description: 'Job job-f9e8d7 â€” ResNet training run', amount: 1.23, provider: 'Lambda Labs' },
-      { date: '2026-02-25', description: 'Job job-b5c4d3 â€” Dataset preprocessing', amount: 0.46, provider: 'RunPod' },
+      { date: '2026-03-01', description: 'Job job-a3b2c1 "" Fine-tune Llama 3', amount: 4.82, provider: 'RunPod' },
+      { date: '2026-02-28', description: 'Job job-f9e8d7 "" ResNet training run', amount: 1.23, provider: 'Lambda Labs' },
+      { date: '2026-02-25', description: 'Job job-b5c4d3 "" Dataset preprocessing', amount: 0.46, provider: 'RunPod' },
     ]);
   }, []);
 
@@ -127,16 +128,16 @@ export default function BillingPage() {
       if (data.checkout_url) {
         window.location.href = data.checkout_url;
       } else if (data.demo_mode || data.message) {
-        // Demo mode â€” Stripe not configured yet, simulate trial activation
-        setMessage(`ðŸŽ‰ 14-day free trial activated for the ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan! You'll be charged after the trial ends. Add STRIPE_SECRET_KEY to enable real billing.`);
+        // Demo mode "" Stripe not configured yet, simulate trial activation
+        setMessage(` 14-day free trial activated for the ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan! You'll be charged after the trial ends. Add STRIPE_SECRET_KEY to enable real billing.`);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (r.status === 404 || r.status === 422) {
-        setMessage(`ðŸŽ‰ Trial started! Connect Stripe in settings to enable billing. Plan: ${planId}`);
+        setMessage(` Trial started! Connect Stripe in settings to enable billing. Plan: ${planId}`);
       } else {
-        setMessage('âŒ Checkout unavailable. Please try again or contact support@orquanta.com');
+        setMessage('Checkout unavailable. Please try again or contact support@orquanta.com');
       }
     } catch (err) {
-      setMessage('âŒ Checkout failed. Please try again.');
+      setMessage('Checkout failed. Please try again.');
     } finally {
       setCheckoutLoading('');
     }
@@ -153,7 +154,7 @@ export default function BillingPage() {
         window.location.href = data.portal_url;
       }
     } catch (err) {
-      setMessage('âŒ Could not open billing portal.');
+      setMessage('Could not open billing portal.');
     }
   }
 
@@ -161,7 +162,11 @@ export default function BillingPage() {
   const isActivePlan = (planId) => planStatus === planId;
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1100px', margin: '0 auto' }}>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+      style={{ padding: '2rem', maxWidth: '1100px', margin: '0 auto' }}>
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
         <h1 style={{
@@ -193,12 +198,12 @@ export default function BillingPage() {
           gap: '1rem',
           fontSize: '0.9rem',
         }}>
-          <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>âš </span>
+          <span style={{ fontSize: '1.2rem', flexShrink: 0 }}> </span>
           <div>
             <span style={{ color: '#fbbf24', fontWeight: 700 }}>Payment gateway not yet connected. </span>
             <span style={{ color: '#94a3b8' }}>
               Plans are visible and trials can be started. To enable real billing, add{' '}
-              <code style={{ background: 'rgba(0,0,0,0.08)', padding: '1px 6px', borderRadius: 4, fontSize: '0.85rem', color: '#e2e8f0' }}>STRIPE_SECRET_KEY</code>{' '}
+              <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 6px', borderRadius: 4, fontSize: '0.85rem', color: '#e2e8f0' }}>STRIPE_SECRET_KEY</code>{' '}
               to your environment variables.
             </span>
           </div>
@@ -238,7 +243,7 @@ export default function BillingPage() {
             </span>
             <span style={{ color: '#94a3b8', marginLeft: '1rem', fontSize: '0.875rem' }}>
               Status: {currentPlan.status}
-              {currentPlan.trial_end && ` Â· Trial ends: ${new Date(currentPlan.trial_end).toLocaleDateString()}`}
+              {currentPlan.trial_end && ` - Trial ends: ${new Date(currentPlan.trial_end).toLocaleDateString()}`}
             </span>
           </div>
           <button
@@ -270,7 +275,7 @@ export default function BillingPage() {
                 : 'rgba(15, 23, 42, 0.8)',
               border: plan.popular
                 ? '2px solid rgba(139, 92, 246, 0.6)'
-                : '1px solid rgba(0,0,0,0.08)',
+                : '1px solid rgba(255,255,255,0.06)',
               borderRadius: '16px',
               padding: '2rem',
               position: 'relative',
@@ -307,7 +312,7 @@ export default function BillingPage() {
                 fontWeight: 700,
                 color: 'var(--text-primary)',
               }}>
-                âœ“ Current Plan
+                " Current Plan
               </div>
             )}
 
@@ -326,7 +331,7 @@ export default function BillingPage() {
                   </span>
                   <span style={{ color: '#64748b', fontSize: '0.9rem' }}>/month</span>
                   <div style={{ color: '#6366f1', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-                    14-day free trial Â· No credit card required
+                    14-day free trial - No credit card required
                   </div>
                 </>
               ) : (
@@ -391,7 +396,7 @@ export default function BillingPage() {
       {/* GPU Cost Calculator */}
       <div style={{
         background: 'rgba(15, 23, 42, 0.8)',
-        border: '1px solid rgba(0,0,0,0.08)',
+        border: '1px solid rgba(255,255,255,0.06)',
         borderRadius: '16px',
         padding: '2rem',
         marginBottom: '2rem',
@@ -404,7 +409,7 @@ export default function BillingPage() {
             { label: 'Average GPU savings', value: '60%', sub: 'vs list price' },
             { label: 'Time saved per job', value: '45 min', sub: 'no manual provisioning' },
             { label: 'Idle compute eliminated', value: '87%', sub: 'auto-terminate on completion' },
-            { label: 'ROI at $5K/mo spend', value: '30Ã—', sub: 'after OrQuanta fees' },
+            { label: 'ROI at $5K/mo spend', value: '30 - ', sub: 'after OrQuanta fees' },
           ].map((stat) => (
             <div key={stat.label} style={{ textAlign: 'center' }}>
               <div style={{
@@ -417,7 +422,7 @@ export default function BillingPage() {
                 {stat.value}
               </div>
               <div style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '0.25rem' }}>{stat.label}</div>
-              <div style={{ color: '#475569', fontSize: '0.75rem' }}>{stat.sub}</div>
+              <div style={{ color: '#64748B', fontSize: '0.75rem' }}>{stat.sub}</div>
             </div>
           ))}
         </div>
@@ -427,7 +432,7 @@ export default function BillingPage() {
       {billingHistory.length > 0 && (
         <div style={{
           background: 'rgba(15, 23, 42, 0.8)',
-          border: '1px solid rgba(0,0,0,0.08)',
+          border: '1px solid rgba(255,255,255,0.06)',
           borderRadius: '16px',
           padding: '2rem',
         }}>
@@ -436,7 +441,7 @@ export default function BillingPage() {
           </h3>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                 {['Date', 'Job', 'Provider', 'Cost'].map((h) => (
                   <th key={h} style={{ color: '#64748b', fontWeight: 600, padding: '0.75rem 0', textAlign: 'left', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     {h}
@@ -446,7 +451,7 @@ export default function BillingPage() {
             </thead>
             <tbody>
               {billingHistory.map((row, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                   <td style={{ padding: '0.875rem 0', color: '#94a3b8', fontSize: '0.875rem' }}>{row.date}</td>
                   <td style={{ padding: '0.875rem 0', color: '#e2e8f0', fontSize: '0.875rem' }}>{row.description}</td>
                   <td style={{ padding: '0.875rem 0', fontSize: '0.875rem' }}>
@@ -469,7 +474,7 @@ export default function BillingPage() {
           </table>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — Audit Agent
+OrQuanta Agentic v1.0  -  Audit Agent
 
 Immutable, tamper-proof audit logging for every action on the platform:
   - Every API call: who, when, what, result
@@ -44,9 +44,9 @@ logger = logging.getLogger("orquanta.audit")
 _raw_hmac_key = os.getenv("AUDIT_HMAC_KEY")
 if not _raw_hmac_key:
     import secrets as _secrets
-    _raw_hmac_key = _secrets.token_hex(32)  # Secure random key per process — not persistent but safe
+    _raw_hmac_key = _secrets.token_hex(32)  # Secure random key per process  -  not persistent but safe
     logging.getLogger("orquanta.audit").critical(
-        "AUDIT_HMAC_KEY is not set — audit HMAC integrity checks will NOT survive restarts. "
+        "AUDIT_HMAC_KEY is not set  -  audit HMAC integrity checks will NOT survive restarts. "
         "Set AUDIT_HMAC_KEY to a strong persistent secret in production."
     )
 AUDIT_HMAC_KEY: str = _raw_hmac_key
@@ -85,7 +85,7 @@ class AuditAgent:
     persists to PostgreSQL. Events are HMAC-signed in batches
     for tamper detection. 
 
-    All writes are fire-and-forget async — callers are never
+    All writes are fire-and-forget async  -  callers are never
     blocked by audit logging.
     """
 
@@ -115,12 +115,12 @@ class AuditAgent:
         if self._persist_task:
             self._persist_task.cancel()
 
-    # ─── Core Logging API ────────────────────────────────────────────
+    # --- Core Logging API --------------------------------------------
 
     async def log(self, event: AuditEvent) -> str:
         """
         Log an audit event. Returns the event_id.
-        Non-blocking — always succeeds even if DB is down.
+        Non-blocking  -  always succeeds even if DB is down.
         """
         event = self._stamp_event(event)
         self._events.append(event)
@@ -138,7 +138,7 @@ class AuditAgent:
         return event.event_id
 
     def log_sync(self, event: AuditEvent) -> str:
-        """Synchronous log — for use outside async context (middleware)."""
+        """Synchronous log  -  for use outside async context (middleware)."""
         event = self._stamp_event(event)
         self._events.append(event)
         self._pending_persist.append(event)
@@ -190,7 +190,7 @@ class AuditAgent:
             metadata={"detail": detail[:200]},
         ))
 
-    # ─── Query API ───────────────────────────────────────────────────
+    # --- Query API ---------------------------------------------------
 
     def get_history(
         self,
@@ -245,14 +245,14 @@ class AuditAgent:
                 return False
         return True
 
-    # ─── GDPR Export / Purge ─────────────────────────────────────────
+    # --- GDPR Export / Purge -----------------------------------------
 
     def export_user_data(self, actor_id: str) -> list[dict[str, Any]]:
         """GDPR Article 20: export all data for a user."""
         return [asdict(e) for e in self._events if e.actor_id == actor_id]
 
     def purge_user_data(self, actor_id: str) -> int:
-        """GDPR Article 17: right to erasure — anonymize user data in buffer."""
+        """GDPR Article 17: right to erasure  -  anonymize user data in buffer."""
         count = 0
         for event in self._events:
             if event.actor_id == actor_id:
@@ -264,7 +264,7 @@ class AuditAgent:
         logger.info("[AuditAgent] GDPR purge: anonymized %d events for %s", count, actor_id)
         return count
 
-    # ─── Internal ────────────────────────────────────────────────────
+    # --- Internal ----------------------------------------------------
 
     def _stamp_event(self, event: AuditEvent) -> AuditEvent:
         """Assign ID, timestamp, and HMAC signature to an event."""
@@ -323,7 +323,7 @@ class AuditAgent:
         since_hours: int = 168,  # Default: 1 week
     ) -> bytes:
         """
-        Generate a signed PDF audit report (stub — uses reportlab in production).
+        Generate a signed PDF audit report (stub  -  uses reportlab in production).
         Returns PDF bytes.
         """
         events = self.get_history(org_id=org_id, since_hours=since_hours, limit=1000)
@@ -340,7 +340,7 @@ class AuditAgent:
         return json.dumps(report, indent=2, default=str).encode()
 
 
-# ─── Singleton ────────────────────────────────────────────────────────────────
+# --- Singleton ----------------------------------------------------------------
 
 _audit_agent: AuditAgent | None = None
 

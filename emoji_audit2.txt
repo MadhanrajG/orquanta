@@ -1,0 +1,37 @@
+v4/agents\healing_agent.py:297:                 f"?? Thermal alert on job {record.job_id}: {metrics.get('temp_celsius', 0):.1f}?C. "
+v4/agents\healing_agent.py:325:                     f"? Job {record.job_id} exceeded max restart attempts ({MAX_RESTART_ATTEMPTS}). 
+v4/agents\nemoclaw_engine.py:476:             f"? NemoClawEngine v{self.VERSION} initialised. "
+v4/agents\nemoclaw_engine.py:496:         logger.info("? NemoClaw started. 3 background loops active.")
+v4/agents\recommendation_agent.py:128:             title=f"? {len(wasteful)} jobs averaging only {avg_util:.0f}% GPU utilization",
+v4/agents\recommendation_agent.py:194:             title="? Schedule jobs at night for lower spot prices",
+v4/agents\safety_governor.py:126:         logger.critical(f"? EMERGENCY STOP TRIGGERED: {reason}")
+v4/agents\vero_agent.py:251:             "?  VERO AGENT INITIALISED  -  Superior Intelligence Meta-Agent online. "
+v4/agents\vero_agent.py:285:         logger.info("?  VERO started. 3 supervision loops active.")
+v4/providers\colab_generator.py:357:             _md_cell(f"# ? OrQuanta  -  Audio Transcription (Whisper)\n**Goal:** {goal}"),
+v4/providers\colab_generator.py:428:             _md_cell(f"# ? OrQuanta  -  Text Embeddings\n**Goal:** {goal}"),
+v4/providers\lambda_labs_provider.py:121:             logger.info("[LambdaLabs] API healthy ?")
+v4/providers\runpod_serverless.py:142:             logger.info("[RunPod Serverless] SDK initialized ?")
+v4/demo\demo_scenario.py:58:             "icon": "?",
+v4/demo\demo_scenario.py:110:         "icon": "?",
+v4/demo\demo_scenario.py:117:         "icon": "?",
+v4/demo\demo_scenario.py:173:         ("orquanta_orchestrator", "?", "Parsing natural language goal...", 0.91),
+v4/demo\demo_scenario.py:174:         ("orquanta_orchestrator", "?", "Intent: fine_tune | Model: Mistral 7B | Budget: $50 | Constr
+v4/demo\demo_scenario.py:175:         ("orquanta_orchestrator", "?", "DAG: 5 tasks | Dependencies resolved | Dispatching agents", 
+v4/demo\demo_scenario.py:176:         ("cost_optimizer",        "?", "Budget $50 ? max 25 GPU-hours at $2/hr | Searching cheapest 
+v4/demo\demo_scenario.py:177:         ("cost_optimizer",        "?", "Lambda Labs gpu_1x_a100 @ $1.99/hr | Estimated: $39.80 for 2
+v4/demo\demo_scenario.py:178:         ("scheduler",             "?", "No queue backlog | Provisioning now | ETA: 18 seconds", 0.99
+v4/demo\demo_scenario.py:197:         "icon": "?",
+v4/monitoring\alerting.py:54:     AlertSeverity.INFO: "??",
+v4/monitoring\alerting.py:55:     AlertSeverity.WARNING: "??",
+v4/monitoring\alerting.py:56:     AlertSeverity.CRITICAL: "?",
+v4/monitoring\alerting.py:57:     AlertSeverity.P1: "?",
+v4/monitoring\alerting.py:186:         emoji = SEVERITY_EMOJI.get(alert.severity, "??")
+v4/monitoring\cost_tracker.py:265:                 msg = f"?? Budget alert: ${today_spend:.2f} spent today ({pct:.0f}% of ${self.daily_
+v4/intelligence\carbon_tracker.py:256:             "badge":             "? Carbon Neutral" if self._carbon_neutral else None,
+v4/intelligence\carbon_tracker.py:284:         if intensity < 50:   return "A+ ?"
+v4/intelligence\carbon_tracker.py:285:         if intensity < 150:  return "A  ??"
+v4/intelligence\carbon_tracker.py:286:         if intensity < 300:  return "B  ?"
+v4/intelligence\carbon_tracker.py:287:         if intensity < 450:  return "C  ??"
+v4/intelligence\carbon_tracker.py:288:         return "D  ?"
+v4/intelligence\market_trend_analyzer.py:197:                 change=f"Add '? Prices Down {abs(change_pct):.0f}%' badge to Live Pricing nav item",
+v4/intelligence\market_trend_analyzer.py:218:                 change="Show '? Limited Availability' badge on H100 and A100 options",

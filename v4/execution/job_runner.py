@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — SSH Job Runner
+OrQuanta Agentic v1.0  -  SSH Job Runner
 
 Submits ML jobs to GPU instances via SSH:
 - Executes arbitrary shell commands over Paramiko
@@ -102,7 +102,7 @@ class SSHClient:
                 return
             except Exception as exc:
                 last_exc = exc
-                logger.debug(f"[SSH] Connect attempt failed: {exc}. Retrying…")
+                logger.debug(f"[SSH] Connect attempt failed: {exc}. Retrying...")
                 await asyncio.sleep(10)
 
         raise ConnectionError(f"Could not SSH to {self.host} within {timeout}s: {last_exc}")
@@ -155,7 +155,7 @@ class SSHClient:
         sftp = await loop.run_in_executor(None, self._client.open_sftp)
         try:
             await loop.run_in_executor(None, lambda: sftp.put(local_path, remote_path))
-            logger.info(f"[SSH] Uploaded {local_path} → {self.host}:{remote_path}")
+            logger.info(f"[SSH] Uploaded {local_path} -> {self.host}:{remote_path}")
         finally:
             sftp.close()
 
@@ -165,7 +165,7 @@ class SSHClient:
         sftp = await loop.run_in_executor(None, self._client.open_sftp)
         try:
             await loop.run_in_executor(None, lambda: sftp.get(remote_path, local_path))
-            logger.info(f"[SSH] Downloaded {self.host}:{remote_path} → {local_path}")
+            logger.info(f"[SSH] Downloaded {self.host}:{remote_path} -> {local_path}")
         finally:
             sftp.close()
 
@@ -194,7 +194,7 @@ class JobRunner:
     Features:
     - Waits for instance SSH readiness
     - Uploads job script
-    - Streams logs back via callback (→ WebSocket)  
+    - Streams logs back via callback (-> WebSocket)  
     - Polls GPU metrics during execution
     - downloads artifacts on completion
     - Calculates total cost
@@ -241,7 +241,7 @@ class JobRunner:
 
         try:
             # --- 1. Connect (wait for instance to boot) ---
-            logger.info(f"[JobRunner] Connecting to {host_ip} for job {job_id}…")
+            logger.info(f"[JobRunner] Connecting to {host_ip} for job {job_id}...")
             await ssh.connect(timeout=SSH_CONNECT_TIMEOUT)
             self._active_jobs[job_id]["status"] = "uploading"
 
@@ -318,7 +318,7 @@ class JobRunner:
 
             status = "completed" if exit_code == 0 else "failed"
             self._active_jobs[job_id]["status"] = status
-            logger.info(f"[JobRunner] Job {job_id} {status} — exit={exit_code}, cost=${total_cost:.4f}")
+            logger.info(f"[JobRunner] Job {job_id} {status}  -  exit={exit_code}, cost=${total_cost:.4f}")
             return result
 
         except Exception as exc:

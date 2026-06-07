@@ -1,5 +1,5 @@
 """
-OrQuanta Agentic v1.0 — Google Cloud Platform GPU Provider
+OrQuanta Agentic v1.0  -  Google Cloud Platform GPU Provider
 
 Real GCP integration using google-cloud-compute:
 - Preemptible + On-demand GPU VMs
@@ -264,7 +264,7 @@ class GCPProvider(BaseGPUProvider):
             op = await loop.run_in_executor(None, lambda: compute.insert(
                 project=self._project, zone=zone, instance_resource=instance_resource
             ))
-            # Don't wait for completion — return pending state
+            # Don't wait for completion  -  return pending state
             latency = (time.monotonic() - t0) * 1000
             self._record_call("spin_up", zone, latency, True, cost_usd=0.001)
 

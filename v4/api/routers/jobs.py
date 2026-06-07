@@ -1,4 +1,4 @@
-"""OrQuanta Agentic v1.0 — Jobs Router (CRUD /api/v1/jobs).
+"""OrQuanta Agentic v1.0  -  Jobs Router (CRUD /api/v1/jobs).
 
 This router is the production job API. It routes all job submission
 through the real JobPipeline which handles:
@@ -36,7 +36,7 @@ async def create_job(
     _: None = Depends(rate_limit_dependency),
 ) -> dict[str, Any]:
     """
-    Schedule a GPU job — routes through the production JobPipeline.
+    Schedule a GPU job  -  routes through the production JobPipeline.
 
     The pipeline will:
     1. Select the cheapest available provider (RunPod first @ $2.49/hr for H100)
@@ -188,6 +188,6 @@ echo ""
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader 2>/dev/null || echo "GPU info unavailable"
 echo ""
 echo "=== Running workload ==="
-echo "Job ready — attach your script or use the script field in the API."
+echo "Job ready  -  attach your script or use the script field in the API."
 echo "=== Completed: $(date -u) ==="
 """

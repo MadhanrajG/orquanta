@@ -1,11 +1,11 @@
 """
-OrQuanta Agentic v1.0 — Azure VM GPU Provider
+OrQuanta Agentic v1.0  -  Azure VM GPU Provider
 
 Real Azure integration using azure-mgmt-compute:
 - Spot VMs with eviction policies (Deallocate / Delete)
 - GPU SKUs: NC-series (T4), ND-series (A100), NDm-series (H100)
 - Azure Monitor metrics integration
-- Multi-region failover: eastus → westus2 → westeurope
+- Multi-region failover: eastus -> westus2 -> westeurope
 """
 
 from __future__ import annotations
@@ -92,7 +92,7 @@ class AzureProvider(BaseGPUProvider):
         self._monitor_client = None
 
     def _creds(self):
-        """Get Azure credentials (Service Principal → DefaultAzureCredential)."""
+        """Get Azure credentials (Service Principal -> DefaultAzureCredential)."""
         try:
             from azure.identity import ClientSecretCredential, DefaultAzureCredential
             client_id = os.getenv("AZURE_CLIENT_ID")
@@ -268,7 +268,7 @@ class AzureProvider(BaseGPUProvider):
                     AZURE_RESOURCE_GROUP, vm_name, vm_params
                 )
             )
-            # Return immediately — VM is being provisioned asynchronously
+            # Return immediately  -  VM is being provisioned asynchronously
             latency = (time.monotonic() - t0) * 1000
             self._record_call("spin_up", region, latency, True, cost_usd=0.001)
 
@@ -356,7 +356,7 @@ class AzureProvider(BaseGPUProvider):
 
             self._record_call("get_metrics", region, (time.monotonic() - t0) * 1000, True)
             gpu_util = metrics.get("Percentage GPU", 0.0)
-            mem_used = metrics.get("GPU Memory Used", 0.0) / 1024**3  # bytes → GB
+            mem_used = metrics.get("GPU Memory Used", 0.0) / 1024**3  # bytes -> GB
 
             return [GPUMetrics(
                 instance_id=instance_id, provider="azure",

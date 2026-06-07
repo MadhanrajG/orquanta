@@ -1,4 +1,4 @@
-"""OrQuanta Agentic v1.0 — API Rate Limiting Middleware."""
+"""OrQuanta Agentic v1.0  -  API Rate Limiting Middleware."""
 
 from __future__ import annotations
 
