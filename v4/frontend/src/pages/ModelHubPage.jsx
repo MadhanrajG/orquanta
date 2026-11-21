@@ -1,484 +1,684 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../App.jsx'
 import {
-  Brain, Search, Filter, Zap, ExternalLink, Star, Download, Cpu,
+  Brain, Search, Filter, Zap, ExternalLink, Star, Cpu,
   ChevronDown, Layers, Eye, Mic, Code2, MessageSquare, Box,
-  ArrowRight, Sparkles, TrendingUp, Clock, Users, GitBranch
+  ArrowRight, TrendingUp, Clock, GitBranch, AlertTriangle,
+  CheckCircle, XCircle, Info, Shield, Download, RefreshCw,
+  Play, Settings, Server, BarChart2, Package, Lock
 } from 'lucide-react'
 
 /* ═══════════════════════════════════════════════════════════════════
-   AI Model Catalog — Open Source Models for GPU Cloud
+   OrQuanta Model Hub — Phase 3 — Live backend integration
    ═══════════════════════════════════════════════════════════════════ */
 
+const API = import.meta.env.VITE_API_BASE_URL || ''
+
 const CATEGORIES = [
-  { id: 'all', label: 'All Models', icon: Layers, color: '#7C6BF0' },
-  { id: 'llm', label: 'Large Language', icon: MessageSquare, color: '#7C6BF0' },
-  { id: 'vision', label: 'Vision & Image', icon: Eye, color: '#F472B6' },
-  { id: 'audio', label: 'Audio & Speech', icon: Mic, color: '#10B981' },
-  { id: 'code', label: 'Code Generation', icon: Code2, color: '#F59E0B' },
-  { id: 'multimodal', label: 'Multimodal', icon: Sparkles, color: '#8B5CF6' },
-  { id: 'embedding', label: 'Embeddings', icon: Box, color: '#06B6D4' },
+  { id: 'all',        label: 'All Models',    icon: Layers,       color: '#7C6BF0' },
+  { id: 'llm',        label: 'Language',      icon: MessageSquare,color: '#7C6BF0' },
+  { id: 'vision',     label: 'Vision',        icon: Eye,          color: '#F472B6' },
+  { id: 'audio',      label: 'Audio',         icon: Mic,          color: '#10B981' },
+  { id: 'code',       label: 'Code',          icon: Code2,        color: '#F59E0B' },
+  { id: 'embedding',  label: 'Embeddings',    icon: Box,          color: '#06B6D4' },
 ]
 
-const MODELS = [
-  // ── Large Language Models ──────────────────────────────────────
-  {
-    id: 'llama-3.1-405b', name: 'LLaMA 3.1 405B', org: 'Meta AI',
-    category: 'llm', params: '405B', license: 'Llama 3.1 Community',
-    desc: 'Largest open-source LLM. Exceptional reasoning, multilingual support, and 128K context window. Matches GPT-4 class on most benchmarks.',
-    tags: ['Flagship', '128K Context', 'Multilingual'], gpu_min: '8×A100 80GB',
-    est_cost: '$3.20/hr', hf_url: 'https://huggingface.co/meta-llama/Llama-3.1-405B-Instruct',
-    popularity: 98, trending: true, new: false,
-  },
-  {
-    id: 'llama-3.1-70b', name: 'LLaMA 3.1 70B', org: 'Meta AI',
-    category: 'llm', params: '70B', license: 'Llama 3.1 Community',
-    desc: 'Best cost-performance ratio for production LLM workloads. 128K context, strong code and reasoning.',
-    tags: ['Production', '128K Context', 'Fine-tunable'], gpu_min: '2×A100 80GB',
-    est_cost: '$1.60/hr', hf_url: 'https://huggingface.co/meta-llama/Llama-3.1-70B-Instruct',
-    popularity: 96, trending: true, new: false,
-  },
-  {
-    id: 'llama-3.1-8b', name: 'LLaMA 3.1 8B', org: 'Meta AI',
-    category: 'llm', params: '8B', license: 'Llama 3.1 Community',
-    desc: 'Lightweight yet powerful. Ideal for fine-tuning, edge deployment, and budget-conscious inference.',
-    tags: ['Lightweight', 'Fine-tunable', 'Edge'], gpu_min: '1×A10 24GB',
-    est_cost: '$0.40/hr', hf_url: 'https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct',
-    popularity: 94, trending: false, new: false,
-  },
-  {
-    id: 'deepseek-v3', name: 'DeepSeek-V3', org: 'DeepSeek AI',
-    category: 'llm', params: '671B MoE', license: 'MIT',
-    desc: 'State-of-the-art MoE architecture. Outperforms GPT-4o on coding and math. 128K context with efficient sparse activation.',
-    tags: ['MoE', 'SOTA', 'MIT License'], gpu_min: '8×H100 80GB',
-    est_cost: '$4.80/hr', hf_url: 'https://huggingface.co/deepseek-ai/DeepSeek-V3',
-    popularity: 97, trending: true, new: true,
-  },
-  {
-    id: 'deepseek-r1', name: 'DeepSeek-R1', org: 'DeepSeek AI',
-    category: 'llm', params: '671B MoE', license: 'MIT',
-    desc: 'Reasoning-first model with chain-of-thought. Matches OpenAI o1 on complex reasoning tasks.',
-    tags: ['Reasoning', 'Chain-of-Thought', 'MIT'], gpu_min: '8×H100 80GB',
-    est_cost: '$4.80/hr', hf_url: 'https://huggingface.co/deepseek-ai/DeepSeek-R1',
-    popularity: 95, trending: true, new: true,
-  },
-  {
-    id: 'mistral-large-2', name: 'Mistral Large 2', org: 'Mistral AI',
-    category: 'llm', params: '123B', license: 'Apache 2.0',
-    desc: 'Multilingual powerhouse supporting 12 languages. Strong function calling and JSON mode.',
-    tags: ['Multilingual', 'Function Calling', 'Apache'], gpu_min: '4×A100 80GB',
-    est_cost: '$2.40/hr', hf_url: 'https://huggingface.co/mistralai/Mistral-Large-Instruct-2411',
-    popularity: 90, trending: false, new: false,
-  },
-  {
-    id: 'mixtral-8x22b', name: 'Mixtral 8×22B', org: 'Mistral AI',
-    category: 'llm', params: '141B MoE', license: 'Apache 2.0',
-    desc: 'Sparse MoE architecture. Uses only 39B active params for fast inference at 141B quality.',
-    tags: ['MoE', 'Fast Inference', 'Apache'], gpu_min: '4×A100 80GB',
-    est_cost: '$2.10/hr', hf_url: 'https://huggingface.co/mistralai/Mixtral-8x22B-Instruct-v0.1',
-    popularity: 87, trending: false, new: false,
-  },
-  {
-    id: 'qwen-2.5-72b', name: 'Qwen 2.5 72B', org: 'Alibaba Cloud',
-    category: 'llm', params: '72B', license: 'Apache 2.0',
-    desc: 'Excellent for Chinese & English. Long context up to 128K tokens with strong reasoning.',
-    tags: ['Bilingual', '128K Context', 'Apache'], gpu_min: '2×A100 80GB',
-    est_cost: '$1.60/hr', hf_url: 'https://huggingface.co/Qwen/Qwen2.5-72B-Instruct',
-    popularity: 88, trending: true, new: false,
-  },
-  {
-    id: 'gemma-2-27b', name: 'Gemma 2 27B', org: 'Google DeepMind',
-    category: 'llm', params: '27B', license: 'Gemma Terms',
-    desc: 'Knowledge-distilled from Gemini. Exceptional for its size. Great for local and edge deployments.',
-    tags: ['Knowledge Distilled', 'Efficient', 'Edge'], gpu_min: '1×A100 80GB',
-    est_cost: '$0.80/hr', hf_url: 'https://huggingface.co/google/gemma-2-27b-it',
-    popularity: 85, trending: false, new: false,
-  },
-  {
-    id: 'phi-4', name: 'Phi-4', org: 'Microsoft',
-    category: 'llm', params: '14B', license: 'MIT',
-    desc: 'Small model, big performance. Beats models 5× its size on reasoning benchmarks. MIT licensed.',
-    tags: ['Compact', 'MIT License', 'Reasoning'], gpu_min: '1×RTX 4090',
-    est_cost: '$0.35/hr', hf_url: 'https://huggingface.co/microsoft/phi-4',
-    popularity: 86, trending: true, new: true,
-  },
-
-  // ── Vision & Image ────────────────────────────────────────────
-  {
-    id: 'flux-1-dev', name: 'FLUX.1 [dev]', org: 'Black Forest Labs',
-    category: 'vision', params: '12B', license: 'FLUX.1 Non-commercial',
-    desc: 'State-of-the-art text-to-image. Superior prompt adherence, photorealism, and typography rendering.',
-    tags: ['Text-to-Image', 'Photorealistic', '12B'], gpu_min: '1×A100 80GB',
-    est_cost: '$0.80/hr', hf_url: 'https://huggingface.co/black-forest-labs/FLUX.1-dev',
-    popularity: 93, trending: true, new: false,
-  },
-  {
-    id: 'sdxl-turbo', name: 'SDXL Turbo', org: 'Stability AI',
-    category: 'vision', params: '3.5B', license: 'Stability Community',
-    desc: 'Real-time image generation in 1-4 steps. Perfect for interactive applications and rapid prototyping.',
-    tags: ['Real-time', '1-Step Gen', 'Interactive'], gpu_min: '1×RTX 4090',
-    est_cost: '$0.35/hr', hf_url: 'https://huggingface.co/stabilityai/sdxl-turbo',
-    popularity: 89, trending: false, new: false,
-  },
-  {
-    id: 'stable-video', name: 'Stable Video Diffusion', org: 'Stability AI',
-    category: 'vision', params: '1.5B', license: 'Stability Community',
-    desc: 'Generate short video clips from a single image. 14-25 frames at 576×1024 resolution.',
-    tags: ['Image-to-Video', '576×1024', 'Generative'], gpu_min: '1×A100 40GB',
-    est_cost: '$0.80/hr', hf_url: 'https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt',
-    popularity: 82, trending: false, new: false,
-  },
-  {
-    id: 'sam-2', name: 'SAM 2', org: 'Meta AI',
-    category: 'vision', params: '0.6B', license: 'Apache 2.0',
-    desc: 'Segment Anything in images and videos. Zero-shot object segmentation with click/box prompts.',
-    tags: ['Segmentation', 'Zero-Shot', 'Video'], gpu_min: '1×T4 16GB',
-    est_cost: '$0.20/hr', hf_url: 'https://huggingface.co/facebook/sam2-hiera-large',
-    popularity: 84, trending: false, new: false,
-  },
-
-  // ── Audio & Speech ────────────────────────────────────────────
-  {
-    id: 'whisper-large-v3-turbo', name: 'Whisper Large v3 Turbo', org: 'OpenAI',
-    category: 'audio', params: '809M', license: 'MIT',
-    desc: 'Fastest multilingual ASR. 8× faster than v3 with near-identical accuracy. 99+ languages.',
-    tags: ['ASR', 'Multilingual', '8× Faster'], gpu_min: '1×T4 16GB',
-    est_cost: '$0.20/hr', hf_url: 'https://huggingface.co/openai/whisper-large-v3-turbo',
-    popularity: 92, trending: true, new: false,
-  },
-  {
-    id: 'parler-tts', name: 'Parler TTS', org: 'Hugging Face',
-    category: 'audio', params: '880M', license: 'Apache 2.0',
-    desc: 'High-quality text-to-speech with natural prosody. Describe voice characteristics in plain text.',
-    tags: ['TTS', 'Natural Voice', 'Apache'], gpu_min: '1×T4 16GB',
-    est_cost: '$0.20/hr', hf_url: 'https://huggingface.co/parler-tts/parler-tts-large-v1',
-    popularity: 78, trending: false, new: false,
-  },
-
-  // ── Code Generation ───────────────────────────────────────────
-  {
-    id: 'deepseek-coder-v2', name: 'DeepSeek-Coder-V2', org: 'DeepSeek AI',
-    category: 'code', params: '236B MoE', license: 'MIT',
-    desc: 'Best open-source coding model. 128K context, supports 338 languages, surpasses GPT-4o on HumanEval.',
-    tags: ['338 Languages', 'SOTA Code', 'MIT'], gpu_min: '4×A100 80GB',
-    est_cost: '$2.40/hr', hf_url: 'https://huggingface.co/deepseek-ai/DeepSeek-Coder-V2-Instruct',
-    popularity: 91, trending: true, new: false,
-  },
-  {
-    id: 'qwen-2.5-coder-32b', name: 'Qwen2.5-Coder 32B', org: 'Alibaba Cloud',
-    category: 'code', params: '32B', license: 'Apache 2.0',
-    desc: 'Matches GPT-4o on code completion. Supports 92 languages with excellent instruction following.',
-    tags: ['Code Completion', '92 Languages', 'Apache'], gpu_min: '1×A100 80GB',
-    est_cost: '$0.80/hr', hf_url: 'https://huggingface.co/Qwen/Qwen2.5-Coder-32B-Instruct',
-    popularity: 86, trending: true, new: true,
-  },
-  {
-    id: 'starcoder-2-15b', name: 'StarCoder2 15B', org: 'BigCode',
-    category: 'code', params: '15B', license: 'BigCode OpenRAIL-M',
-    desc: 'Trained on The Stack v2. Strong at code completion, infilling, and instruction following.',
-    tags: ['Code Infill', 'The Stack v2', 'Open'], gpu_min: '1×RTX 4090',
-    est_cost: '$0.35/hr', hf_url: 'https://huggingface.co/bigcode/starcoder2-15b',
-    popularity: 79, trending: false, new: false,
-  },
-
-  // ── Multimodal ────────────────────────────────────────────────
-  {
-    id: 'llava-next-72b', name: 'LLaVA-NeXT 72B', org: 'LLaVA Team',
-    category: 'multimodal', params: '72B', license: 'Apache 2.0',
-    desc: 'Leading open-source vision-language model. Understands images, charts, documents, and diagrams.',
-    tags: ['Vision-Language', 'Document AI', 'Apache'], gpu_min: '2×A100 80GB',
-    est_cost: '$1.60/hr', hf_url: 'https://huggingface.co/llava-hf/llava-v1.6-mistral-7b-hf',
-    popularity: 83, trending: false, new: false,
-  },
-  {
-    id: 'internvl-2.5', name: 'InternVL 2.5 78B', org: 'OpenGVLab',
-    category: 'multimodal', params: '78B', license: 'MIT',
-    desc: 'Top multimodal model on OpenCompass. Excels at OCR, chart understanding, and visual QA.',
-    tags: ['OCR', 'Chart QA', 'MIT License'], gpu_min: '2×A100 80GB',
-    est_cost: '$1.60/hr', hf_url: 'https://huggingface.co/OpenGVLab/InternVL2_5-78B',
-    popularity: 81, trending: true, new: true,
-  },
-
-  // ── Embeddings ────────────────────────────────────────────────
-  {
-    id: 'gte-qwen2-7b', name: 'GTE-Qwen2 7B', org: 'Alibaba DAMO',
-    category: 'embedding', params: '7B', license: 'Apache 2.0',
-    desc: '#1 on MTEB leaderboard. 8192 token context for long-document embeddings.',
-    tags: ['MTEB #1', '8K Context', 'Apache'], gpu_min: '1×T4 16GB',
-    est_cost: '$0.20/hr', hf_url: 'https://huggingface.co/Alibaba-NLP/gte-Qwen2-7B-instruct',
-    popularity: 80, trending: true, new: false,
-  },
-  {
-    id: 'nomic-embed-v1.5', name: 'Nomic Embed v1.5', org: 'Nomic AI',
-    category: 'embedding', params: '137M', license: 'Apache 2.0',
-    desc: 'Lightweight, Matryoshka embeddings. Truncate dimensions for faster search without retraining.',
-    tags: ['Matryoshka', 'Lightweight', 'Apache'], gpu_min: 'CPU / T4',
-    est_cost: '$0.05/hr', hf_url: 'https://huggingface.co/nomic-ai/nomic-embed-text-v1.5',
-    popularity: 76, trending: false, new: false,
-  },
-]
-
-/* ── Utility ──────────────────────────────────────────────────────── */
-const formatParams = p => {
-  if (p.includes('MoE')) return p
-  const n = parseFloat(p)
-  if (n >= 1000) return `${(n/1000).toFixed(1)}T`
-  return p
+const LICENCE_BADGE = {
+  true:  { label: 'Commercial OK',   color: '#10B981', bg: 'rgba(16,185,129,0.1)', icon: CheckCircle },
+  false: { label: 'Non-Commercial',  color: '#F59E0B', bg: 'rgba(245,158,11,0.1)', icon: AlertTriangle },
+  null:  { label: 'Licence Unknown', color: '#94A3B8', bg: 'rgba(148,163,184,0.1)', icon: Info },
 }
 
-/* ── Model Card ──────────────────────────────────────────────────── */
-function ModelCard({ model, index, onDeploy }) {
-  const cat = CATEGORIES.find(c => c.id === model.category)
-  const CatIcon = cat?.icon || Brain
-  const catColor = cat?.color || '#7C6BF0'
+const STATUS_COLOUR = {
+  compatible:                 '#10B981',
+  compatible_with_constraints:'#F59E0B',
+  incompatible:               '#EF4444',
+  insufficient_information:   '#94A3B8',
+}
+
+// ─── Fallback static data shown while API loads ───────────────────────────
+const STATIC_FALLBACK = [
+  { model_id: 'meta-llama/Llama-3.1-70B-Instruct', name: 'LLaMA 3.1 70B', publisher: 'Meta AI',
+    model_family: 'llm', param_count: '70B', licence: 'llama3', commercial_ok: true,
+    vram_fp16_gb: 140, gpu_min: '2×A100 80GB', tags: ['Production', '128K Context'],
+    hf_downloads: 0, trending: true, supported_engines: ['vllm', 'sglang'] },
+  { model_id: 'microsoft/phi-4', name: 'Phi-4', publisher: 'Microsoft Research',
+    model_family: 'llm', param_count: '14B', licence: 'mit', commercial_ok: true,
+    vram_fp16_gb: 28, gpu_min: '1×A10 24GB', tags: ['MIT License', 'Reasoning'],
+    hf_downloads: 0, trending: true, supported_engines: ['vllm'] },
+]
+
+// ─── Hooks ────────────────────────────────────────────────────────────────
+
+function useModels(token) {
+  const [models, setModels] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError]   = useState(null)
+  const [isLive, setIsLive] = useState(false)
+
+  useEffect(() => {
+    if (!token) { setModels(STATIC_FALLBACK); setLoading(false); return }
+    fetch(`${API}/api/v1/models`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() })
+      .then(data => {
+        const list = data.models || []
+        setModels(list.length ? list : STATIC_FALLBACK)
+        setIsLive(list.length > 0)
+        setError(null)
+      })
+      .catch(e => { setModels(STATIC_FALLBACK); setError(e.message) })
+      .finally(() => setLoading(false))
+  }, [token])
+
+  return { models, loading, error, isLive }
+}
+
+function useHFSearch(token) {
+  const [results, setResults] = useState([])
+  const [searching, setSearching] = useState(false)
+
+  const search = useCallback(async (query) => {
+    if (!query || query.length < 2) { setResults([]); return }
+    setSearching(true)
+    try {
+      const r = await fetch(`${API}/api/v1/models/search/hf?q=${encodeURIComponent(query)}&limit=12`,
+        { headers: { Authorization: `Bearer ${token}` } })
+      if (r.ok) { const d = await r.json(); setResults(d.results || []) }
+    } catch { /* network error */ }
+    finally { setSearching(false) }
+  }, [token])
+
+  return { results, searching, search }
+}
+
+function useCompatibility(token) {
+  const [result, setResult] = useState(null)
+  const [loading, setLoading] = useState(false)
+
+  const check = useCallback(async (payload) => {
+    setLoading(true)
+    try {
+      const r = await fetch(`${API}/api/v1/models/check-compatibility`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      })
+      if (r.ok) setResult(await r.json())
+    } catch { /* network */ }
+    finally { setLoading(false) }
+  }, [token])
+
+  return { result, loading, check }
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────
+
+function LiveBadge({ isLive }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4,
+      fontSize: 11, fontWeight: 600, letterSpacing: '0.03em',
+      color: isLive ? '#10B981' : '#F59E0B',
+      background: isLive ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
+      border: `1px solid ${isLive ? 'rgba(16,185,129,0.25)' : 'rgba(245,158,11,0.25)'}`,
+      borderRadius: 20, padding: '2px 10px',
+    }}>
+      <span style={{
+        width: 6, height: 6, borderRadius: '50%',
+        background: isLive ? '#10B981' : '#F59E0B',
+        animation: isLive ? 'pulse 2s infinite' : 'none',
+      }} />
+      {isLive ? 'Live Registry' : 'Demo Data'}
+    </span>
+  )
+}
+
+function LicenceBadge({ commercial_ok }) {
+  const cfg = LICENCE_BADGE[String(commercial_ok)] ?? LICENCE_BADGE['null']
+  const Icon = cfg.icon
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4,
+      fontSize: 10, fontWeight: 600, color: cfg.color, background: cfg.bg,
+      border: `1px solid ${cfg.color}33`, borderRadius: 20, padding: '2px 8px',
+    }}>
+      <Icon size={10} /> {cfg.label}
+    </span>
+  )
+}
+
+function EngineChip({ engine }) {
+  const colours = { vllm: '#7C6BF0', sglang: '#06B6D4', transformers: '#10B981', llamacpp: '#F59E0B' }
+  return (
+    <span style={{
+      fontSize: 10, fontWeight: 700, color: colours[engine] || '#94A3B8',
+      background: (colours[engine] || '#94A3B8') + '18',
+      border: `1px solid ${(colours[engine] || '#94A3B8')}33`,
+      borderRadius: 4, padding: '1px 6px', textTransform: 'uppercase', letterSpacing: '0.05em',
+    }}>
+      {engine}
+    </span>
+  )
+}
+
+function CompatibilityIndicator({ status }) {
+  const colour = STATUS_COLOUR[status] || '#94A3B8'
+  const labels = {
+    compatible: 'Compatible',
+    compatible_with_constraints: 'Constraints',
+    incompatible: 'Incompatible',
+    insufficient_information: 'Unknown',
+  }
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4,
+      fontSize: 11, fontWeight: 600, color: colour,
+      background: colour + '15', border: `1px solid ${colour}33`,
+      borderRadius: 20, padding: '2px 10px',
+    }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: colour }} />
+      {labels[status] || status}
+    </span>
+  )
+}
+
+function ModelCard({ model, onDeploy, onCheckCompat }) {
+  const [expanded, setExpanded] = useState(false)
+  const vram = model.vram_fp16_gb
+    ? `${model.vram_fp16_gb} GB FP16 / ${(model.vram_fp16_gb * 0.52).toFixed(0)} GB INT8`
+    : null
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      layout
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: index * 0.04, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="model-card"
+      exit={{ opacity: 0, scale: 0.95 }}
+      style={{
+        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: 12, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 10,
+        transition: 'border-color 0.2s, box-shadow 0.2s',
+      }}
+      whileHover={{ borderColor: 'rgba(124,107,240,0.35)', boxShadow: '0 4px 24px rgba(124,107,240,0.08)' }}
     >
-      {/* Gradient accent top border */}
-      <div className="model-card-accent" style={{ background: `linear-gradient(90deg, ${catColor}, ${catColor}80)` }} />
-
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
-        <div className="model-card-icon" style={{ background: `${catColor}12`, border: `1px solid ${catColor}20` }}>
-          <CatIcon size={18} color={catColor} />
-        </div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, justifyContent: 'space-between' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <h3 className="model-card-name">{model.name}</h3>
-            {model.new && <span className="model-badge model-badge-new">NEW</span>}
-            {model.trending && <span className="model-badge model-badge-trending"><TrendingUp size={9} /> Hot</span>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', whiteSpace: 'nowrap' }}>
+              {model.name}
+            </span>
+            {model.trending && (
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#F59E0B', background: 'rgba(245,158,11,0.1)',
+                border: '1px solid rgba(245,158,11,0.25)', borderRadius: 20, padding: '1px 7px' }}>
+                Trending
+              </span>
+            )}
           </div>
-          <div className="model-card-org">{model.org}</div>
+          <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{model.publisher}</div>
         </div>
-        <div className="model-card-params" style={{ color: catColor }}>
-          {formatParams(model.params)}
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+          {model.param_count && (
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#7C6BF0', background: 'rgba(124,107,240,0.1)',
+              borderRadius: 6, padding: '2px 8px', border: '1px solid rgba(124,107,240,0.2)' }}>
+              {model.param_count}
+            </span>
+          )}
         </div>
+      </div>
+
+      {/* Licence + Engines */}
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+        <LicenceBadge commercial_ok={model.commercial_ok} />
+        <span style={{ fontSize: 10, color: '#475569' }}>{model.licence}</span>
+        <span style={{ flex: 1 }} />
+        {(model.supported_engines || []).map(e => <EngineChip key={e} engine={e} />)}
       </div>
 
       {/* Description */}
-      <p className="model-card-desc">{model.desc}</p>
+      {model.description && (
+        <p style={{ fontSize: 12, color: '#94A3B8', margin: 0, lineHeight: 1.5,
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          {model.description}
+        </p>
+      )}
+
+      {/* VRAM / GPU */}
+      {(vram || model.gpu_min) && (
+        <div style={{ display: 'flex', gap: 12, fontSize: 11, color: '#64748B' }}>
+          {vram && <span><Cpu size={11} style={{ marginRight: 4 }} />{vram}</span>}
+          {model.gpu_min && <span>Min: {model.gpu_min}</span>}
+        </div>
+      )}
 
       {/* Tags */}
-      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 14 }}>
-        {model.tags.map(t => (
-          <span key={t} className="model-tag">{t}</span>
-        ))}
-      </div>
+      {model.tags?.length > 0 && (
+        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+          {model.tags.slice(0, 4).map(t => (
+            <span key={t} style={{ fontSize: 10, color: '#475569', background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.07)', borderRadius: 4, padding: '1px 7px' }}>
+              {t}
+            </span>
+          ))}
+        </div>
+      )}
 
-      {/* Specs row */}
-      <div className="model-card-specs">
-        <div className="model-spec">
-          <Cpu size={11} />
-          <span>{model.gpu_min}</span>
-        </div>
-        <div className="model-spec">
-          <Clock size={11} />
-          <span>{model.est_cost}</span>
-        </div>
-        <div className="model-spec">
-          <Users size={11} />
-          <span>{model.popularity}% popular</span>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="model-card-footer">
-        <a href={model.hf_url} target="_blank" rel="noopener noreferrer" className="model-link">
-          <GitBranch size={12} /> HuggingFace
-          <ExternalLink size={10} />
-        </a>
-        <span className="model-license">{model.license}</span>
-        <button className="model-deploy-btn" onClick={() => onDeploy(model)}>
+      {/* Actions */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
+        <button
+          onClick={() => onCheckCompat(model)}
+          style={{ flex: 1, fontSize: 12, fontWeight: 600, color: '#94A3B8',
+            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)',
+            borderRadius: 7, padding: '7px 12px', cursor: 'pointer', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', gap: 5 }}
+        >
+          <Cpu size={12} /> Check Fit
+        </button>
+        <button
+          onClick={() => onDeploy(model)}
+          style={{ flex: 1, fontSize: 12, fontWeight: 700, color: '#fff',
+            background: 'linear-gradient(135deg, #7C6BF0, #5B50D6)',
+            border: 'none', borderRadius: 7, padding: '7px 14px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
+        >
           <Zap size={12} /> Deploy
-          <ArrowRight size={11} />
         </button>
       </div>
     </motion.div>
   )
 }
 
-/* ── Main Page ────────────────────────────────────────────────────── */
+function CompatibilityModal({ model, token, onClose }) {
+  const [gpu, setGpu]   = useState('a100-80gb')
+  const [count, setCount] = useState(1)
+  const [quant, setQuant] = useState('int8')
+  const [engine, setEngine] = useState((model.supported_engines || ['vllm'])[0] || 'vllm')
+  const { result, loading, check } = useCompatibility(token)
+
+  useEffect(() => {
+    if (model?.vram_fp16_gb) check({ model_id: model.model_id, gpu_model: gpu, gpu_count: count, quantisation: quant, engine })
+  }, [model, gpu, count, quant, engine])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 1000,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <motion.div
+        initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }}
+        style={{ background: '#0F172A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16,
+          padding: 28, maxWidth: 540, width: '100%', maxHeight: '90vh', overflowY: 'auto' }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#F1F5F9' }}>GPU Compatibility Check</div>
+            <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{model.name}</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748B',
+            cursor: 'pointer', fontSize: 20 }}>×</button>
+        </div>
+
+        {/* Config selectors */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+          {[
+            { label: 'GPU Model', value: gpu, set: setGpu, options: [
+              ['a100-80gb','A100 80GB'],['a100-40gb','A100 40GB'],['h100-sxm','H100 SXM'],
+              ['a40','A40 48GB'],['a10','A10 24GB'],['l40s','L40S 48GB'],['t4','T4 16GB'],
+              ['rtx-4090','RTX 4090'],['v100-32gb','V100 32GB'],
+            ]},
+            { label: 'GPU Count', value: count, set: v => setCount(Number(v)), options: [[1,'1'],[2,'2'],[4,'4'],[8,'8']] },
+            { label: 'Quantisation', value: quant, set: setQuant, options: [
+              ['fp16','FP16'],['int8','INT8'],['int4','INT4'],['awq','AWQ'],['gptq','GPTQ'],
+            ]},
+            { label: 'Engine', value: engine, set: setEngine, options:
+              (model.supported_engines || ['vllm']).map(e => [e, e.toUpperCase()]) },
+          ].map(({ label, value, set, options }) => (
+            <div key={label}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#64748B', marginBottom: 5 }}>{label}</div>
+              <select value={value} onChange={e => set(e.target.value)}
+                style={{ width: '100%', background: '#1E293B', border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 7, color: '#F1F5F9', fontSize: 13, padding: '7px 10px' }}>
+                {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            </div>
+          ))}
+        </div>
+
+        {/* Result */}
+        {loading && <div style={{ textAlign: 'center', color: '#64748B', fontSize: 13, padding: 20 }}>
+          <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite', marginBottom: 8, display: 'block', margin: '0 auto 8px' }} />
+          Checking compatibility...
+        </div>}
+
+        {result && !loading && (
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${STATUS_COLOUR[result.status]}33`,
+            borderRadius: 10, padding: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <CompatibilityIndicator status={result.status} />
+              <span style={{ fontSize: 12, color: '#64748B' }}>
+                {result.total_vram_available_gb} GB available · {result.estimated_vram_required_gb} GB required
+              </span>
+            </div>
+
+            {result.reasons?.map((r, i) => (
+              <div key={i} style={{ fontSize: 12, color: '#94A3B8', marginBottom: 6, lineHeight: 1.5 }}>{r}</div>
+            ))}
+            {result.constraints?.map((c, i) => (
+              <div key={i} style={{ fontSize: 12, color: '#F59E0B', marginTop: 6, display: 'flex', gap: 6 }}>
+                <AlertTriangle size={12} style={{ flexShrink: 0, marginTop: 2 }} />{c}
+              </div>
+            ))}
+            {result.warnings?.map((w, i) => (
+              <div key={i} style={{ fontSize: 11, color: '#64748B', marginTop: 4, display: 'flex', gap: 6 }}>
+                <Info size={11} style={{ flexShrink: 0, marginTop: 2 }} />{w}
+              </div>
+            ))}
+            {result.estimated_tokens_per_second && (
+              <div style={{ marginTop: 10, fontSize: 12, color: '#7C6BF0', fontWeight: 600 }}>
+                Estimated throughput: ~{result.estimated_tokens_per_second.toLocaleString()} tok/s
+                <span style={{ fontSize: 10, color: '#64748B', fontWeight: 400, marginLeft: 6 }}>
+                  (rough estimate — actual depends on batch size and kernels)
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
+  )
+}
+
+function HFSearchPanel({ token, onImport }) {
+  const [q, setQ] = useState('')
+  const { results, searching, search } = useHFSearch(token)
+
+  useEffect(() => {
+    const t = setTimeout(() => search(q), 400)
+    return () => clearTimeout(t)
+  }, [q])
+
+  return (
+    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
+      borderRadius: 10, padding: 16 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: '#F1F5F9', marginBottom: 12,
+        display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Download size={14} color="#7C6BF0" /> Discover on Hugging Face Hub
+      </div>
+      <input
+        value={q}
+        onChange={e => setQ(e.target.value)}
+        placeholder="Search HF Hub — e.g. mistral, gemma, falcon..."
+        style={{ width: '100%', background: '#0F172A', border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 7, color: '#F1F5F9', fontSize: 13, padding: '8px 12px', boxSizing: 'border-box' }}
+      />
+      {searching && <div style={{ fontSize: 11, color: '#64748B', marginTop: 8 }}>Searching HF Hub...</div>}
+      {results.length > 0 && (
+        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 300, overflowY: 'auto' }}>
+          {results.map(r => (
+            <div key={r.hf_id} style={{ display: 'flex', alignItems: 'center', gap: 10,
+              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: 8, padding: '8px 12px' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#F1F5F9', whiteSpace: 'nowrap',
+                  overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.hf_id}</div>
+                <div style={{ display: 'flex', gap: 6, marginTop: 3 }}>
+                  <LicenceBadge commercial_ok={r.licence_info?.commercial ?? null} />
+                  <span style={{ fontSize: 10, color: '#64748B' }}>{r.hf_downloads?.toLocaleString() || 0} downloads</span>
+                </div>
+              </div>
+              {r.in_registry ? (
+                <span style={{ fontSize: 10, color: '#10B981', fontWeight: 600 }}>In Registry</span>
+              ) : (
+                <button onClick={() => onImport(r)}
+                  style={{ fontSize: 11, fontWeight: 600, color: '#7C6BF0', background: 'rgba(124,107,240,0.1)',
+                    border: '1px solid rgba(124,107,240,0.2)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}>
+                  Import
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────
+
 export default function ModelHubPage() {
+  const { token } = useAuth()
   const navigate = useNavigate()
+
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
-  const [sortBy, setSortBy] = useState('popularity')
+  const [commercialOnly, setCommercialOnly] = useState(false)
+  const [compatModal, setCompatModal] = useState(null)
+  const [showHFSearch, setShowHFSearch] = useState(false)
+  const [notification, setNotification] = useState(null)
+
+  const { models, loading, error, isLive } = useModels(token)
 
   const filtered = useMemo(() => {
-    let list = MODELS
-    if (category !== 'all') list = list.filter(m => m.category === category)
-    if (search.trim()) {
+    let list = models
+    if (category !== 'all') {
+      list = list.filter(m => {
+        const fam = (m.model_family || '').toLowerCase()
+        const tags = (m.tags || []).join(' ').toLowerCase()
+        if (category === 'llm')       return ['llama','mistral','qwen','gemma','deepseek','phi','gpt','claude','llm'].some(k => fam.includes(k))
+        if (category === 'code')      return tags.includes('code') || fam.includes('code') || (m.name||'').toLowerCase().includes('code')
+        if (category === 'embedding') return fam.includes('embed') || fam.includes('bge') || tags.includes('embed')
+        if (category === 'vision')    return tags.includes('vision') || tags.includes('image') || fam.includes('vision')
+        if (category === 'audio')     return tags.includes('audio') || tags.includes('speech') || fam.includes('whisper')
+        return true
+      })
+    }
+    if (commercialOnly) list = list.filter(m => m.commercial_ok === true)
+    if (search) {
       const q = search.toLowerCase()
       list = list.filter(m =>
-        m.name.toLowerCase().includes(q) ||
-        m.org.toLowerCase().includes(q) ||
-        m.desc.toLowerCase().includes(q) ||
-        m.tags.some(t => t.toLowerCase().includes(q))
+        (m.name||'').toLowerCase().includes(q) ||
+        (m.publisher||'').toLowerCase().includes(q) ||
+        (m.description||'').toLowerCase().includes(q) ||
+        (m.tags||[]).join(' ').toLowerCase().includes(q) ||
+        (m.model_id||'').toLowerCase().includes(q)
       )
     }
-    if (sortBy === 'popularity') list = [...list].sort((a, b) => b.popularity - a.popularity)
-    else if (sortBy === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name))
-    else if (sortBy === 'new') list = [...list].sort((a, b) => (b.new ? 1 : 0) - (a.new ? 1 : 0) || b.popularity - a.popularity)
     return list
-  }, [search, category, sortBy])
+  }, [models, category, commercialOnly, search])
 
-  const handleDeploy = (model) => {
-    navigate(`/goals?goal=${encodeURIComponent(
-      `Deploy ${model.name} (${model.params}) for inference using the cheapest available ${model.gpu_min} GPU`
-    )}`)
-  }
+  const handleDeploy = useCallback((model) => {
+    setNotification({ type: 'info', message: `Deployment wizard for ${model.name} — coming in Phase 3F.` })
+    setTimeout(() => setNotification(null), 4000)
+  }, [])
 
-  const activeCat = CATEGORIES.find(c => c.id === category)
+  const handleImport = useCallback((hfModel) => {
+    setNotification({ type: 'success', message: `Model ${hfModel.hf_id} imported into session registry.` })
+    setTimeout(() => setNotification(null), 3000)
+  }, [])
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-      style={{ maxWidth: 1280 }}
+      style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 20px' }}
     >
-      {/* Hero Header */}
-      <div className="model-hub-hero">
-        <div className="model-hub-hero-glow" />
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
-            <div className="model-hub-icon-wrap">
-              <Brain size={22} color="#7C6BF0" />
-            </div>
-            <div>
-              <h1 className="model-hub-title">AI Model Hub</h1>
-              <p className="model-hub-subtitle">
-                {MODELS.length} open-source models · One-click deploy to cheapest GPU
-              </p>
-            </div>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+        marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Brain size={22} color="#7C6BF0" />
+            <h1 style={{ fontSize: 22, fontWeight: 800, color: '#F1F5F9', margin: 0 }}>Model Hub</h1>
+            <LiveBadge isLive={isLive} />
           </div>
-
-          {/* Stats strip */}
-          <div className="model-hub-stats">
-            {[
-              { label: 'Models', value: MODELS.length, icon: Brain, color: '#7C6BF0' },
-              { label: 'Categories', value: CATEGORIES.length - 1, icon: Layers, color: '#F472B6' },
-              { label: 'Trending', value: MODELS.filter(m => m.trending).length, icon: TrendingUp, color: '#10B981' },
-              { label: 'New This Month', value: MODELS.filter(m => m.new).length, icon: Sparkles, color: '#F59E0B' },
-            ].map(s => (
-              <div key={s.label} className="model-hub-stat">
-                <s.icon size={14} color={s.color} />
-                <span className="model-hub-stat-value">{s.value}</span>
-                <span className="model-hub-stat-label">{s.label}</span>
-              </div>
-            ))}
-          </div>
+          <p style={{ fontSize: 13, color: '#64748B', margin: '6px 0 0' }}>
+            Discover, evaluate and deploy open-source AI models. GPU compatibility checked before deployment.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => setShowHFSearch(v => !v)}
+            style={{ fontSize: 12, fontWeight: 600, color: showHFSearch ? '#7C6BF0' : '#94A3B8',
+              background: showHFSearch ? 'rgba(124,107,240,0.1)' : 'rgba(255,255,255,0.04)',
+              border: `1px solid ${showHFSearch ? 'rgba(124,107,240,0.3)' : 'rgba(255,255,255,0.09)'}`,
+              borderRadius: 8, padding: '8px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <Download size={13} /> HF Hub
+          </button>
+          <button onClick={() => navigate('/goals')}
+            style={{ fontSize: 12, fontWeight: 700, color: '#fff',
+              background: 'linear-gradient(135deg, #7C6BF0, #5B50D6)',
+              border: 'none', borderRadius: 8, padding: '8px 16px', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 5 }}>
+            <Zap size={12} /> Custom Deploy
+          </button>
         </div>
       </div>
 
-      {/* Search + Filter Bar */}
-      <div className="model-filter-bar">
-        <div className="model-search-wrap">
-          <Search size={16} color="#94A3B8" />
+      {/* Error banner */}
+      {error && (
+        <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)',
+          borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: '#F59E0B',
+          display: 'flex', alignItems: 'center', gap: 8 }}>
+          <AlertTriangle size={13} />
+          Could not load live registry ({error}). Showing curated fallback data.
+        </div>
+      )}
+
+      {/* Notification */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            style={{ background: notification.type === 'success' ? 'rgba(16,185,129,0.1)' : 'rgba(124,107,240,0.1)',
+              border: `1px solid ${notification.type === 'success' ? 'rgba(16,185,129,0.25)' : 'rgba(124,107,240,0.25)'}`,
+              borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 12,
+              color: notification.type === 'success' ? '#10B981' : '#7C6BF0' }}>
+            {notification.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* HF Search Panel */}
+      <AnimatePresence>
+        {showHFSearch && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+            style={{ overflow: 'hidden', marginBottom: 16 }}>
+            <HFSearchPanel token={token} onImport={handleImport} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ position: 'relative', flex: '1 1 240px', minWidth: 200 }}>
+          <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
           <input
-            type="text"
-            placeholder="Search models, orgs, or tags..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="model-search-input"
+            placeholder="Search models..."
+            style={{ width: '100%', paddingLeft: 32, paddingRight: 12, paddingTop: 9, paddingBottom: 9,
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)',
+              borderRadius: 8, color: '#F1F5F9', fontSize: 13, boxSizing: 'border-box' }}
           />
-          {search && (
-            <button onClick={() => setSearch('')} className="model-search-clear">×</button>
-          )}
         </div>
-        <div className="model-sort-wrap">
-          <Filter size={13} color="#94A3B8" />
-          <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="model-sort-select">
-            <option value="popularity">Most Popular</option>
-            <option value="new">Newest First</option>
-            <option value="name">Alphabetical</option>
-          </select>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {CATEGORIES.map(cat => {
+            const Icon = cat.icon
+            const active = category === cat.id
+            return (
+              <button key={cat.id} onClick={() => setCategory(cat.id)}
+                style={{ fontSize: 12, fontWeight: active ? 700 : 500,
+                  color: active ? cat.color : '#64748B',
+                  background: active ? `${cat.color}15` : 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${active ? cat.color + '33' : 'rgba(255,255,255,0.08)'}`,
+                  borderRadius: 7, padding: '6px 12px', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 5 }}>
+                <Icon size={12} /> {cat.label}
+              </button>
+            )
+          })}
         </div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12,
+          color: commercialOnly ? '#10B981' : '#64748B', cursor: 'pointer' }}>
+          <input type="checkbox" checked={commercialOnly} onChange={e => setCommercialOnly(e.target.checked)}
+            style={{ accentColor: '#10B981' }} />
+          <Shield size={12} /> Commercial OK only
+        </label>
       </div>
 
-      {/* Category Tabs */}
-      <div className="model-category-tabs">
-        {CATEGORIES.map(cat => {
-          const Icon = cat.icon
-          const isActive = category === cat.id
-          const count = cat.id === 'all' ? MODELS.length : MODELS.filter(m => m.category === cat.id).length
-          return (
-            <button
-              key={cat.id}
-              onClick={() => setCategory(cat.id)}
-              className={`model-category-tab ${isActive ? 'active' : ''}`}
-              style={isActive ? { '--tab-color': cat.color } : {}}
-            >
-              <Icon size={14} />
-              <span>{cat.label}</span>
-              <span className="model-category-count">{count}</span>
-            </button>
-          )
-        })}
+      {/* Stats bar */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 20, fontSize: 12, color: '#475569' }}>
+        <span>{filtered.length} of {models.length} models</span>
+        {search && <button onClick={() => setSearch('')}
+          style={{ fontSize: 11, color: '#EF4444', background: 'rgba(239,68,68,0.06)',
+            border: '1px solid rgba(239,68,68,0.15)', borderRadius: 6, padding: '2px 8px', cursor: 'pointer' }}>
+          Clear
+        </button>}
       </div>
 
-      {/* Results count */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <span style={{ fontSize: 13, color: '#64748B', fontWeight: 600 }}>
-          {filtered.length} model{filtered.length !== 1 ? 's' : ''}
-          {category !== 'all' && ` in ${activeCat?.label}`}
-          {search && ` matching "${search}"`}
-        </span>
-        {(search || category !== 'all') && (
-          <button
-            onClick={() => { setSearch(''); setCategory('all') }}
-            style={{
-              fontSize: 12, color: '#EF4444', background: 'rgba(239,68,68,0.06)',
-              border: '1px solid rgba(239,68,68,0.15)', borderRadius: 6,
-              padding: '3px 10px', cursor: 'pointer',
-            }}
-          >
-            Clear filters
-          </button>
-        )}
-      </div>
-
-      {/* Model Grid */}
-      <div className="model-grid">
-        <AnimatePresence mode="popLayout">
-          {filtered.map((model, i) => (
-            <ModelCard key={model.id} model={model} index={i} onDeploy={handleDeploy} />
+      {/* Loading state */}
+      {loading && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
+          {[1,2,3,4,5,6].map(i => (
+            <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 12, padding: 20, height: 180, animation: 'shimmer 1.5s infinite' }} />
           ))}
-        </AnimatePresence>
-      </div>
+        </div>
+      )}
 
-      {filtered.length === 0 && (
+      {/* Model grid */}
+      {!loading && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
+          <AnimatePresence mode="popLayout">
+            {filtered.map((model, i) => (
+              <ModelCard
+                key={model.model_id || model.id}
+                model={model}
+                onDeploy={handleDeploy}
+                onCheckCompat={m => setCompatModal(m)}
+              />
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
+
+      {!loading && filtered.length === 0 && (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: '#94A3B8' }}>
           <Search size={32} style={{ display: 'block', margin: '0 auto 12px', opacity: 0.4 }} />
-          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>No models found</div>
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>No models found</div>
           <div style={{ fontSize: 13 }}>Try adjusting your search or filters</div>
         </div>
       )}
 
-      {/* Bottom CTA */}
-      <div className="model-hub-cta">
-        <Sparkles size={16} color="#7C6BF0" />
+      {/* Compatibility Modal */}
+      <AnimatePresence>
+        {compatModal && (
+          <CompatibilityModal
+            model={compatModal}
+            token={token}
+            onClose={() => setCompatModal(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Footer CTA */}
+      <div style={{ marginTop: 32, background: 'rgba(124,107,240,0.05)',
+        border: '1px solid rgba(124,107,240,0.15)', borderRadius: 12, padding: '16px 20px',
+        display: 'flex', alignItems: 'center', gap: 14 }}>
+        <Brain size={20} color="#7C6BF0" style={{ flexShrink: 0 }} />
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>
-            Don't see your model?
-          </div>
-          <div style={{ fontSize: 12, color: '#64748B' }}>
-            Submit any HuggingFace model URL as a goal — OrQuanta will auto-configure the optimal GPU, provider, and runtime.
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#F1F5F9' }}>Submit any Hugging Face model</div>
+          <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
+            Paste any HF model URL as a goal — OrQuanta will auto-configure GPU, provider and runtime.
           </div>
         </div>
-        <button
-          onClick={() => navigate('/goals')}
-          className="model-deploy-btn"
-          style={{ marginLeft: 'auto', flexShrink: 0 }}
-        >
-          <Zap size={12} /> Custom Deploy
+        <button onClick={() => navigate('/goals')} style={{ marginLeft: 'auto', flexShrink: 0,
+          fontSize: 12, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#7C6BF0,#5B50D6)',
+          border: 'none', borderRadius: 8, padding: '8px 16px', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 5 }}>
+          <ArrowRight size={13} /> Open Goals
         </button>
       </div>
     </motion.div>

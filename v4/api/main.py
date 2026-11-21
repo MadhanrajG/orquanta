@@ -1340,6 +1340,16 @@ app.include_router(nemoclaw_router) # /api/v1/nemoclaw -- NemoClaw cognitive lay
 app.include_router(uix_router)      # /api/v1/uix -- UIXAgent autonomous UI/UX diagnostics
 app.include_router(oauth_router)    # /auth/google + /auth/github -- OAuth2 SSO
 app.include_router(api_keys_router) # /api/v1/api-keys -- programmatic access keys
+# ── Phase 3: Inference Platform ──────────────────────────────────────────────
+try:
+    from .routers.inference import v1_router as _v1_router, hub_router as _hub_router, deploy_router as _deploy_router
+    app.include_router(_v1_router)       # POST /v1/chat/completions, GET /v1/models, POST /v1/embeddings
+    app.include_router(_hub_router)      # GET  /api/v1/models, /api/v1/models/search/hf, /check-compatibility
+    app.include_router(_deploy_router)   # POST /api/v1/deployments, GET/DELETE /api/v1/deployments/{id}
+    import logging as _log; _log.getLogger("orquanta.main").info("[Phase3] Inference routers registered.")
+except Exception as _e:
+    import logging as _log; _log.getLogger("orquanta.main").warning(f"[Phase3] Inference routers not loaded: {_e}")
+
 app.include_router(ws_router)
 
 # Demo router - always included; active only when DEMO_MODE=true

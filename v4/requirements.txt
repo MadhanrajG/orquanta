@@ -88,3 +88,24 @@ pytest-mock==3.14.0
 pytest-cov==6.1.0
 httpx==0.28.1                        # TestClient HTTP
 anyio==4.7.0
+
+# ─── Phase 3: Inference Platform ─────────────────────────────────────────────
+# LiteLLM — unified OpenAI-compatible inference proxy
+# Install: pip install litellm>=1.55.0
+# Optional: deploy as separate proxy service (see docs/litellm-proxy.md)
+# litellm>=1.55.0
+
+# vLLM — GPU inference engine (Linux + CUDA only; install on inference nodes)
+# pip install vllm>=0.6.4  (requires CUDA 12.1+, Python 3.11+)
+# Not listed here — installed separately on GPU instances via Docker image:
+#   vllm/vllm-openai:v0.6.4
+
+# SGLang — alternative high-throughput inference engine (Linux + CUDA only)
+# pip install sglang>=0.4.1  (requires sm_80+ GPU)
+# Not listed here — installed separately on GPU instances via Docker image:
+#   lmsysorg/sglang:v0.4.1-cu121
+
+# huggingface-hub — model metadata fetching (no weight download)
+huggingface-hub>=0.26.0              # HF Hub API client for metadata only
+
+# Phase 3 test helpers (already included above via httpx + anyio)

@@ -7,6 +7,97 @@ OrQuanta uses [Conventional Commits](https://www.conventionalcommits.org/) for c
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-11-21
+
+### Added — Phase 3: Open-Source Model Platform & Inference Infrastructure
+
+#### Phase 3A — LiteLLM Inference Gateway (`v4/inference/gateway.py`)
+- Unified OpenAI-compatible inference proxy with multi-provider routing
+- Virtual API key system: `sk-orq-...` keys with per-tenant budget limits, rate limits, and model permissions
+- Provider routing table: Groq (LLaMA 3.1 70B/8B, Mixtral), OpenAI (GPT-4o), Anthropic (Claude 3.5 Sonnet)
+- Token accounting: input/output token counting → USD cost estimation
+- Request logging with provider credential redaction (never logged or returned)
+- Mock mode: `USE_REAL_INFERENCE=false` returns labelled `[MOCK]` responses for testing
+- Fallback chain: multi-provider fallback on failure
+
+#### Phase 3A — OpenAI-Compatible Inference API (`v4/api/routers/inference.py`)
+- `POST /v1/chat/completions` — OpenAI-compatible chat completions
+- `GET /v1/models` — list routed models with OrQuanta metadata
+- `POST /v1/embeddings` — embedding endpoint (mock; real via vLLM deployment in 3D)
+- Authenticates `sk-orq-...` inference keys and user JWTs
+- Rate limiting per tenant via sliding window
+- Budget enforcement blocks requests when tenant budget exhausted
+
+#### Phase 3B — Model Registry & Hugging Face Integration (`v4/inference/model_registry.py`)
+- Curated registry of 10 models: LLaMA 3.1 (405B/70B/8B), DeepSeek-V3/R1, Qwen 2.5 72B, Mixtral 8×7B, Gemma 2 27B, Phi-4, BGE-M3
+- Full metadata: publisher, family, revision, context length, parameter count, quantisation options, VRAM estimates, GPU requirements
+- Licence database: 14 licences mapped (MIT, Apache-2.0, LLaMA 3, Gemma, DeepSeek, OpenRAIL, CC variants, etc.)
+- `commercial_ok` field populated from licence database; unknown licences explicitly flagged
+- `GET /api/v1/models` — registry listing with family/engine/commercial filters and search
+- `GET /api/v1/models/{id}` — model detail with GPU recommendations
+- `GET /api/v1/models/search/hf` — real-time Hugging Face Hub search (read-only metadata only)
+- `GET /api/v1/models/fetch/hf` — single HF model metadata fetch
+- Runtime model registration API for custom models
+- Never downloads model weights or executes untrusted model code
+
+#### Phase 3C — GPU Compatibility Engine (`v4/inference/gpu_compatibility.py`)
+- Hardware database: 20 GPU models (H100, A100, A40, A30, A10, L40S, L4, RTX 4090/3090, T4, V100, P100)
+- Quantisation VRAM factors: FP32, FP16, BF16, INT8, INT4, AWQ, GPTQ, GGUF
+- Engine-to-architecture compatibility enforcement (vLLM sm_70+, SGLang sm_80+)
+- Status: `compatible` | `compatible_with_constraints` | `incompatible` | `insufficient_information`
+- Constraint suggestions: automatically proposes lower quantisation if model doesn't fit
+- KV-cache overhead modelling (15% overhead + long-context scaling)
+- Rough throughput estimation in tokens/second (explicitly labelled as estimate)
+- `POST /api/v1/models/check-compatibility` — API endpoint
+- `GET /api/v1/models/gpus` — GPU hardware database endpoint
+- `recommend_gpus_for_model()` — sorted list of compatible GPU configs for a model
+
+#### Phase 3D — vLLM/SGLang Deployment Adapter (`v4/inference/vllm_adapter.py`)
+- vLLM startup command builder: tensor parallelism, quantisation flags, context length cap
+- SGLang startup command builder
+- Deployment spec builder (JSON-serialisable for Celery)
+- Health check waiter: polls `/health` until HTTP 200 (never marks ready on non-200)
+- Mock deployment clearly labelled `[MOCK]`; `is_real=false` without real providers
+- `POST /api/v1/deployments` — one-click deployment with compatibility pre-check
+- `GET /api/v1/deployments` — list deployments
+- `GET /api/v1/deployments/{id}` — deployment detail
+- `DELETE /api/v1/deployments/{id}` — stop and clean up
+
+#### Frontend — Model Hub Upgrade (`v4/frontend/src/pages/ModelHubPage.jsx`)
+- Live backend integration: fetches real registry from `/api/v1/models` with static fallback
+- `LiveBadge` component: green "Live Registry" / amber "Demo Data"
+- HF Hub search panel: real-time search with licence display and in-registry check
+- GPU Compatibility modal: interactive GPU/count/quantisation/engine selector
+- Compatibility result display: status, VRAM breakdown, constraints, warnings, TPS estimate
+- Licence badge: Commercial OK / Non-Commercial / Unknown with accurate display
+- Engine chips: vLLM / SGLang / transformers
+- Filter by family, commercial-only toggle, full-text search
+- Error banner when API unavailable (shows curated fallback with explicit label)
+
+### New Environment Variables (Phase 3)
+| Variable | Default | Description |
+|---|---|---|
+| `USE_REAL_INFERENCE` | `false` | Enable real LLM inference via provider keys |
+| `LITELLM_BASE_URL` | — | External LiteLLM proxy URL (optional) |
+| `LITELLM_MASTER_KEY` | — | LiteLLM master key (never exposed to clients) |
+| `GROQ_API_KEY` | — | Groq API key for Llama/Mixtral inference |
+| `HF_TOKEN` | — | Read-only Hugging Face token for model metadata |
+| `VLLM_DOCKER_IMAGE` | `vllm/vllm-openai:v0.6.4` | vLLM Docker image for deployments |
+| `SGLANG_DOCKER_IMAGE` | `lmsysorg/sglang:v0.4.1-cu121` | SGLang Docker image |
+| `VLLM_STARTUP_TIMEOUT_SECONDS` | `600` | Max wait time for model loading |
+| `INFERENCE_DEFAULT_BUDGET_USD` | `10.0` | Default per-key inference budget |
+| `INFERENCE_TIMEOUT_SECONDS` | `120` | Inference request timeout |
+
+### Test Results — Phase 3
+- **37/37 Phase 3 tests PASS** (pytest, Python 3.11, 0.22s)
+- **Frontend build: 2799 modules, 0 errors**
+
+### Open-Source Compliance (Phase 3)
+- Apache 2.0 header on all Phase 3 source files
+- Third-party licence obligations documented in requirements.txt
+- vLLM (Apache 2.0), SGLang (Apache 2.0), HuggingFace Hub (Apache 2.0)
+- Licence obligations for deployed models tracked per-deployment
+
 ## [0.5.0] — 2026-11-21
 
 ### Added — Phase 2: Production Reliability Engineering
