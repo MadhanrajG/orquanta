@@ -1,4 +1,4 @@
-/**
+﻿/**
  * OrQuanta - Live GPU Pricing Page
  * Shows real-time GPU spot prices from Lambda Labs, RunPod, Vast.ai, and AWS
  * Data sourced from /api/v1/pricing (refreshed every 60s server-side)
@@ -7,7 +7,7 @@ import { useState, useEffect } from'react'
 import { motion } from 'framer-motion'
 import { RefreshCw, TrendingDown, Zap, Filter, ChevronDown, ExternalLink } from'lucide-react'
 
-const API = import.meta.env.VITE_API_URL ||''
+const API = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || ''
 
 const PROVIDER_INFO = {
  lambda: { label:'Lambda Labs', color:'#7C6BF0', dot:'#9B8BF4', url:'https://cloud.lambdalabs.com' },
@@ -17,6 +17,21 @@ const PROVIDER_INFO = {
 }
 
 const GPU_CLASSES = ['All','A10','A100','H100','RTX 4090','RTX 3090','T4','V100']
+// Demo data shown when provider API keys are not yet configured
+const MOCK_LISTINGS = [
+  { provider: 'lambda', instance_id: 'gpu_1xa10_sxm4_24gb', gpu_type: 'A10', gpu_count: 1, vram_gb: 24, price_per_hr: 0.60, price_per_hr_fmt: '$0.60/hr', region: 'us-east-1', available: true, is_mock: true },
+  { provider: 'runpod', instance_id: 'SECURE_CLOUD', gpu_type: 'RTX 4090', gpu_count: 1, vram_gb: 24, price_per_hr: 0.74, price_per_hr_fmt: '$0.74/hr', region: 'US', available: true, is_mock: true },
+  { provider: 'vastai', instance_id: 'vastai-h100-1', gpu_type: 'H100', gpu_count: 1, vram_gb: 80, price_per_hr: 2.49, price_per_hr_fmt: '$2.49/hr', region: 'EU', available: true, is_mock: true },
+  { provider: 'lambda', instance_id: 'gpu_1xa100_sxm4_40gb', gpu_type: 'A100', gpu_count: 1, vram_gb: 40, price_per_hr: 1.10, price_per_hr_fmt: '$1.10/hr', region: 'us-west-2', available: true, is_mock: true },
+  { provider: 'runpod', instance_id: 'COMMUNITY_CLOUD', gpu_type: 'A100', gpu_count: 1, vram_gb: 80, price_per_hr: 1.64, price_per_hr_fmt: '$1.64/hr', region: 'CA', available: true, is_mock: true },
+  { provider: 'vastai', instance_id: 'vastai-rtx3090-1', gpu_type: 'RTX 3090', gpu_count: 1, vram_gb: 24, price_per_hr: 0.26, price_per_hr_fmt: '$0.26/hr', region: 'US', available: true, is_mock: true },
+  { provider: 'lambda', instance_id: 'gpu_8xa100_sxm4_40gb', gpu_type: 'A100', gpu_count: 8, vram_gb: 320, price_per_hr: 8.80, price_per_hr_fmt: '$8.80/hr', region: 'us-east-1', available: true, is_mock: true },
+  { provider: 'aws', instance_id: 'p3.2xlarge', gpu_type: 'V100', gpu_count: 1, vram_gb: 16, price_per_hr: 3.06, price_per_hr_fmt: '$3.06/hr', region: 'us-east-1', available: true, is_mock: true },
+  { provider: 'runpod', instance_id: 'SECURE_H100', gpu_type: 'H100', gpu_count: 1, vram_gb: 80, price_per_hr: 2.89, price_per_hr_fmt: '$2.89/hr', region: 'EU', available: true, is_mock: true },
+  { provider: 'vastai', instance_id: 'vastai-t4-1', gpu_type: 'T4', gpu_count: 1, vram_gb: 16, price_per_hr: 0.11, price_per_hr_fmt: '$0.11/hr', region: 'US', available: true, is_mock: true },
+]
+
+
 
 export default function LivePricing() {
  const [listings, setListings] = useState([])
@@ -26,6 +41,7 @@ export default function LivePricing() {
  const [lastRefresh, setLastRefresh] = useState(null)
  const [filter, setFilter] = useState({ gpu:'All', maxPrice:'', minVram:'', provider:'' })
  const [view, setView] = useState('listings') //'listings' |'summary'
+  const [isMockData, setIsMockData] = useState(false)
 
  const fetchData = async () => {
  try {
@@ -42,12 +58,21 @@ export default function LivePricing() {
  fetch(`${API}/api/v1/pricing/providers`),
  ])
 
- if (pRes.ok) { const d = await pRes.json(); setListings(d.listings || []); setLastRefresh(d.updated_at) }
+ if (pRes.ok) {
+      const d = await pRes.json()
+      const live = d.listings || []
+      setListings(live.length > 0 ? live : MOCK_LISTINGS)
+      if (live.length === 0) console.info('[OrQuanta] No live prices — showing demo data')
+      setLastRefresh(d.updated_at || new Date().toISOString())
+    } else {
+      setListings(MOCK_LISTINGS)
+    }
  if (sRes.ok) { const d = await sRes.json(); setSummary(d) }
  if (hRes.ok) { const d = await hRes.json(); setHealth(d) }
  } catch (e) {
- console.error('Pricing fetch error:', e)
- } finally {
+    console.error('Pricing fetch error:', e)
+    setListings(MOCK_LISTINGS)
+    } finally {
  setLoading(false)
  }
  }
@@ -68,6 +93,18 @@ export default function LivePricing() {
  <h1 className="text-2xl font-bold text-slate-800" style={{ display:'flex', alignItems:'center', gap: 10 }}>
  <span style={{ fontSize: 24 }}></span> Live GPU Pricing
  </h1>
+ {listings.length > 0 && listings[0] && listings[0].is_mock && (
+    <div style={{
+      marginTop: 8, padding: '5px 12px', borderRadius: 8,
+      display: 'inline-flex', alignItems: 'center', gap: 8,
+      background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)',
+    }}>
+      <span style={{ fontSize: 11, color: '#F59E0B', fontWeight: 700 }}>DEMO</span>
+      <span style={{ fontSize: 11, color: '#94A3B8' }}>
+        Sample prices shown. Add provider API keys to load live data.
+      </span>
+    </div>
+  )}
  <p className="text-slate-500 text-sm mt-1">
  Real-time prices from Lambda Labs . RunPod . Vast.ai . AWS - sorted cheapest first
  </p>
@@ -249,7 +286,7 @@ export default function LivePricing() {
  ) : listings.length === 0 ? (
  <tr>
  <td colSpan={9} style={{ textAlign:'center', padding:'40px 20px', color:'#94A3B8' }}>
- No GPU listings found for your filters. Try adjusting them.
+ No listings match your current filters — try removing some filters or clearing all.
  </td>
  </tr>
  ) : listings.map((l, i) => {

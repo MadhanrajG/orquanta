@@ -1,10 +1,11 @@
-import { useState, useEffect } from'react'
+import { SkeletonStatGrid, SkeletonChart } from '../components/Skeleton.jsx'
+﻿import { useState, useEffect } from'react'
 import { motion } from 'framer-motion'
 import { DollarSign, TrendingDown, Cloud, RefreshCw } from'lucide-react'
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, RadarChart, Radar, PolarGrid, PolarAngleAxis } from'recharts'
 import { useAuth } from'../App.jsx'
 
-const API = import.meta.env.VITE_API_URL ||''
+const API = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || ''
 
 // Simulated cost time series (in production: fetched from API)
 function genCostHistory(n = 30) {

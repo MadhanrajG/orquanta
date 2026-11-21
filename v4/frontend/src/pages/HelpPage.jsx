@@ -9,6 +9,10 @@ const FAQS = [
         section: 'Getting Started',
         items: [
             {
+                q: 'How do I reset my password?',
+                a: 'Click Forgot password? on the Sign In page, enter your email, and check your inbox for a reset link. The link expires in 1 hour. If you do not receive it check spam or contact support@orquanta.com.'
+            },
+            {
                 q: 'What is OrQuanta?',
                 a: 'OrQuanta is an AI-native GPU cloud platform that autonomously orchestrates workloads across 6 cloud providers (Lambda Labs, RunPod, CoreWeave, AWS, GCP, Azure). Just describe your goal in plain English "" 5 AI agents handle the rest.'
             },

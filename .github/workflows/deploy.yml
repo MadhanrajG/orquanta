@@ -178,6 +178,11 @@ jobs:
           tags: |
             ${{ env.GHCR_IMAGE }}:latest
             ${{ env.GHCR_IMAGE }}:${{ github.sha }}
+          # Bake production API URLs into the React bundle at Docker build time
+          build-args: |
+            VITE_API_BASE_URL=https://orquanta.com
+            VITE_WS_BASE_URL=wss://orquanta.com
+            VITE_APP_ENV=production
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

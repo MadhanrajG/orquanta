@@ -29,6 +29,7 @@ webhook_router = APIRouter(prefix="/api/v1/webhooks", tags=["Webhooks"])
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
 STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 APP_URL = os.getenv("APP_URL", "https://orquanta.com")
 
 
@@ -46,15 +47,10 @@ class CheckoutRequest(BaseModel):
     cancel_url: Optional[str] = None
 
 
-# -- Dependency: get current user (simplified, uses JWT from main.py auth) -----
-
-async def get_current_user(request: Request) -> dict:
-    """Extract user info from JWT. Re-uses the main auth middleware."""
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    # The actual JWT decode is in v4/api/security.py  -  mock for now
-    return {"user_id": "user-from-jwt", "org_id": "org-from-jwt", "email": "user@example.com"}
+# -- Dependency: real JWT auth (shared with the rest of the API) ---------------
+# FIXED: was a local mock that always returned a fake user and org_id.
+# Now uses the same middleware as every other protected endpoint.
+from ..middleware.auth import get_current_user  # noqa: E402
 
 
 # -- Endpoints -----------------------------------------------------------------
@@ -62,19 +58,25 @@ async def get_current_user(request: Request) -> dict:
 @router.get("/plans")
 async def get_plans():
     """Return available subscription plans and pricing."""
-    from ...billing.stripe_integration import StripeBilling
-    return StripeBilling.get_pricing_page()
+    try:
+        from ...billing.stripe_integration import StripeBilling
+        data = StripeBilling.get_pricing_page()
+    except Exception:
+        data = {}
+    data["stripe_enabled"] = bool(STRIPE_SECRET_KEY)
+    data["stripe_publishable_key"] = STRIPE_PUBLISHABLE_KEY
+    return data
 
 
 @router.get("/subscription")
-async def get_subscription(request: Request):
-    """Get the current user's subscription status."""
+async def get_subscription(
+    current_user: dict = Depends(get_current_user),
+):
+    """Get the authenticated user's subscription status."""
     try:
         from ...billing.stripe_integration import get_billing
-        # Extract org_id from JWT (simplified)
-        auth_header = request.headers.get("Authorization", "")
-        org_id = "demo-org"  # In production: decode JWT
-
+        # Use real user email as the stable org identifier
+        org_id = current_user.get("sub") or current_user.get("email", "unknown")
         billing = get_billing()
         sub = await billing.get_subscription(org_id)
         if not sub:
@@ -86,13 +88,15 @@ async def get_subscription(request: Request):
 
 
 @router.post("/checkout")
-async def create_checkout_session(body: CheckoutRequest, request: Request):
+async def create_checkout_session(
+    body: CheckoutRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
-    Create a Stripe Checkout session.
+    Create a Stripe Checkout session for the authenticated user.
     Frontend redirects user to the Stripe-hosted checkout page.
     """
     if not STRIPE_SECRET_KEY:
-        # Return mock checkout URL for demo mode
         return {
             "checkout_url": f"{APP_URL}/app/billing?mock=true&plan={body.plan}",
             "session_id": f"cs_mock_{body.plan}",
@@ -111,39 +115,45 @@ async def create_checkout_session(body: CheckoutRequest, request: Request):
         success = body.success_url or f"{APP_URL}/app/billing?success=true"
         cancel = body.cancel_url or f"{APP_URL}/app/billing?cancelled=true"
 
+        # Tag the session with the real user so the webhook can look them up
+        user_email = current_user.get("email", "")
+        user_id = current_user.get("sub", "")
+
         session = stripe.checkout.Session.create(
             mode="subscription",
-            line_items=[{
-                "price": plan_info["price_id"],
-                "quantity": 1,
-            }],
+            customer_email=user_email or None,
+            line_items=[{"price": plan_info["price_id"], "quantity": 1}],
             subscription_data={"trial_period_days": 14},
+            metadata={"user_id": user_id, "user_email": user_email},
             success_url=success + "&session_id={CHECKOUT_SESSION_ID}",
             cancel_url=cancel,
             allow_promotion_codes=True,
         )
         return {"checkout_url": session.url, "session_id": session.id}
 
-    except stripe.error.StripeError as exc:
+    except Exception as exc:  # stripe.error.StripeError or import error
         logger.error(f"Stripe checkout error: {exc}")
         raise HTTPException(status_code=400, detail=str(exc))
 
 
 @router.post("/portal")
-async def create_portal_session(request: Request):
-    """Create a Stripe Customer Portal session for managing subscription."""
+async def create_portal_session(
+    current_user: dict = Depends(get_current_user),
+):
+    """Create a Stripe Customer Portal session for the authenticated user."""
     if not STRIPE_SECRET_KEY:
-        return {
-            "portal_url": f"{APP_URL}/app/billing",
-            "demo_mode": True,
-        }
+        return {"portal_url": f"{APP_URL}/app/billing", "demo_mode": True}
 
     try:
         import stripe
         stripe.api_key = STRIPE_SECRET_KEY
 
-        # Get customer_id from DB (simplified)
-        customer_id = "cus_placeholder"  # In production: query DB
+        user_email = current_user.get("email", "")
+        # Look up Stripe customer by email
+        customers = stripe.Customer.list(email=user_email, limit=1)
+        if not customers.data:
+            raise HTTPException(status_code=404, detail="No Stripe customer found for this account.")
+        customer_id = customers.data[0].id
 
         session = stripe.billing_portal.Session.create(
             customer=customer_id,
@@ -151,13 +161,18 @@ async def create_portal_session(request: Request):
         )
         return {"portal_url": session.url}
 
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.error(f"Portal session error: {exc}")
         raise HTTPException(status_code=400, detail=str(exc))
 
 
 @router.post("/subscribe")
-async def subscribe(body: SubscribeRequest, request: Request):
+async def subscribe(
+    body: SubscribeRequest,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Subscribe to a plan directly via API (for SDK/CLI users).
     Creates Stripe customer + subscription with 14-day trial.
@@ -166,8 +181,12 @@ async def subscribe(body: SubscribeRequest, request: Request):
         from ...billing.stripe_integration import get_billing
         billing = get_billing()
 
-        org_id = f"org-{hash(body.email) % 1000000}"
-        customer_id = await billing.create_customer(org_id, body.email, body.org_name or "")
+        # Use authenticated user's real ID as the stable org identifier
+        user_id = current_user.get("sub", "")
+        user_email = current_user.get("email", body.email)
+        org_id = f"org-{user_id}" if user_id else f"org-{hash(user_email) % 1000000}"
+
+        customer_id = await billing.create_customer(org_id, user_email, body.org_name or "")
         cust_id, sub_id = await billing.create_subscription(org_id, customer_id, body.plan)
 
         return {
@@ -185,16 +204,21 @@ async def subscribe(body: SubscribeRequest, request: Request):
 
 
 @router.delete("/subscription")
-async def cancel_subscription(request: Request, at_period_end: bool = True):
-    """Cancel the current subscription."""
+async def cancel_subscription(
+    at_period_end: bool = True,
+    current_user: dict = Depends(get_current_user),
+):
+    """Cancel the authenticated user's subscription."""
     try:
         from ...billing.stripe_integration import get_billing
         billing = get_billing()
-        org_id = "demo-org"  # In production: from JWT
+        user_id = current_user.get("sub", "")
+        user_email = current_user.get("email", "")
+        org_id = f"org-{user_id}" if user_id else f"org-{hash(user_email) % 1000000}"
         ok = await billing.cancel_subscription(org_id, at_period_end)
         if ok:
-            return {"success": True, "message": "Subscription cancelled"}
-        return {"success": False, "message": "No active subscription found"}
+            return {"success": True, "message": "Subscription cancelled successfully."}
+        return {"success": False, "message": "No active subscription found."}
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
@@ -207,15 +231,37 @@ async def stripe_webhook(
     stripe_signature: str = Header(None, alias="stripe-signature"),
 ):
     """
-    Stripe webhook endpoint.
-    Must be registered at: https://dashboard.stripe.com/webhooks
-    URL: https://your-railway-url.up.railway.app/api/v1/webhooks/stripe
+    Stripe webhook endpoint — signature-verified.
+    Register at: https://dashboard.stripe.com/webhooks
+    URL: https://orquanta.com/api/v1/webhooks/stripe
     Events: customer.subscription.*, invoice.paid, invoice.payment_failed
+    Requires: STRIPE_WEBHOOK_SECRET env var (from Stripe dashboard).
     """
     payload = await request.body()
 
     if not stripe_signature:
         raise HTTPException(status_code=400, detail="Missing stripe-signature header")
+
+    # --- Signature verification (M1 security fix) ----------------------------
+    # Without this check anyone can POST fake events to activate subscriptions.
+    if STRIPE_WEBHOOK_SECRET:
+        try:
+            import stripe as _stripe
+            _stripe.Webhook.construct_event(
+                payload, stripe_signature, STRIPE_WEBHOOK_SECRET
+            )
+        except _stripe.error.SignatureVerificationError:
+            logger.warning("[Webhook] Invalid Stripe signature — request rejected")
+            raise HTTPException(status_code=400, detail="Invalid webhook signature")
+        except Exception as exc:
+            logger.error(f"[Webhook] Signature check error: {exc}")
+            raise HTTPException(status_code=400, detail="Webhook verification failed")
+    else:
+        logger.warning(
+            "[Webhook] STRIPE_WEBHOOK_SECRET not set — skipping signature check. "
+            "Set this env var in production to prevent spoofed events."
+        )
+    # -------------------------------------------------------------------------
 
     try:
         from ...billing.stripe_integration import get_billing

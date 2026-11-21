@@ -347,7 +347,19 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         "base-uri 'self'; "
         "form-action 'self';"
     )
-    # Demo page uses server-rendered inline scripts  -  allow unsafe-inline for /demo only
+    # Swagger UI / ReDoc need CDN scripts + styles + inline scripts (FastAPI auto-docs)
+    _CSP_DOCS = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net fonts.googleapis.com; "
+        "font-src 'self' fonts.gstatic.com; "
+        "img-src 'self' data: blob: cdn.jsdelivr.net fastapi.tiangolo.com; "
+        "connect-src 'self' wss: https:; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self';"
+    )
+    # Demo page and health page use server-rendered inline scripts
     _CSP_DEMO = (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline'; "
@@ -370,9 +382,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
         response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
-        # Apply per-route CSP  -  demo page needs unsafe-inline for its inline scripts
+        # Apply per-route CSP
         path = request.url.path
-        if path.startswith("/demo"):
+        if path.startswith("/docs") or path.startswith("/redoc") or path == "/openapi.json":
+            response.headers["Content-Security-Policy"] = self._CSP_DOCS
+        elif path.startswith("/demo") or path == "/health":
             response.headers["Content-Security-Policy"] = self._CSP_DEMO
         else:
             response.headers["Content-Security-Policy"] = self._CSP_APP
@@ -961,6 +975,135 @@ async def update_profile(
         conn.close()
     return {"success": True, "full_name": req.full_name}
 
+# --- Forgot / Reset password (unauthenticated) --------------------------------
+
+class _ForgotPasswordRequest(_BaseModel):
+    email: str
+
+class _ResetPasswordRequest(_BaseModel):
+    token: str
+    new_password: str
+
+@app.post("/auth/forgot-password", tags=["Auth"], summary="Request password reset link")
+async def forgot_password(req: _ForgotPasswordRequest):
+    """Accept an email, generate a time-limited reset token (1 h JWT), log it, optionally send SMTP."""
+    from .middleware.auth import _get_db, _USE_PG, _ph, JWT_SECRET, JWT_ALGORITHM
+    import secrets as _sec
+
+    ph = _ph()
+    conn = _get_db()
+    try:
+        if _USE_PG:
+            cur = conn.cursor()
+            cur.execute(f"SELECT id FROM users WHERE email = {ph}", (req.email.lower(),))
+            row = cur.fetchone()
+            cur.close()
+        else:
+            row = conn.execute(f"SELECT id FROM users WHERE email = {ph}", (req.email.lower(),)).fetchone()
+    finally:
+        conn.close()
+
+    if row:
+        payload = {
+            "sub": req.email.lower(),
+            "type": "reset",
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+            "jti": _sec.token_hex(16),
+        }
+        reset_token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+        frontend_url = os.getenv("FRONTEND_URL", "https://orquanta.com")
+        reset_url = f"{frontend_url}/forgot-password?token={reset_token}"
+        logger.info(f"[PASSWORD RESET] Email={req.email}  URL={reset_url}")
+
+        smtp_host = os.getenv("SMTP_HOST", "")
+        if smtp_host:
+            try:
+                import smtplib, email.mime.text as _mt, email.mime.multipart as _mm
+                smtp_port = int(os.getenv("SMTP_PORT", "587"))
+                smtp_user = os.getenv("SMTP_USER", "")
+                smtp_pass = os.getenv("SMTP_PASS", "")
+                smtp_from = os.getenv("SMTP_FROM", smtp_user)
+                msg = _mm.MIMEMultipart("alternative")
+                msg["Subject"] = "Reset your OrQuanta password"
+                msg["From"] = smtp_from
+                msg["To"] = req.email
+                html_body = (
+                    "<html><body style='font-family:sans-serif;padding:32px;'>"
+                    "<h2 style='color:#7B2FFF;'>OrQuanta Password Reset</h2>"
+                    "<p>Click below to reset your password. Expires in <strong>1 hour</strong>.</p>"
+                    f"<a href='{reset_url}' style='display:inline-block;padding:12px 24px;"
+                    "background:linear-gradient(135deg,#7B2FFF,#0091FF);color:#fff;"
+                    "text-decoration:none;border-radius:8px;font-weight:700;'>Reset Password</a>"
+                    "<p style='margin-top:24px;color:#94A3B8;font-size:12px;'>"
+                    "If you did not request this, ignore this email.</p></body></html>"
+                )
+                msg.attach(_mt.MIMEText(html_body, "html"))
+                with smtplib.SMTP(smtp_host, smtp_port) as s:
+                    s.ehlo(); s.starttls(); s.login(smtp_user, smtp_pass)
+                    s.sendmail(smtp_from, [req.email], msg.as_string())
+                logger.info(f"[PASSWORD RESET] Email delivered to {req.email}")
+            except Exception as smtp_err:
+                logger.warning(f"[PASSWORD RESET] SMTP failed: {smtp_err}")
+
+    # Always 200 — prevents email enumeration
+    return {"success": True, "message": "If that email is registered, a reset link has been sent."}
+
+
+@app.post("/auth/reset-password", tags=["Auth"], summary="Complete password reset with token")
+async def reset_password_endpoint(req: _ResetPasswordRequest):
+    """Verify the reset JWT and update the user password."""
+    from .middleware.auth import _get_db, _USE_PG, _ph, JWT_SECRET, JWT_ALGORITHM, hash_password
+    import secrets as _sec
+
+    if len(req.new_password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters.")
+
+    try:
+        payload = jwt.decode(req.token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=400, detail="Reset link has expired. Please request a new one.")
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=400, detail="Invalid reset token.")
+
+    if payload.get("type") != "reset":
+        raise HTTPException(status_code=400, detail="Invalid token type.")
+
+    email = payload.get("sub", "")
+    if not email:
+        raise HTTPException(status_code=400, detail="Malformed token.")
+
+    ph = _ph()
+    new_salt = _sec.token_hex(8)
+    new_hash = hash_password(req.new_password, new_salt)
+    conn = _get_db()
+    try:
+        if _USE_PG:
+            cur = conn.cursor()
+            cur.execute(
+                f"UPDATE users SET hashed_pw = {ph}, salt = {ph} WHERE email = {ph}",
+                (new_hash, new_salt, email.lower()),
+            )
+            conn.commit()
+            affected = cur.rowcount
+            cur.close()
+        else:
+            conn.execute(
+                f"UPDATE users SET hashed_pw = {ph}, salt = {ph} WHERE email = {ph}",
+                (new_hash, new_salt, email.lower()),
+            )
+            conn.commit()
+            affected = conn.total_changes
+    finally:
+        conn.close()
+
+    if affected == 0:
+        raise HTTPException(status_code=404, detail="Account not found.")
+
+    logger.info(f"[PASSWORD RESET] Password reset complete for: {email}")
+    return {"success": True, "message": "Password updated successfully. You can now sign in."}
+
+
+
 
 
 
@@ -972,9 +1115,8 @@ async def prometheus_metrics():
     return get_metrics_response()
 
 
-@app.get("/health", tags=["System"], summary="Health check")
-async def health():
-    """System health check with operational metrics - no auth required."""
+def _build_health_data() -> dict:
+    """Compute health data dict (shared between JSON + HTML endpoints)."""
     from .websocket.agent_stream import manager as _ws_manager
     uptime = round(time.monotonic() - _APP_START_TIME, 1)
     return {
@@ -996,6 +1138,156 @@ async def health():
             "forecast": "ok",
         },
     }
+
+
+@app.get("/api/health", tags=["System"], summary="Health check (JSON)", response_model=None, include_in_schema=True)
+async def api_health_json():
+    """Machine-readable JSON health check. Used by Dashboard and monitoring tools."""
+    return JSONResponse(content=_build_health_data())
+
+
+@app.get("/health", tags=["System"], summary="Health check", response_class=HTMLResponse, include_in_schema=False)
+async def health_page(request: Request):
+    """Browser-friendly HTML status page. Returns JSON if Accept: application/json."""
+
+    # If caller prefers JSON (curl, monitoring tools, OpenAPI spec), return JSON
+    accept = request.headers.get("accept", "")
+    if "application/json" in accept and "text/html" not in accept:
+        return JSONResponse(content=_build_health_data())
+
+    data = _build_health_data()
+    uptime_s = int(data["uptime_seconds"])
+    uptime_str = f"{uptime_s // 86400}d {(uptime_s % 86400) // 3600}h {(uptime_s % 3600) // 60}m {uptime_s % 60}s"
+    errors = data["errors_last_hour"]
+    err_color = "#EF4444" if errors > 0 else "#10B981"
+    err_icon = "⚠" if errors > 0 else "✓"
+    components_html = "".join(
+        f'<div class="comp-row"><span class="comp-name">{name}</span>'
+        f'<span class="comp-badge ok">● {status_val}</span></div>'
+        for name, status_val in data["components"].items()
+    )
+    html = f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="refresh" content="10">
+  <title>OrQuanta — System Status</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *{{margin:0;padding:0;box-sizing:border-box}}
+    body{{background:#F8FAFC;color:#0F172A;font-family:'Inter',sans-serif;min-height:100vh;padding:40px 24px}}
+    .bg{{position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 50% -10%,rgba(0,145,255,.05),transparent 70%);pointer-events:none;z-index:0}}
+    .wrap{{max-width:720px;margin:0 auto;position:relative;z-index:1}}
+    nav{{display:flex;align-items:center;justify-content:space-between;margin-bottom:48px}}
+    .logo{{font-family:'Space Grotesk',sans-serif;font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,#0091FF,#7B2FFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}}
+    .nav-links a{{color:#475569;text-decoration:none;font-size:.875rem;font-weight:500;padding:8px 16px;border-radius:8px;border:1px solid rgba(0,0,0,.1);transition:all .2s}}
+    .nav-links a:hover{{border-color:rgba(0,145,255,.4);color:#0091FF}}
+    .status-hero{{text-align:center;margin-bottom:40px}}
+    .status-badge{{display:inline-flex;align-items:center;gap:10px;padding:10px 24px;border-radius:999px;border:2px solid rgba(16,185,129,.35);background:rgba(16,185,129,.08);font-family:'Space Grotesk',sans-serif;font-size:1.05rem;font-weight:700;color:#10B981;margin-bottom:20px}}
+    .pulse{{width:10px;height:10px;border-radius:50%;background:#10B981;animation:pulse 2s infinite}}
+    h1{{font-family:'Space Grotesk',sans-serif;font-size:2rem;font-weight:800;color:#0F172A;margin-bottom:8px}}
+    .subtitle{{color:#64748B;font-size:.95rem}}
+    .grid{{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}}
+    .card{{background:#FFFFFF;border:1px solid rgba(0,0,0,.07);border-radius:16px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.04)}}
+    .card-label{{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94A3B8;margin-bottom:6px}}
+    .card-val{{font-family:'Space Grotesk',sans-serif;font-size:1.9rem;font-weight:800;line-height:1}}
+    .blue{{background:linear-gradient(135deg,#0091FF,#7B2FFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent}}
+    .green{{color:#10B981}}
+    .card-sub{{font-size:.78rem;color:#94A3B8;margin-top:4px}}
+    .section{{background:#FFFFFF;border:1px solid rgba(0,0,0,.07);border-radius:16px;padding:24px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}}
+    .section-title{{font-family:'Space Grotesk',sans-serif;font-size:.8rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#475569;margin-bottom:16px}}
+    .comp-row{{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.04)}}
+    .comp-row:last-child{{border-bottom:none;padding-bottom:0}}
+    .comp-name{{font-weight:500;font-size:.9rem;text-transform:capitalize}}
+    .comp-badge{{font-size:.78rem;font-weight:700;padding:4px 12px;border-radius:999px}}
+    .comp-badge.ok{{background:rgba(16,185,129,.08);color:#10B981;border:1px solid rgba(16,185,129,.25)}}
+    .meta-row{{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.04);font-size:.875rem}}
+    .meta-row:last-child{{border-bottom:none}}
+    .meta-key{{color:#64748B}}
+    .meta-val{{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#0F172A}}
+    .errors-row{{background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.15);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:16px}}
+    .refresh-note{{text-align:center;color:#94A3B8;font-size:.78rem;margin-top:24px}}
+    footer{{text-align:center;color:#94A3B8;font-size:.82rem;margin-top:32px;padding-top:24px;border-top:1px solid rgba(0,0,0,.06)}}
+    footer a{{color:#0091FF;text-decoration:none}}
+    @keyframes pulse{{0%,100%{{opacity:1;transform:scale(1)}}50%{{opacity:.5;transform:scale(1.4)}}}}
+  </style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="wrap">
+  <nav>
+    <a class="logo" href="/">OrQuanta</a>
+    <div class="nav-links">
+      <a href="/docs">API Docs</a>
+    </div>
+  </nav>
+
+  <div class="status-hero">
+    <div class="status-badge"><span class="pulse"></span> All Systems Operational</div>
+    <h1>System Status</h1>
+    <p class="subtitle">OrQuanta Agentic v{data["version"]} &nbsp;·&nbsp; Real-time platform health</p>
+  </div>
+
+  {'<div class="errors-row"><span style="color:'+err_color+';font-size:1.1rem">'+err_icon+'</span><span style="color:'+err_color+';font-size:.875rem;font-weight:600">'+str(errors)+' error(s) in the last hour</span></div>' if errors > 0 else ''}
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-label">Uptime</div>
+      <div class="card-val blue">{uptime_str}</div>
+      <div class="card-sub">Since last restart</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Active WebSocket Connections</div>
+      <div class="card-val blue">{data["active_websocket_connections"]}</div>
+      <div class="card-sub">Live agent streams</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Goals Today</div>
+      <div class="card-val green">{data["goals_submitted_today"]}</div>
+      <div class="card-sub">Submitted to orchestrator</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Jobs Today</div>
+      <div class="card-val green">{data["jobs_completed_today"]}</div>
+      <div class="card-sub">{data["jobs_failed_today"]} failed &nbsp;/&nbsp; {data["jobs_completed_today"]} completed</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Components</div>
+    {components_html}
+  </div>
+
+  <div class="section">
+    <div class="section-title">Details</div>
+    <div class="meta-row"><span class="meta-key">Status</span><span class="meta-val">{data["status"]}</span></div>
+    <div class="meta-row"><span class="meta-key">Version</span><span class="meta-val">{data["version"]}</span></div>
+    <div class="meta-row"><span class="meta-key">Timestamp</span><span class="meta-val">{data["timestamp"]}</span></div>
+    <div class="meta-row"><span class="meta-key">Errors (last hour)</span><span class="meta-val" style="color:{err_color}">{data["errors_last_hour"]}</span></div>
+    <div class="meta-row"><span class="meta-key">JSON endpoint</span><span class="meta-val"><a href="/api/health" style="color:#0091FF">/api/health</a></span></div>
+  </div>
+
+  <p class="refresh-note">⟳ Auto-refreshes every 10 seconds</p>
+
+  <footer>
+    OrQuanta Agentic v{data["version"]} &nbsp;·&nbsp;
+    <a href="/">Home</a> &nbsp;·&nbsp;
+    <a href="/docs">API Docs</a> &nbsp;·&nbsp;
+    <a href="mailto:hello@orquanta.com">hello@orquanta.com</a>
+  </footer>
+</div>
+</body>
+</html>
+"""
+    return HTMLResponse(content=html, status_code=200)
+
+
+@app.get("/api/health", tags=["System"], summary="Health check (JSON)")
+async def health_json():
+    """System health check with operational metrics - no auth required. Returns JSON."""
+    return _build_health_data()
 
 
 @app.get("/", include_in_schema=False)

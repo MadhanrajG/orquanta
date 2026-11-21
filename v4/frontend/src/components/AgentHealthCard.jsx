@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AgentHealthCard - Live Safety Governor stats widget
  *
  * Polls /admin/safety/status every 10s and displays:
@@ -14,7 +14,7 @@ import { motion } from 'framer-motion'
 import { AlertTriangle, ShieldCheck, DollarSign, Activity } from 'lucide-react'
 import { AuthContext } from '../App.jsx'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || ''
 
 export default function AgentHealthCard() {
     const { token } = useContext(AuthContext)

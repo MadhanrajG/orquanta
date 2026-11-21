@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react'
+﻿import { useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Wand2, RefreshCw, CheckCircle, AlertTriangle, Zap, Shield, Eye,
          BarChart2, Layers, ChevronRight, Play, Wrench, Award } from 'lucide-react'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || ''
 const getH = () => ({
     'Content-Type': 'application/json',
     Authorization: `Bearer ${localStorage.getItem('orquanta_token') || ''}`,

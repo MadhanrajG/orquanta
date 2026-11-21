@@ -493,12 +493,12 @@ export default {
     // Root landing page  -  marketing page served at the edge
     if (path === "/") return landingPage(env);
 
-    // /status  -  beautiful HTML status page (fetches /health from backend)
+    // /status  -  beautiful HTML status page (fetches /api/health JSON from backend)
     if (path === "/status") {
       let healthData = null;
       try {
         const backend = env.BACKEND_URL || "https://orquanta-sg.onrender.com";
-        const res = await fetch(`${backend}/health`, { method: "GET", signal: AbortSignal.timeout(8000) });
+        const res = await fetch(`${backend}/api/health`, { method: "GET", signal: AbortSignal.timeout(8000) });
         if (res.ok) healthData = await res.json();
       } catch (_) { /* backend may be cold-starting; show degraded */ }
       return statusPage(healthData);
@@ -562,7 +562,7 @@ export default {
   async scheduled(_event, env, ctx) {
     const backend = env.BACKEND_URL || "https://orquanta-sg.onrender.com";
     ctx.waitUntil(
-      fetch(`${backend}/health`, { method: "GET" }).then(r =>
+      fetch(`${backend}/api/health`, { method: "GET" }).then(r =>
         console.log(`[keepalive] ${new Date().toISOString()} -> HTTP ${r.status}`)
       ).catch(e =>
         console.error(`[keepalive] failed: ${e.message}`)

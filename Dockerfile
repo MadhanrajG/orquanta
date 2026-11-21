@@ -8,7 +8,14 @@ COPY v4/frontend/package*.json ./
 RUN npm ci
 
 # Copy source and build
+# Pass production API URLs as build-time args so Vite bakes them into the bundle
 COPY v4/frontend/ ./
+ARG VITE_API_BASE_URL=https://orquanta.com
+ARG VITE_WS_BASE_URL=wss://orquanta.com
+ARG VITE_APP_ENV=production
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_WS_BASE_URL=$VITE_WS_BASE_URL
+ENV VITE_APP_ENV=$VITE_APP_ENV
 RUN npm run build
 
 # ─── Stage 2: Python runtime ───────────────────────────────────────────────────

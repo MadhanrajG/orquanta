@@ -22,6 +22,7 @@ import BillingPage from './pages/BillingPage.jsx'
 import NemoClawPage from './pages/NemoClawPage.jsx'
 import UIXAgentPage from './pages/UIXAgentPage.jsx'
 import HelpPage from './pages/HelpPage.jsx'
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
 import SelfImprovementPage from './pages/SelfImprovementPage.jsx'
 import ModelHubPage from './pages/ModelHubPage.jsx'
 import OrQuantaAssistant from './components/OrQuantaAssistant.jsx'
@@ -94,7 +95,8 @@ function AuthProvider({ children }) {
         if (oauthToken) {
             localStorage.setItem('orquanta_token', oauthToken)
             setToken(oauthToken)
-            window.history.replaceState({}, '', '/app')
+            // Use replaceState to keep /app basename intact
+            window.history.replaceState({}, '', window.location.pathname.includes('/app') ? '/app' : window.location.pathname)
         }
         if (oauthError) console.warn('OAuth error:', oauthError)
     }, [])
@@ -141,7 +143,8 @@ function AuthProvider({ children }) {
         setToken(null); setUser(null)
         localStorage.removeItem('orquanta_token')
         localStorage.removeItem('orquanta_user')
-        window.location.href = '/'
+        // Navigate to /app login page, not root landing page
+        window.location.href = '/app'
     }
 
     return (
@@ -249,10 +252,17 @@ function LoginPage() {
                             <label className="input-label">Email address</label>
                             <input id="auth-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@company.ai" autoComplete="email" />
                         </div>
-                        <div className="input-group" style={{ marginBottom: mode === 'register' ? 8 : 20 }}>
+                        <div className="input-group" style={{ marginBottom: mode === 'register' ? 8 : 12 }}>
                             <label className="input-label">Password</label>
                             <input id="auth-password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} placeholder="Min. 8 characters" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
                         </div>
+                        {mode === 'login' && (
+                            <div style={{ textAlign: 'right', marginBottom: 20 }}>
+                                <a href="/forgot-password" style={{ fontSize: 12, color: '#7C6BF0', textDecoration: 'none', fontWeight: 500 }}>
+                                    Forgot password?
+                                </a>
+                            </div>
+                        )}
                         {mode === 'register' && (
                             <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 18, lineHeight: 1.5 }}>By signing up you agree to our Terms of Service.</p>
                         )}
@@ -650,7 +660,18 @@ function AppLayout() {
                         <Route path="/self-improvement" element={<SelfImprovementPage />} />
                         <Route path="/models" element={<ModelHubPage />} />
                         <Route path="/help" element={<HelpPage />} />
-                        <Route path="*" element={<Navigate to="/" />} />
+                        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                        <Route path="*" element={
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 16, textAlign: 'center', padding: '2rem' }}>
+                                <div style={{ fontSize: 64, opacity: 0.15 }}>404</div>
+                                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>Page not found</h2>
+                                <p style={{ color: '#94A3B8', margin: 0 }}>The page you're looking for doesn't exist or was moved.</p>
+                                <a href="/app/" style={{ marginTop: 8, padding: '0.625rem 1.5rem', borderRadius: 10, background: 'linear-gradient(135deg,#7C6BF0,#9B8BF4)', color: '#fff', fontWeight: 600, textDecoration: 'none', fontSize: '0.9rem' }}>
+                                    ← Back to Dashboard
+                                </a>
+                            </div>
+                        } />
+
                     </Routes>
                 </ErrorBoundary>
             </main>

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Clock, Plus, Trash2, RefreshCw, Play, Pause, ChevronDown, ChevronRight, CheckCircle, AlertCircle } from 'lucide-react'
 import { useAuth } from '../App.jsx'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || ''
 
 const CRON_PRESETS = [
     { label: 'Every hour', expr: '0 * * * *' },

@@ -1,3 +1,4 @@
+import { SkeletonStatGrid, SkeletonCard } from '../components/Skeleton.jsx'
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
@@ -68,9 +69,9 @@ export default function BillingPage() {
     // Check URL params for success/cancel
     const params = new URLSearchParams(window.location.search);
     if (params.get('success') === 'true') {
-      setMessage('... Subscription activated! Welcome to OrQuanta.');
+      setMessage('✅ Subscription activated! Welcome to OrQuanta.');
     } else if (params.get('cancelled') === 'true') {
-      setMessage('... Checkout cancelled. Your free trial is still active.');
+      setMessage('ℹ️ Checkout cancelled. Your free trial is still active.');
     }
 
     fetchSubscription();
@@ -79,12 +80,22 @@ export default function BillingPage() {
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data?.stripe_enabled) setStripeReady(true) })
       .catch(() => {});
-    // Generate mock billing history for demo
-    setBillingHistory([
-      { date: '2026-03-01', description: 'Job job-a3b2c1 "" Fine-tune Llama 3', amount: 4.82, provider: 'RunPod' },
-      { date: '2026-02-28', description: 'Job job-f9e8d7 "" ResNet training run', amount: 1.23, provider: 'Lambda Labs' },
-      { date: '2026-02-25', description: 'Job job-b5c4d3 "" Dataset preprocessing', amount: 0.46, provider: 'RunPod' },
-    ]);
+
+    // Fetch real billing/usage history from API
+    fetch('/api/v1/jobs?status=completed&limit=10', {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
+      .then(r => r.ok ? r.json() : { jobs: [] })
+      .then(data => {
+        const rows = (data.jobs || []).map(j => ({
+          date: j.completed_at ? new Date(j.completed_at).toLocaleDateString() : '—',
+          description: `Job ${(j.job_id || '').slice(0, 10)}… ${j.intent ? '— ' + j.intent.slice(0, 40) : ''}`,
+          amount: j.cost_usd ?? 0,
+          provider: j.provider || 'GPU Cloud',
+        }));
+        setBillingHistory(rows);
+      })
+      .catch(() => setBillingHistory([]));
   }, []);
 
   async function fetchSubscription() {
@@ -160,6 +171,24 @@ export default function BillingPage() {
 
   const planStatus = currentPlan?.plan || 'free';
   const isActivePlan = (planId) => planStatus === planId;
+
+  if (loading) return (
+    <div style={{ padding: '2rem', maxWidth: 1100, margin: '0 auto' }}>
+      <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+        <div style={{ height: 40, width: '50%', margin: '0 auto 16px', borderRadius: 8,
+          background: 'linear-gradient(90deg,rgba(99,102,241,0.08) 25%,rgba(99,102,241,0.15) 50%,rgba(99,102,241,0.08) 75%)',
+          backgroundSize: '400% 100%', animation: 'shimmer 1.6s linear infinite' }} />
+        <div style={{ height: 16, width: '40%', margin: '0 auto', borderRadius: 6,
+          background: 'linear-gradient(90deg,rgba(0,0,0,0.04) 25%,rgba(0,0,0,0.08) 50%,rgba(0,0,0,0.04) 75%)',
+          backgroundSize: '400% 100%', animation: 'shimmer 1.6s linear infinite' }} />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
+        <SkeletonCard rows={6} />
+        <SkeletonCard rows={6} />
+        <SkeletonCard rows={6} />
+      </div>
+    </div>
+  );
 
   return (
     <motion.div
@@ -409,7 +438,7 @@ export default function BillingPage() {
             { label: 'Average GPU savings', value: '60%', sub: 'vs list price' },
             { label: 'Time saved per job', value: '45 min', sub: 'no manual provisioning' },
             { label: 'Idle compute eliminated', value: '87%', sub: 'auto-terminate on completion' },
-            { label: 'ROI at $5K/mo spend', value: '30 - ', sub: 'after OrQuanta fees' },
+            { label: 'ROI at $5K/mo spend', value: '30×', sub: 'after OrQuanta fees' },
           ].map((stat) => (
             <div key={stat.label} style={{ textAlign: 'center' }}>
               <div style={{

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../App.jsx'
 import {
@@ -11,7 +11,7 @@ import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend
 } from 'recharts'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || ''
 
 /* ── Hooks ────────────────────────────────────────────────────── */
 function useImprovementStatus(interval = 8000) {

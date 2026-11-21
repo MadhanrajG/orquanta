@@ -1,4 +1,4 @@
-/**
+﻿/**
  * VeroControl "" Full-page Vero Command Center
  *
  * 4-panel layout:
@@ -15,7 +15,7 @@ import { useState, useEffect, useContext, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { AuthContext } from '../App.jsx'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || ''
 
 const AGENT_META = {
     master_orchestrator: { label: 'OrMind', icon: '', color: '#0091FF' },

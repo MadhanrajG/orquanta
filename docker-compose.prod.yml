@@ -1,0 +1,97 @@
+# OrQuanta — Production Docker Compose (Coolify / self-hosted VPS)
+# Usage:
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Prerequisites:
+#   - Set env vars in a .env.prod file or export them before running
+#   - Caddy or Traefik handles TLS (Coolify manages Traefik automatically)
+
+version: "3.9"
+
+services:
+  # ── API + Frontend (single container) ─────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: https://orquanta.com
+        VITE_WS_BASE_URL: wss://orquanta.com
+        VITE_APP_ENV: production
+    image: orquanta/app:latest
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.prod
+    environment:
+      - PORT=8000
+      - ENV=production
+      - CORS_ORIGINS=https://orquanta.com,https://www.orquanta.com
+      - DATABASE_URL=postgresql+asyncpg://orquanta:${POSTGRES_PASSWORD}@postgres:5432/orquanta
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8200
+    depends_on:
+      postgres:
+        condition: service_healthy
+      chromadb:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # Coolify / Traefik labels for auto-TLS + routing
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.orquanta.rule=Host(`orquanta.com`) || Host(`www.orquanta.com`)"
+      - "traefik.http.routers.orquanta.entrypoints=websecure"
+      - "traefik.http.routers.orquanta.tls.certresolver=letsencrypt"
+      - "traefik.http.services.orquanta.loadbalancer.server.port=8000"
+
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: orquanta
+      POSTGRES_USER: orquanta
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_in_prod}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orquanta -d orquanta"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── ChromaDB (Vector Memory) ───────────────────────────────────────────────
+  chromadb:
+    image: chromadb/chroma:latest
+    restart: unless-stopped
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8200
+      - ALLOW_RESET=false
+    ports:
+      - "8200:8200"
+
+  # ── Redis (Celery broker + cache) ─────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  chroma_data:
+  redis_data:
+
+networks:
+  default:
+    name: orquanta-network

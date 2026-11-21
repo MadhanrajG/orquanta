@@ -1,9 +1,9 @@
-import { useState, useEffect } from'react'
+﻿import { useState, useEffect } from'react'
 import { motion } from 'framer-motion'
 import { ScrollText, RefreshCw, Filter, CheckCircle, AlertCircle, Clock } from'lucide-react'
 import { useAuth } from'../App.jsx'
 
-const API = import.meta.env.VITE_API_URL ||''
+const API = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || ''
 
 export default function AuditLog() {
  const { token } = useAuth()

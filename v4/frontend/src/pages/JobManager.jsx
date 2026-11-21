@@ -1,16 +1,17 @@
-import { useState, useEffect } from'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, RefreshCw, X, Server, Clock, CheckCircle, AlertCircle, Circle } from'lucide-react'
-import { useAuth } from'../App.jsx'
+import { Plus, RefreshCw, X, Server, Clock, CheckCircle, AlertCircle, Circle } from 'lucide-react'
+import { SkeletonPage } from '../components/Skeleton.jsx'
+import { useAuth } from '../App.jsx'
 
-const API = import.meta.env.VITE_API_URL ||''
+const API = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || ''
 
 const STATUS_BADGE = {
- queued:'badge-yellow', running:'badge-blue', completed:'badge-green',
- failed:'badge-red', cancelled:'badge-gray', pending:'badge-gray',
+ queued: 'badge-yellow', running: 'badge-blue', completed: 'badge-green',
+ failed: 'badge-red', cancelled: 'badge-gray', pending: 'badge-gray',
 }
 
-const GPU_COLORS = { H100:'text-purple-600', A100:'text-lavender-500', T4:'text-emerald-400', A10G:'text-amber-600' }
+const GPU_COLORS = { H100: 'text-purple-600', A100: 'text-lavender-500', T4: 'text-emerald-400', A10G: 'text-amber-600' }
 
 export default function JobManager() {
  const { token } = useAuth()
@@ -18,34 +19,35 @@ export default function JobManager() {
  const [queueStatus, setQueueStatus] = useState({})
  const [loading, setLoading] = useState(true)
  const [showForm, setShowForm] = useState(false)
- const [form, setForm] = useState({ intent:'', gpu_type:'H100', gpu_count: 1, provider:'', required_vram_gb: 80, max_cost_usd: 50, max_runtime_minutes: 120 })
+ const [form, setForm] = useState({ intent: '', gpu_type: 'H100', gpu_count: 1, provider: '', required_vram_gb: 80, max_cost_usd: 50, max_runtime_minutes: 120 })
  const [submitting, setSubmitting] = useState(false)
  const [statusFilter, setStatusFilter] = useState('')
 
  const headers = { Authorization: `Bearer ${token}` }
 
- const fetchJobs = async () => {
- try {
- const url = `${API}/api/v1/jobs${statusFilter ? `?status=${statusFilter}` :''}`
- const res = await fetch(url, { headers })
- if (res.ok) { const d = await res.json(); setJobs(d.jobs || []); setQueueStatus(d.queue_status || {}) }
- } catch { }
- finally { setLoading(false) }
- }
+ // useCallback prevents infinite re-fetch loop from stale closure
+ const fetchJobs = useCallback(async () => {
+  try {
+   const url = `${API}/api/v1/jobs${statusFilter ? `?status=${statusFilter}` : ''}`
+   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+   if (res.ok) { const d = await res.json(); setJobs(d.jobs || []); setQueueStatus(d.queue_status || {}) }
+  } catch { }
+  finally { setLoading(false) }
+ }, [token, statusFilter])
 
- useEffect(() => { fetchJobs(); const t = setInterval(fetchJobs, 5000); return () => clearInterval(t) }, [statusFilter])
+ useEffect(() => { fetchJobs(); const t = setInterval(fetchJobs, 5000); return () => clearInterval(t) }, [fetchJobs])
 
  const handleSubmit = async (e) => {
- e.preventDefault(); setSubmitting(true)
- try {
- await fetch(`${API}/api/v1/jobs`, { method:'POST', headers: { ...headers,'Content-Type':'application/json' }, body: JSON.stringify(form) })
- setShowForm(false); fetchJobs()
- } catch { } finally { setSubmitting(false) }
+  e.preventDefault(); setSubmitting(true)
+  try {
+   await fetch(`${API}/api/v1/jobs`, { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+   setShowForm(false); fetchJobs()
+  } catch { } finally { setSubmitting(false) }
  }
 
  const cancelJob = async (id) => {
- await fetch(`${API}/api/v1/jobs/${id}`, { method:'DELETE', headers })
- fetchJobs()
+  await fetch(`${API}/api/v1/jobs/${id}`, { method: 'DELETE', headers })
+  fetchJobs()
  }
 
  return (
@@ -65,7 +67,7 @@ export default function JobManager() {
  </div>
 
  {/* Queue Stats */}
- <div className="grid grid-cols-4 gap-3">
+ <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
  {[
  { label:'Total Jobs', value: queueStatus.total_jobs ?? jobs.length },
  { label:'Queued', value: queueStatus.queued_jobs ?? 0 },
@@ -94,7 +96,7 @@ export default function JobManager() {
  </div>
 
  {/* Job Table */}
- <div className="glass-card overflow-hidden">
+ <div className="glass-card overflow-hidden"><div className="overflow-x-auto -mx-0">
  <table className="w-full text-sm">
  <thead>
  <tr className="border-b border-slate-200" style={{ background: '#F8FAFC' }}>
@@ -105,7 +107,20 @@ export default function JobManager() {
  </thead>
  <tbody>
  {loading ? (
- <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-500">Loading...</td></tr>
+ {...Array(5).fill(0).map((_, i) => (
+              <tr key={i} className="border-b border-slate-100">
+                {Array(7).fill(0).map((__, c) => (
+                  <td key={c} className="px-4 py-3">
+                    <div style={{
+                      height: 12, borderRadius: 6, width: `${60 + Math.random() * 30}%`,
+                      background: 'linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%)',
+                      backgroundSize: '400% 100%',
+                      animation: 'shimmer 1.6s linear infinite',
+                    }} />
+                  </td>
+                ))}
+              </tr>
+            ))}
  ) : jobs.length === 0 ? (
  <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-500">No jobs found. Create one above.</td></tr>
  ) : jobs.map(job => (
@@ -137,7 +152,7 @@ export default function JobManager() {
  ))}
  </tbody>
  </table>
- </div>
+ </div></div>
 
  {/* New Job Modal */}
  {showForm && (
@@ -153,7 +168,7 @@ export default function JobManager() {
  <textarea className="input-field min-h-[80px] resize-none" placeholder="e.g. Train ResNet-50 on ImageNet"
  value={form.intent} onChange={e => setForm(f => ({ ...f, intent: e.target.value }))} required />
  </div>
- <div className="grid grid-cols-2 gap-3">
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
  {[
  { label:'GPU Type', field:'gpu_type', type:'select', options: ['H100','A100','A10G','RTX 4090','T4','L40S'] },
  { label:'Provider', field:'provider', type:'select', options: ['','runpod','lambda','aws','gcp','azure','coreweave'] },

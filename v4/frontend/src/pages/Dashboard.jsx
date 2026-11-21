@@ -12,34 +12,36 @@ import {
 } from'recharts'
 import { useAuth } from'../App.jsx'
 
-const API = import.meta.env.VITE_API_URL ||''
+const API = import.meta.env.VITE_API_BASE_URL
+    || import.meta.env.VITE_API_URL
+    || ''
 
-/* """ Shared fetch hook "" with AbortController and request timeout "" */
-function useApi(endpoint, interval = 6000) {
- const { token } = useAuth()
- const [data, setData] = useState(null)
- useEffect(() => {
- let controller = new AbortController()
- const go = async () => {
- controller.abort()
- controller = new AbortController()
- try {
- const r = await fetch(`${API}${endpoint}`, {
- headers: { Authorization: `Bearer ${token}` },
- signal: AbortSignal.any
- ? AbortSignal.any([controller.signal, AbortSignal.timeout(8000)])
- : controller.signal,
- })
- if (r.ok) setData(await r.json())
- } catch (e) {
- if (e.name !== 'AbortError') { /* silent "" stale data stays visible */ }
- }
- }
- go()
- const t = setInterval(go, interval)
- return () => { clearInterval(t); controller.abort() }
- }, [endpoint, token])
- return data
+/* """ Shared fetch hook with AbortController and request timeout """ */
+function useApiHook(endpoint, interval = 6000) {
+  const { token } = useAuth()
+  const [data, setData] = useState(null)
+  useEffect(() => {
+  let controller = new AbortController()
+  const go = async () => {
+  controller.abort()
+  controller = new AbortController()
+  try {
+   const r = await fetch(`${API}${endpoint}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    signal: typeof AbortSignal.any === 'function'
+     ? AbortSignal.any([controller.signal, AbortSignal.timeout(8000)])
+     : controller.signal,
+   })
+  if (r.ok) setData(await r.json())
+  } catch (e) {
+  if (e.name !== 'AbortError') { /* silent — stale data stays visible */ }
+  }
+  }
+  go()
+  const t = setInterval(go, interval)
+  return () => { clearInterval(t); controller.abort() }
+  }, [endpoint, token])
+  return data
 }
 
 /* """ Live UTC clock """"""""""""""""""""""""""""""""""""""""""""""""""" */
@@ -239,7 +241,7 @@ function GPUFleet() {
                       {/* GPU count + rate */}
                       <div style={{ textAlign:'right', flexShrink:0 }}>
                         <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:700, color: r.active ? '#0F172A' : '#94A3B8', fontVariantNumeric:'tabular-nums' }}>
-                          {r.active ? r.gpus : '""'}
+                          {r.active ? r.gpus : '—'}
                         </div>
                         <div style={{ fontSize:9, color:'#94A3B8' }}>{r.active ? 'GPUs' : 'offline'}</div>
                         {r.active && (
@@ -311,44 +313,49 @@ function AgentFeed() {
  const [isLive, setIsLive] = useState(false)
 
  useEffect(() => {
- // Try real WebSocket first; fall back to demo rotation if unavailable
- const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws'
- const wsUrl = `${wsProto}://${window.location.host}/ws/agent-stream?token=${token}`
- let ws = null
- let demoTimer = null
- let demoIdx = 4
+  // Use secure first-message auth — token must NOT go in WS URL (visible in server logs)
+  const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  const wsUrl = `${wsProto}://${window.location.host}/ws/agent-stream`
+  let ws = null
+  let demoTimer = null
+  let demoIdx = 4
 
- const startDemo = () => {
- demoTimer = setInterval(() => {
- const thought = DEMO_THOUGHTS[demoIdx % DEMO_THOUGHTS.length]
- setEntries(prev => [{ ...thought, key: Date.now(), ts: Date.now() }, ...prev.slice(0, 14)])
- demoIdx++
- }, 3000)
- }
+  const startDemo = () => {
+  demoTimer = setInterval(() => {
+  const thought = DEMO_THOUGHTS[demoIdx % DEMO_THOUGHTS.length]
+  setEntries(prev => [{ ...thought, key: Date.now(), ts: Date.now() }, ...prev.slice(0, 14)])
+  demoIdx++
+  }, 3000)
+  }
 
- try {
- ws = new WebSocket(wsUrl)
- ws.onopen = () => setIsLive(true)
- ws.onmessage = (e) => {
- try {
- const msg = JSON.parse(e.data)
- if (msg.agent && msg.message) {
- setEntries(prev => [
- { agent: msg.agent, msg: msg.message, key: Date.now(), ts: Date.now() },
- ...prev.slice(0, 14),
- ])
- }
- } catch { /* ignore malformed frames */ }
- }
- ws.onerror = () => { setIsLive(false); startDemo() }
- ws.onclose = () => { setIsLive(false); startDemo() }
- } catch { startDemo() }
+  try {
+  ws = new WebSocket(wsUrl)
+  ws.onopen = () => {
+    // Send auth as first message instead of URL param
+    ws.send(JSON.stringify({ type: 'auth', token }))
+    setIsLive(true)
+  }
+  ws.onmessage = (e) => {
+  try {
+  const msg = JSON.parse(e.data)
+  if (msg.type === 'auth_error') { ws.close(); return; }
+  if (msg.agent && msg.message) {
+  setEntries(prev => [
+  { agent: msg.agent, msg: msg.message, key: Date.now(), ts: Date.now() },
+  ...prev.slice(0, 14),
+  ])
+  }
+  } catch { /* ignore malformed frames */ }
+  }
+  ws.onerror = () => { setIsLive(false); startDemo() }
+  ws.onclose = () => { setIsLive(false); startDemo() }
+  } catch { startDemo() }
 
- return () => {
- if (ws) ws.close()
- if (demoTimer) clearInterval(demoTimer)
- }
- }, [token])
+  return () => {
+  if (ws) ws.close()
+  if (demoTimer) clearInterval(demoTimer)
+  }
+  }, [token])
 
  return (
  <div className="glass-card p-5 flex flex-col" style={{ minHeight: 320 }}>
@@ -566,8 +573,14 @@ const sparkSpend = genSpark(24, 40, 15)
 const sparkSaved = genSpark(24, 60, 10).map((d, i) => ({ ...d, v: Math.round(10 + i * 0.8 + Math.random() * 3) }))
 
 export default function Dashboard() {
- const metrics = useApi('/health')
- const [healthScore] = useState(97)
+  const metrics = useApiHook('/api/health')
+  const costMetrics = useApiHook('/api/v1/metrics/cost/dashboard', 30000)
+  const [healthScore] = useState(97)
+
+  // Derive real savings from API, zero-state while loading
+  const totalSavingsUsd = costMetrics?.total_savings_usd ?? metrics?.total_savings_usd ?? null
+  const dailySpendUsd = costMetrics?.daily_spend_usd ?? metrics?.daily_spend_usd ?? null
+  const monthlySavingsUsd = costMetrics?.monthly_savings_usd ?? null
 
  return (
  <motion.div
@@ -578,17 +591,19 @@ export default function Dashboard() {
  {/* "" Vero meta-agent status "" */}
  <VeroStatus />
 
- {/* "" Hero savings bar "" */}
- <div className="savings-hero">
- <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
- <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
- <div className="savings-hero-value">$127.40</div>
- <div>
- <div className="savings-hero-label">Saved This Month</div>
- <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>vs AWS on-demand pricing</div>
- </div>
- </div>
- </div>
+  {/* Hero savings bar — shows real API data, not hardcoded value */}
+  <div className="savings-hero">
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+  <div className="savings-hero-value">
+    {monthlySavingsUsd !== null ? `$${monthlySavingsUsd.toFixed(2)}` : totalSavingsUsd !== null ? `$${totalSavingsUsd.toFixed(2)}` : '—'}
+  </div>
+  <div>
+  <div className="savings-hero-label">Saved This Month</div>
+  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>vs AWS on-demand pricing</div>
+  </div>
+  </div>
+  </div>
  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginLeft: 'auto' }}>
  <span className="savings-hero-pill"> 67% cheaper than AWS</span>
  <span className="savings-hero-pill"> 5 agents active</span>
@@ -621,14 +636,14 @@ export default function Dashboard() {
  value={`${metrics?.platform_utilization_pct?.toFixed(0) ?? 81}%`}
  sub="Avg across all instances" trend={5}
  sparkData={sparkUtil} />
- <HeroCard icon={DollarSign} label="Today's Spend" color="amber"
- value={`$${(metrics?.daily_spend_usd ?? 47.23).toFixed(2)}`}
- sub="$152.77 remaining budget" trend={-8}
- sparkData={sparkSpend} />
- <HeroCard icon={Zap} label="AI Cost Savings" color="purple"
- value={`$${(metrics?.total_savings_usd ?? 1247.80).toFixed(0)}`}
- sub="Total saved vs on-demand" trend={23}
- sparkData={sparkSaved} />
+  <HeroCard icon={DollarSign} label="Today's Spend" color="amber"
+  value={dailySpendUsd !== null ? `$${dailySpendUsd.toFixed(2)}` : `$${(metrics?.daily_spend_usd ?? 0).toFixed(2)}`}
+  sub={dailySpendUsd !== null ? `$${(200 - dailySpendUsd).toFixed(2)} remaining budget` : 'Budget tracking live'} trend={-8}
+  sparkData={sparkSpend} />
+  <HeroCard icon={Zap} label="AI Cost Savings" color="purple"
+  value={totalSavingsUsd !== null ? `$${totalSavingsUsd.toFixed(0)}` : metrics?.total_savings_usd != null ? `$${metrics.total_savings_usd.toFixed(0)}` : '—'}
+  sub="Total saved vs on-demand" trend={23}
+  sparkData={sparkSaved} />
  </div>
 
  {/* "" Charts row "" */}

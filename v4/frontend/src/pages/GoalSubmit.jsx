@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Send, Loader, Cpu, DollarSign, Clock, CheckCircle, AlertCircle, Sparkles, Brain, Shield, Calendar, FileText, Check, Activity } from 'lucide-react'
+import { Send, Loader, Cpu, DollarSign, Clock, CheckCircle, AlertCircle, Sparkles, Brain, Shield, Calendar, FileText, Check, Activity, ChevronRight } from 'lucide-react'
 import { useAuth } from'../App.jsx'
 
 import { useNavigate, useLocation } from'react-router-dom'
 
-const API = import.meta.env.VITE_API_URL ||''
+const API = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || ''
 
 /* """ Placeholder cycling """"""""""""""""""""""""""""""""""""""""""""""" */
 const PLACEHOLDERS = [
@@ -83,28 +83,30 @@ const AGENTS = [
 ]
 
 /* """ Cost Estimator (live preview) """"""""""""""""""""""""""""""""""*/
-function CostPreview({ goal }) {
+function CostPreview({ goal, onEstimate }) {
  const [est, setEst] = useState(null)
  useEffect(() => {
- if (!goal || goal.length < 10) { setEst(null); return }
+ if (!goal || goal.length < 10) { setEst(null); onEstimate?.(null); return }
  const t = setTimeout(() => {
- // Heuristic estimate from goal text
- const isLarge = /70b|72b|large|xl|huge|8x/i.test(goal)
- const isMedium = /7b|13b|medium|fine-?tune/i.test(goal)
- const gpu = isLarge ?'gpu_8x_a100' : isMedium ?'gpu_1x_a100' :'gpu_1x_a10'
- const hr = isLarge ? 14.32 : isMedium ? 1.99 : 0.75
- const hrs = isLarge ? 4 : isMedium ? Math.round(2 + Math.random() * 4) : 1
- const awsHr = isLarge ? 32.77 : isMedium ? 4.10 : 1.10
- setEst({
- gpu_type: gpu,
- gpu_display: isLarge ?'8x A100 80GB' : isMedium ?'A100 80GB' :'A10 24GB',
- provider:'Lambda Labs',
- cost_per_hr: hr,
- estimated_hrs: hrs,
- total: +(hr * hrs).toFixed(2),
- saved_vs_aws: +((awsHr - hr) * hrs).toFixed(2),
- confidence: Math.round(85 + Math.random() * 10),
- })
+  // Heuristic estimate from goal text
+  const isLarge = /70b|72b|large|xl|huge|8x/i.test(goal)
+  const isMedium = /7b|13b|medium|fine-?tune/i.test(goal)
+  const gpu = isLarge ? 'gpu_8x_a100' : isMedium ? 'gpu_1x_a100' : 'gpu_1x_a10'
+  const hr = isLarge ? 14.32 : isMedium ? 1.99 : 0.75
+  const hrs = isLarge ? 4 : isMedium ? Math.round(2 + Math.random() * 4) : 1
+  const awsHr = isLarge ? 32.77 : isMedium ? 4.10 : 1.10
+  const newEst = {
+   gpu_type: gpu,
+   gpu_display: isLarge ? '8x A100 80GB' : isMedium ? 'A100 80GB' : 'A10 24GB',
+   provider: 'Lambda Labs',
+   cost_per_hr: hr,
+   estimated_hrs: hrs,
+   total: +(hr * hrs).toFixed(2),
+   saved_vs_aws: +((awsHr - hr) * hrs).toFixed(2),
+   confidence: Math.round(85 + Math.random() * 10),
+  }
+  setEst(newEst)
+  onEstimate?.(newEst)
  }, 600)
  return () => clearTimeout(t)
  }, [goal])
@@ -401,8 +403,8 @@ export default function GoalSubmit() {
   {/* AI suggestion chips */}
   <AISuggestionChips goal={goal} onChipClick={chip => { setGoal(chip); textRef.current?.focus() }} />
 
- {/* Live cost estimate */}
- <CostPreview goal={goal} />
+  {/* Live cost estimate — ref wired so handleSubmit can read cost estimate */}
+  <CostPreview goal={goal} onEstimate={(est) => { costEstRef.current = est }} />
 
  {/* Agent theater */}
  <AgentTheater phase={phase} activeAgent={activeAgent} />

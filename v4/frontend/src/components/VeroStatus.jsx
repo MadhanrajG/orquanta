@@ -1,4 +1,4 @@
-/**
+﻿/**
  * VeroStatus - compact Vero widget for Dashboard
  * Shows live safety status: Vero health badge, agents monitored, active users, trend alerts.
  * Polls /api/v1/vero/status every 15s.
@@ -8,7 +8,7 @@ import { motion } from 'framer-motion'
 import { AuthContext } from '../App.jsx'
 import { Crown, Users, TrendingUp, AlertTriangle, CheckCircle, Wifi } from 'lucide-react'
 
-const API = import.meta.env.VITE_API_URL || ''
+const API = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || ''
 
 export default function VeroStatus() {
     const { token } = useContext(AuthContext)

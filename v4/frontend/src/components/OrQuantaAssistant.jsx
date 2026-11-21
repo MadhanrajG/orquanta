@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from'react'
+﻿import { useState, useEffect, useRef, useCallback } from'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageSquare, X, Minimize2, Send, Loader, Sparkles, Brain } from'lucide-react'
 import { useAuth } from'../App.jsx'
 
-const API = import.meta.env.VITE_API_URL ||''
+const API = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || ''
 
 /* """ Smart context-aware responses """""""""""""""""""""""""""""""""""" */
 const DEMO_RESPONSES = {

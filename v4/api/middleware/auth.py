@@ -166,7 +166,14 @@ import secrets as sec_module
 from typing import Optional
 
 _DATABASE_URL = os.getenv("DATABASE_URL", "")
-_USE_PG = _DATABASE_URL.startswith(("postgresql://", "postgres://"))
+# Accept all common SQLAlchemy PostgreSQL URL prefixes (sync + async drivers)
+_USE_PG = _DATABASE_URL.startswith((
+    "postgresql://",
+    "postgres://",
+    "postgresql+asyncpg://",
+    "postgresql+psycopg2://",
+    "postgresql+psycopg://",
+))
 
 if _USE_PG:
     try:
