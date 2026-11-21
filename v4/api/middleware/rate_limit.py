@@ -57,6 +57,20 @@ class RateLimiter:
 
         window.append(now)
 
+        # Evict stale IPs periodically to prevent unbounded dict growth
+        if len(self._windows) > 500:
+            self._evict_stale()
+
+
+    def _evict_stale(self) -> None:
+        """Remove IP entries idle longer than 2x the rate-limit window to prevent memory leak."""
+        now = time.monotonic()
+        stale = [ip for ip, dq in list(self._windows.items()) if not dq or (now - dq[-1]) > self.window * 2]
+        for ip in stale:
+            del self._windows[ip]
+        if stale:
+            logger.debug(f"[RateLimit] Evicted {len(stale)} stale IP entries; tracking {len(self._windows)}")
+
     def get_stats(self) -> dict[str, int]:
         """Return rate limiter statistics."""
         return {
@@ -72,7 +86,15 @@ _limiter = RateLimiter()
 
 async def rate_limit_dependency(request: Request) -> None:
     """FastAPI dependency: apply rate limiting per client IP."""
-    client_ip = request.client.host if request.client else "unknown"
+    # Support reverse proxies (nginx, Cloudflare, AWS ALB) via X-Forwarded-For / X-Real-IP
+    forwarded_for = request.headers.get("X-Forwarded-For", "")
+    real_ip = request.headers.get("X-Real-IP", "")
+    if forwarded_for:
+        client_ip = forwarded_for.split(",")[0].strip()
+    elif real_ip:
+        client_ip = real_ip.strip()
+    else:
+        client_ip = request.client.host if request.client else "unknown"
     # Exemptions: health check endpoint
     if request.url.path in ["/health", "/", "/docs", "/openapi.json"]:
         return

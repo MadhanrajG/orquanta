@@ -20,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from sqlalchemy.orm import DeclarativeBase, relationship
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://orquanta:orquanta@localhost:5432/orquanta")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./orquanta_local.db"  # Set DATABASE_URL env var in production)
 # SQLAlchemy needs asyncpg URL scheme
 if DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)

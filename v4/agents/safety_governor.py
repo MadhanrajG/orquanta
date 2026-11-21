@@ -192,16 +192,31 @@ class SafetyGovernor:
             # Gate 3: Daily spend cap
             self._check_daily_spend(cost_estimate_usd)
 
-            # Gate 4: High-cost threshold (would normally trigger async human approval)
+            # Gate 4: High-cost threshold - requires human approval above limit
             approved = True
             approval_note = "auto-approved"
             if cost_estimate_usd > self.auto_approve_limit:
-                logger.warning(
-                    f"[{agent_name}] Action '{action}' cost ${cost_estimate_usd:.2f} "
-                    f"exceeds auto-approve limit ${self.auto_approve_limit:.2f}. "
-                    f"Logging for review. Auto-approving in demo mode."
-                )
-                approval_note = f"over-limit-logged (${cost_estimate_usd:.2f})"
+                require_approval = os.getenv("REQUIRE_HIGH_COST_APPROVAL", "true").lower() != "false"
+                if require_approval:
+                    logger.warning(
+                        f"[{agent_name}] Action '{action}' cost ${cost_estimate_usd:.2f} "
+                        f"exceeds auto-approve limit ${self.auto_approve_limit:.2f}. "
+                        f"BLOCKED: Requires human approval before execution."
+                    )
+                    # Notify via available channels
+                    self._notify_approval_required(agent_name, action, cost_estimate_usd, reasoning)
+                    raise PermissionError(
+                        f"Action '{action}' cost ${cost_estimate_usd:.2f} exceeds the "
+                        f"auto-approve limit of ${self.auto_approve_limit:.2f}. "
+                        f"An administrator must approve high-cost actions. "
+                        f"Set REQUIRE_HIGH_COST_APPROVAL=false to disable this gate (not recommended)."
+                    )
+                else:
+                    logger.warning(
+                        f"[{agent_name}] Action '{action}' cost ${cost_estimate_usd:.2f} "
+                        f"exceeds auto-approve limit — proceeding (REQUIRE_HIGH_COST_APPROVAL=false)."
+                    )
+                    approval_note = f"over-limit-bypass (${cost_estimate_usd:.2f})"
 
             # Gate 5: Persist audit entry BEFORE execution
             entry = AuditEntry(

@@ -1013,7 +1013,8 @@ async def forgot_password(req: _ForgotPasswordRequest):
         reset_token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
         frontend_url = os.getenv("FRONTEND_URL", "https://orquanta.com")
         reset_url = f"{frontend_url}/forgot-password?token={reset_token}"
-        logger.info(f"[PASSWORD RESET] Email={req.email}  URL={reset_url}")
+        logger.info(f"[PASSWORD RESET] Reset link generated for: {req.email}")
+        logger.debug(f"[PASSWORD RESET] URL={reset_url}")  # DEBUG only - never INFO in production
 
         smtp_host = os.getenv("SMTP_HOST", "")
         if smtp_host:

@@ -257,10 +257,23 @@ async def stripe_webhook(
             logger.error(f"[Webhook] Signature check error: {exc}")
             raise HTTPException(status_code=400, detail="Webhook verification failed")
     else:
-        logger.warning(
-            "[Webhook] STRIPE_WEBHOOK_SECRET not set — skipping signature check. "
-            "Set this env var in production to prevent spoofed events."
-        )
+        # In production, missing webhook secret is a hard failure.
+        # Prevents attackers from posting fake subscription-activation events.
+        is_production = os.getenv("ENVIRONMENT", "development").lower() in ("production", "prod")
+        if is_production:
+            logger.error(
+                "[Webhook] CRITICAL: STRIPE_WEBHOOK_SECRET is not set in production. "
+                "Rejecting webhook to prevent spoofed event processing."
+            )
+            raise HTTPException(
+                status_code=500,
+                detail="Webhook signature verification not configured. Contact support."
+            )
+        else:
+            logger.warning(
+                "[Webhook] STRIPE_WEBHOOK_SECRET not set — skipping signature check. "
+                "Acceptable in development; MUST be set before production deployment."
+            )
     # -------------------------------------------------------------------------
 
     try:

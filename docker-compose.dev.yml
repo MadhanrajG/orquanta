@@ -1,52 +1,118 @@
-# OrQuanta — Local development stack
-# Starts Redis (caching/queues) and ChromaDB (vector memory) without needing cloud credentials.
-#
-# Usage:
-#   docker-compose -f docker-compose.dev.yml up -d
-#   docker-compose -f docker-compose.dev.yml down
-#
-# Then start the API:
-#   REDIS_URL=redis://localhost:6379 CHROMA_HOST=localhost CHROMA_PORT=8200 \
-#   LLM_PROVIDER=mock JWT_SECRET_KEY=dev-secret-key-local \
-#   python -m uvicorn v4.api.main:app --reload --port 8000
-
 version: "3.9"
 
+# OrQuanta — Local Development Stack
+# Usage: docker compose -f docker-compose.dev.yml up
+# Requires: .env file (copy from v4/.env.example)
+# Services: API (8000), Frontend (3000), PostgreSQL (5432), Redis (6379), ChromaDB (8001)
+
 services:
+
+  # ── PostgreSQL ────────────────────────────────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: orquanta_postgres_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: orquanta
+      POSTGRES_USER: orquanta
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orquanta-dev-change-me}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orquanta -d orquanta"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ─────────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: orquanta-redis
+    container_name: orquanta_redis_dev
+    restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --save 60 1 --loglevel warning
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
-      timeout: 5s
-      retries: 3
-    restart: unless-stopped
+      timeout: 3s
+      retries: 5
 
+  # ── ChromaDB ──────────────────────────────────────────────────────────────────
   chromadb:
     image: chromadb/chroma:latest
-    container_name: orquanta-chromadb
+    container_name: orquanta_chromadb_dev
+    restart: unless-stopped
     ports:
-      - "8200:8000"
+      - "8001:8000"
     volumes:
       - chroma_data:/chroma/chroma
     environment:
-      - ANONYMIZED_TELEMETRY=false
-      - ALLOW_RESET=true
+      CHROMA_SERVER_HOST: 0.0.0.0
+      CHROMA_SERVER_HTTP_PORT: 8000
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
       interval: 15s
       timeout: 5s
-      retries: 3
+      retries: 5
+
+  # ── FastAPI Backend ───────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./v4
+      dockerfile: infra/Dockerfile.api
+    container_name: orquanta_api_dev
     restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./v4:/app
+    env_file:
+      - ./v4/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://orquanta:${POSTGRES_PASSWORD:-orquanta-dev-change-me}@postgres:5432/orquanta
+      REDIS_URL: redis://redis:6379/0
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: "8000"
+      ENVIRONMENT: development
+      WS_AUTH_REQUIRED: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_healthy
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── Vite Dev Server (Frontend) ────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./v4/frontend
+      dockerfile: Dockerfile.dev
+      target: dev
+    container_name: orquanta_frontend_dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./v4/frontend:/app
+      - /app/node_modules
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+      VITE_WS_URL: ws://localhost:8000
+    depends_on:
+      - api
 
 volumes:
+  postgres_data:
   redis_data:
-    driver: local
   chroma_data:
-    driver: local
