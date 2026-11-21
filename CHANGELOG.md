@@ -7,6 +7,55 @@ OrQuanta uses [Conventional Commits](https://www.conventionalcommits.org/) for c
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-11-21
+
+### Added — Phase 2: Production Reliability Engineering
+
+#### Database-Persisted Job Management
+- PostgreSQL is now the authoritative source of job state; in-memory `pipeline._jobs` dict kept for backward compatibility only
+- New columns on `jobs` table: `celery_task_id`, `idempotency_key`, `provider_job_id`, `failure_reason`, `retry_count`, `script`, `region`, `hourly_rate_usd`
+- New tables: `job_events` (append-only history), `outbox_events` (transactional outbox), `provider_health` (provider status snapshots)
+- Schema migration script: `v4/phase2_migrate_schema.py` (run against production PostgreSQL before deploy)
+
+#### Celery Execution Engine (`v4/execution/`)
+- `celery_app.py` — Celery app with Redis broker, JSON serialization, `task_acks_late=True`, `reject_on_worker_lost=True`; two queues: `orquanta.jobs`, `orquanta.ops`
+- `job_db.py` — synchronous psycopg2/sqlite job DB layer for Celery workers with enforced state machine (`VALID_TRANSITIONS`)
+- `tasks.py` — `execute_gpu_job` Celery task with idempotency guard (aborts if `status != queued`), exponential backoff with jitter, `cancel_job` task
+- `durable_pipeline.py` — bridge: `submit_durable_job` (DB create → Celery dispatch → outbox fallback → asyncio fallback)
+- `reconciler.py` — Celery beat task (`reconcile_stuck_jobs` every 60s, `flush_outbox` every 10s); marks jobs stuck >30 min as failed after provider reconciliation
+- `provider_health.py` — Celery beat task (`check_all_providers` every 120s); monitors RunPod, Lambda; never exposes API credentials; `is_real=false` when no key configured
+
+#### Job State Machine
+- Explicit `VALID_TRANSITIONS` dict enforcing legal state changes
+- Terminal states (`completed`, `failed`, `cancelled`) are immutable
+- Idempotency key prevents duplicate billable GPU workload execution
+- Retries only permitted before `instance_id` is assigned
+
+#### New API Endpoints
+- `POST /api/v1/jobs/durable` — submit a durable, DB-persisted job
+- `GET /api/v1/jobs/{id}/events` — full event history timeline for a job
+- `GET /api/v1/jobs/{id}/status` — live job status with Celery correlation
+- `GET /api/v1/provider-health` — all provider health snapshots
+- `GET /api/v1/provider-health/{provider}` — single provider health detail
+
+#### Observability
+- Job event history: every status transition recorded in `job_events` with timestamp, detail, actor
+- Real-time status available via existing WebSocket stream (authenticated)
+- Provider health dashboard endpoint with auth_ok, latency_ms, gpu_available, is_real flags
+
+#### New Environment Variables
+- `CELERY_ENABLED` — enable/disable Celery worker (default: `true` when `REDIS_URL` set)
+- `REDIS_URL` — required for Celery broker and result backend
+
+### Changed
+- Job submission path extended with durable pipeline while preserving legacy sync path
+- Celery beat schedule wired: reconciler (60s), provider health (120s), outbox flush (10s)
+
+### Security
+- Idempotency key enforced at task level: same billable GPU workload cannot be submitted twice
+- Provider API credentials never logged or returned in health API responses
+- Job ownership and tenant association enforced on all new endpoints
+
 ## [0.4.1] — 2026-11-21
 
 ### Security

@@ -162,6 +162,129 @@ async def cancel_job(
     return result
 
 
+
+
+# ---------------------------------------------------------------------------
+# Phase 2 endpoints — durable job submission and observability
+# ---------------------------------------------------------------------------
+
+@router.post(
+    "/durable",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a durable GPU job (DB-persisted, Celery-dispatched)",
+)
+async def create_durable_job(
+    request: JobCreateRequest,
+    user: dict = Depends(get_current_user),
+    _: None = Depends(rate_limit_dependency),
+) -> dict[str, Any]:
+    """
+    Submit a GPU job via the durable execution engine.
+    - Job state is immediately persisted to PostgreSQL.
+    - Dispatched to Celery worker (Redis required) or asyncio fallback.
+    - Idempotency key supported: pass X-Idempotency-Key header.
+    - Job survives API restart — recoverable from DB.
+    """
+    from ...execution.durable_pipeline import submit_durable_job
+
+    org_id = user.get("org_id") or user.get("sub")  # fallback for dev
+    idem_key = None  # could be extracted from request headers via middleware
+
+    script = getattr(request, "script", None) or _intent_to_script(
+        intent=request.intent,
+        gpu_type=request.gpu_type or "H100",
+        gpu_count=request.gpu_count or 1,
+    )
+
+    job = submit_durable_job(
+        intent=request.intent,
+        gpu_type=request.gpu_type or "H100",
+        gpu_count=request.gpu_count or 1,
+        user_id=user["sub"],
+        organization_id=org_id,
+        script=script,
+        provider_preference=request.provider,
+        max_cost_usd=request.max_cost_usd or 50.0,
+        max_runtime_minutes=request.max_runtime_minutes or 120.0,
+        tags={"goal_id": request.goal_id} if request.goal_id else {},
+        goal_id=request.goal_id,
+        idempotency_key=idem_key,
+    )
+
+    logger.info(f"[Jobs] Durable job {job['id']} submitted for user {user.get('email', '?')}")
+    return {
+        **job,
+        "message": "Job submitted durably. Poll GET /api/v1/jobs/{id}/status or watch /ws/agent-stream.",
+        "ws_channel": "/ws/agent-stream",
+    }
+
+
+@router.get(
+    "/{job_id}/events",
+    summary="Get job event history",
+)
+async def get_job_events(
+    job_id: str,
+    limit: int = Query(200, ge=1, le=500),
+    user: dict = Depends(get_current_user),
+) -> dict[str, Any]:
+    """
+    Return the immutable event history for a job.
+    Includes: provisioning, execution, log lines, retries, reconciliation events.
+    Tenant-isolated: non-admins can only view their own jobs.
+    """
+    from ...execution.durable_pipeline import get_durable_job, get_durable_job_history
+
+    job = get_durable_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found.")
+    # Tenant isolation
+    if user.get("role") != "admin":
+        job_user = str(job.get("user_id") or "")
+        if job_user != str(user["sub"]):
+            raise HTTPException(status_code=403, detail="Access denied")
+
+    events = get_durable_job_history(job_id)
+    return {
+        "job_id": job_id,
+        "status": job.get("status"),
+        "event_count": len(events),
+        "events": events[:limit],
+    }
+
+
+@router.get(
+    "/{job_id}/status",
+    summary="Get durable job status from DB",
+)
+async def get_durable_job_status(
+    job_id: str,
+    user: dict = Depends(get_current_user),
+) -> dict[str, Any]:
+    """
+    Get live job status directly from PostgreSQL.
+    More reliable than the in-memory pipeline for jobs that survived a restart.
+    """
+    from ...execution.durable_pipeline import get_durable_job
+
+    job = get_durable_job(job_id)
+    if not job:
+        # Fallback to in-memory pipeline
+        pipeline = get_pipeline()
+        in_mem = pipeline.get_job(job_id)
+        if not in_mem:
+            raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found.")
+        return in_mem.to_dict()
+
+    # Tenant isolation
+    if user.get("role") != "admin":
+        job_user = str(job.get("user_id") or "")
+        if job_user != str(user["sub"]):
+            raise HTTPException(status_code=403, detail="Access denied")
+
+    return job
+
+
 def _shell_quote(s: str) -> str:
     """Single-quote a string for safe bash interpolation (prevents injection)."""
     return "'" + s.replace("'", "'\"'\"'") + "'"

@@ -55,6 +55,18 @@ cp .env.example .env
 uvicorn api.main:app --host 0.0.0.0 --port 8000
 ```
 
+**Celery Workers (Phase 2 — required for durable job execution):**
+```bash
+cd v4
+# Job execution worker
+celery -A v4.execution.celery_app worker --loglevel=info -Q orquanta.jobs,orquanta.ops
+
+# Beat scheduler (reconciler, provider health, outbox flush)
+celery -A v4.execution.celery_app beat --loglevel=info
+```
+
+> **Note:** `REDIS_URL` must be set in `.env` for Celery to start. Set `CELERY_ENABLED=false` to disable Celery and fall back to asyncio execution.
+
 **Frontend:**
 ```bash
 cd v4/frontend
