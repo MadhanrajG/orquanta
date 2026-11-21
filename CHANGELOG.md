@@ -7,6 +7,101 @@ OrQuanta uses [Conventional Commits](https://www.conventionalcommits.org/) for c
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-11-21
+
+### Added — Phase 3E–3H: Inference Engine Completion, Deployment Wizard, Benchmarking, Governance & Security
+
+**Phase 3E — Unified Inference Engine Interface**
+- `v4/inference/engine_interface.py` — `InferenceEngine` ABC standardising vLLM and SGLang behind one interface
+- `VLLMEngine` and `SGLangEngine` with `build_startup_command()`, `health_check()`, `verify_model_loaded()`, `wait_for_ready()`, `cleanup_resources()`
+- `DeploymentLifecycle` state machine: PENDING → PROVISIONING → STARTING → MODEL_LOADING → HEALTH_CHECK → READY → STOPPING → STOPPED / FAILED
+- State transitions are strictly validated; terminal states (FAILED, STOPPED) are immutable
+- Deployment cannot be marked READY without passing health check and model verification
+
+**Phase 3F — 5-Step Deployment Wizard**
+- `v4/api/routers/deployment_wizard.py` — `wizard_router` with full session lifecycle
+  - `POST /api/v1/wizard/sessions` — create session
+  - `GET  /api/v1/wizard/sessions/{id}` — get session state
+  - `POST /api/v1/wizard/sessions/{id}/step/model` — select and validate model
+  - `POST /api/v1/wizard/sessions/{id}/step/engine` — select engine + GPU, run compatibility check
+  - `POST /api/v1/wizard/sessions/{id}/step/provider` — select provider + region, compute cost estimate
+  - `POST /api/v1/wizard/sessions/{id}/step/review` — governance evaluation (PolicyDecisionResult)
+  - `POST /api/v1/wizard/sessions/{id}/step/deploy` — explicit confirmed=true required; respects governance BLOCKED
+  - `DELETE /api/v1/wizard/sessions/{id}` — cancel session
+- Tenant isolation: session locked to creating `user_id`; cross-user access returns HTTP 403
+- Step ordering enforced: each step requires the prior step to be completed (HTTP 409 if violated)
+- Sessions expire after 2 hours; expired sessions return HTTP 410
+- Never auto-deploys: deploy step requires explicit `confirmed: true`
+- `v4/frontend/src/pages/DeploymentWizardPage.jsx` — 5-step React wizard with live backend integration, compat check, governance decision display, status polling
+
+**Phase 3G — Benchmarking Engine**
+- `v4/inference/benchmark_engine.py` — `BenchmarkRunner` with live HTTP and synthetic mock modes
+  - `BenchmarkConfig` dataclass: model, engine, quant, GPU, context length, num_requests, concurrency, prompt_tokens, revision, software_version, test_dataset_hash
+  - `BenchmarkResult` dataclass: TTFT, TPS, E2E latency, P50/P95/P99, throughput_rps, GPU util, GPU mem, cost/1M tokens, cost/task, failure_rate, `is_measured` (bool — true only for live endpoint), `is_mock` (bool), test_methodology, raw_latencies_ms (capped at 100)
+  - `is_measured` and `is_mock` are never mixed — synthetic data is always clearly labelled
+  - `load_test_prompts(seed, count, tokens)` — reproducible prompt generation from fixed seed
+  - `compare_benchmarks(a_id, b_id)` — structured diff with `winner_latency`, `winner_throughput`, statistical significance flag
+  - `get_leaderboard(model_id)` — TPS-ranked results
+- `v4/api/routers/benchmark.py` — `bench_router`
+  - `POST /api/v1/benchmarks` — start benchmark (validates deployment status)
+  - `GET  /api/v1/benchmarks` — list runs (filter by model_id)
+  - `GET  /api/v1/benchmarks/{id}` — get result
+  - `GET  /api/v1/benchmarks/compare?a=&b=` — compare two runs
+  - `GET  /api/v1/benchmarks/leaderboard?model_id=` — ranked leaderboard
+
+**Phase 3H — Model Governance**
+- `v4/inference/governance.py` — `GovernanceEngine` with full audit trail
+  - `verify_licence()` — records licence, commercial permissions, sharealike constraints
+  - `evaluate_deployment()` — returns `PolicyDecisionResult` (APPROVED / REQUIRES_REVIEW / BLOCKED)
+  - Unknown models always return REQUIRES_REVIEW; NC licences + commercial use = BLOCKED
+  - `approve_deployment()` — requires non-system `approver_id`; raises `ValueError` for `approver_id="system"`
+  - `revoke_approval()` — records revoker and reason in audit trail
+  - `get_audit_trail(model_id)` — full immutable event log
+- Governance gate integrated into wizard step/review and step/deploy
+
+**Objective 6 — Hardened API Key Manager**
+- `v4/inference/api_key_manager.py` — `APIKeyManager`
+  - SHA-256 hash-only storage: raw key returned once at generation, never stored
+  - `generate_key()` returns `(raw_key, InferenceAPIKey)` — raw key has `sk-orq-` prefix
+  - Keys expire after configurable TTL (default 90 days, env `INFERENCE_KEY_TTL_DAYS`)
+  - `validate_key()` checks hash, revocation, activity, expiry
+  - `has_scope(record_or_id, scope)` — accepts record or key_id string
+  - `check_and_deduct_budget(record_or_id, cost_usd)` — thread-safe via `threading.Lock`; accepts record or key_id string
+  - `check_rate(record)` — sliding-window rate limiter (60s window)
+  - `revoke_key(key_id)` — sets `is_revoked=True`, `is_active=False`
+
+**Objective 7 — AI Security Foundation**
+- `v4/inference/security_foundation.py` — `SecurityEvaluator`
+  - `check_tenant_isolation(request_tenant_id, resource_tenant_id)` — cross-tenant access logs HIGH severity event and returns False
+  - `evaluate_prompt(prompt, user_id)` — heuristic prompt injection detection; always returns `is_heuristic=True` and `limitation` disclaimer
+  - `evaluate_supply_chain(model_id, revision, expected_revision)` — revision and checksum verification; mismatch logs HIGH severity
+  - `get_security_events(severity, limit)` — structured audit event retrieval
+  - All security decisions include explicit methodology disclaimers
+
+**Developer Ecosystem — CLI Upgrade**
+- `orquanta_cli.py` — added three new subcommand groups:
+  - `orquanta models list/search/compat` — list registry, search HF, check GPU compatibility
+  - `orquanta deploy start/list/status/stop` — deploy and manage model deployments
+  - `orquanta benchmark run/results` — start benchmarks and list results
+  - All CLI commands display `is_mock` indicator (🧪) to prevent mock/real confusion
+
+**Router Registration**
+- `v4/api/main.py` — Phase 3E-H routers registered via try/except block:
+  - `/api/v1/wizard/sessions` — deployment wizard
+  - `/api/v1/benchmarks` — benchmark API
+- `v4/frontend/src/App.jsx` — `/deploy` route added for `DeploymentWizardPage`
+
+### Changed
+- `v4/inference/api_key_manager.py` — `has_scope()` and `check_and_deduct_budget()` now accept either a record object or a key_id string for ergonomic API use
+
+### Environment Variables
+- `INFERENCE_KEY_TTL_DAYS` — API key lifetime in days (default: 90)
+
+### Tests
+- `v4/phase3eh_tests.py` — 50 new tests covering Phase 3E–3H: 50/50 pass
+- Full regression: **87/87 tests pass** (37 Phase 3A–3D + 50 Phase 3E–3H)
+- Frontend build: **2800 modules transformed, 0 errors**
+
 ## [0.6.0] — 2026-11-21
 
 ### Added — Phase 3: Open-Source Model Platform & Inference Infrastructure

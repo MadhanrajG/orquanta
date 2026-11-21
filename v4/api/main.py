@@ -1350,6 +1350,17 @@ try:
 except Exception as _e:
     import logging as _log; _log.getLogger("orquanta.main").warning(f"[Phase3] Inference routers not loaded: {_e}")
 
+
+# ── Phase 3E-H: Deployment Wizard + Benchmarking ────────────────────────────
+try:
+    from .routers.deployment_wizard import wizard_router as _wiz_router
+    from .routers.benchmark import bench_router as _bench_router
+    app.include_router(_wiz_router)   # /api/v1/wizard/sessions
+    app.include_router(_bench_router) # /api/v1/benchmarks
+except Exception as _e:
+    import logging as _l
+    _l.getLogger("orquanta.main").warning(f"[Phase3EH] Routers not loaded: {_e}")
+
 app.include_router(ws_router)
 
 # Demo router - always included; active only when DEMO_MODE=true

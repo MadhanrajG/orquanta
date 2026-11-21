@@ -25,6 +25,7 @@ import HelpPage from './pages/HelpPage.jsx'
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
 import SelfImprovementPage from './pages/SelfImprovementPage.jsx'
 import ModelHubPage from './pages/ModelHubPage.jsx'
+import DeploymentWizardPage from './pages/DeploymentWizardPage.jsx'
 import OrQuantaAssistant from './components/OrQuantaAssistant.jsx'
 import { CommandPalette, ShortcutsModal, useCommandPalette } from './components/CommandPalette.jsx'
 import OnboardingWizard from './components/OnboardingWizard.jsx'
@@ -659,6 +660,7 @@ function AppLayout() {
                         <Route path="/uix" element={<UIXAgentPage />} />
                         <Route path="/self-improvement" element={<SelfImprovementPage />} />
                         <Route path="/models" element={<ModelHubPage />} />
+                        <Route path="/deploy" element={<DeploymentWizardPage />} />
                         <Route path="/help" element={<HelpPage />} />
                         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                         <Route path="*" element={

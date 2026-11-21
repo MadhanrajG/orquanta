@@ -406,5 +406,271 @@ def _watch_job(job_id: str):
         console.print("\n[dim]Stopped watching.[/]")
 
 
+# ── Models subcommands ────────────────────────────────────────────────────────
+models_app = typer.Typer(help="Model registry and Hub")
+app.add_typer(models_app, name="models")
+
+
+@models_app.command("list")
+def models_list(
+    family: Optional[str] = typer.Option(None, help="Filter by model family"),
+    limit: int = typer.Option(20, help="Max results"),
+):
+    """List available models in the OrQuanta Model Hub."""
+    with _client() as c:
+        try:
+            params = {}
+            if family:
+                params["family"] = family
+            r = c.get("/api/v1/models", params=params, headers=_headers())
+            r.raise_for_status()
+            data = r.json()
+        except Exception as exc:
+            console.print(f"[red]❌ {exc}[/]")
+            raise typer.Exit(1)
+
+    models = data.get("models", data) if isinstance(data, dict) else data
+    table = Table(title="OrQuanta Model Hub", show_lines=True)
+    table.add_column("ID", style="cyan", no_wrap=True)
+    table.add_column("Family", style="magenta")
+    table.add_column("Parameters")
+    table.add_column("Context")
+    table.add_column("Licence")
+    table.add_column("Status")
+    for m in models[:limit]:
+        table.add_row(
+            m.get("model_id", ""),
+            m.get("family", ""),
+            str(m.get("parameters_b", "")),
+            str(m.get("context_length", "")),
+            m.get("licence", ""),
+            m.get("deployment_status", ""),
+        )
+    console.print(table)
+
+
+@models_app.command("search")
+def models_search(query: str = typer.Argument(..., help="Search query")):
+    """Search Hugging Face model hub."""
+    with _client() as c:
+        try:
+            r = c.get("/api/v1/models/search/hf", params={"q": query, "limit": 10}, headers=_headers())
+            r.raise_for_status()
+            results = r.json()
+        except Exception as exc:
+            console.print(f"[red]❌ {exc}[/]")
+            raise typer.Exit(1)
+
+    models = results.get("models", results) if isinstance(results, dict) else results
+    table = Table(title=f"HF Search: {query}", show_lines=True)
+    table.add_column("ID", style="cyan")
+    table.add_column("Downloads", justify="right")
+    table.add_column("Licence")
+    for m in models:
+        table.add_row(
+            m.get("modelId", m.get("model_id", "")),
+            str(m.get("downloads", "")),
+            m.get("licence", ""),
+        )
+    console.print(table)
+
+
+@models_app.command("compat")
+def models_compat(
+    model_id: str = typer.Argument(..., help="Model ID"),
+    gpu: str = typer.Option(..., "--gpu", help="GPU model (e.g. A100_80GB)"),
+    quant: str = typer.Option("none", "--quant", help="Quantisation (none/int8/int4/fp8)"),
+):
+    """Check GPU compatibility for a model."""
+    with _client() as c:
+        try:
+            r = c.post("/api/v1/models/check-compatibility",
+                       json={"model_id": model_id, "gpu_model": gpu, "quantisation": quant},
+                       headers=_headers())
+            r.raise_for_status()
+            result = r.json()
+        except Exception as exc:
+            console.print(f"[red]❌ {exc}[/]")
+            raise typer.Exit(1)
+
+    compatible = result.get("compatible", False)
+    icon = "✅" if compatible else "❌"
+    console.print(Panel(
+        f"{icon} [bold]Compatible: {compatible}[/]\n"
+        f"VRAM Required: {result.get('vram_required_gb', 'N/A')} GB\n"
+        f"VRAM Available: {result.get('vram_available_gb', 'N/A')} GB\n"
+        f"Notes: {'; '.join(result.get('notes', []))}",
+        title=f"Compatibility: {model_id} on {gpu}",
+    ))
+
+
+# ── Deploy subcommands ────────────────────────────────────────────────────────
+deploy_app = typer.Typer(help="Model deployments")
+app.add_typer(deploy_app, name="deploy")
+
+
+@deploy_app.command("start")
+def deploy_start(
+    model_id: str = typer.Option(..., "--model", help="Model ID to deploy"),
+    engine: str = typer.Option("vllm", "--engine", help="Inference engine"),
+    gpu: str = typer.Option("A100_80GB", "--gpu", help="GPU model"),
+    provider: str = typer.Option("runpod", "--provider", help="GPU provider"),
+    gpu_count: int = typer.Option(1, "--gpus", help="Number of GPUs"),
+):
+    """Start a model deployment."""
+    with _client() as c:
+        try:
+            r = c.post("/api/v1/deployments",
+                       json={"model_id": model_id, "engine": engine,
+                             "gpu_model": gpu, "gpu_count": gpu_count, "provider": provider},
+                       headers=_headers())
+            r.raise_for_status()
+            dep = r.json()
+        except Exception as exc:
+            console.print(f"[red]❌ {exc}[/]")
+            raise typer.Exit(1)
+
+    is_mock = dep.get("is_mock", True)
+    icon = "🧪 [dim](mock)[/]" if is_mock else "🚀"
+    console.print(Panel(
+        f"{icon} Deployment ID: [bold cyan]{dep.get('deployment_id', dep.get('id', ''))}[/]\n"
+        f"Status: {dep.get('status', 'pending')}\n"
+        f"Model: {model_id}  Engine: {engine}",
+        title="Deployment Started",
+    ))
+
+
+@deploy_app.command("list")
+def deploy_list():
+    """List active deployments."""
+    with _client() as c:
+        try:
+            r = c.get("/api/v1/deployments", headers=_headers())
+            r.raise_for_status()
+            data = r.json()
+        except Exception as exc:
+            console.print(f"[red]❌ {exc}[/]")
+            raise typer.Exit(1)
+
+    deps = data.get("deployments", data) if isinstance(data, dict) else data
+    table = Table(title="Deployments", show_lines=True)
+    table.add_column("ID", style="cyan", no_wrap=True)
+    table.add_column("Model")
+    table.add_column("Engine")
+    table.add_column("Status")
+    table.add_column("Mock", justify="center")
+    for d in deps:
+        table.add_row(
+            d.get("deployment_id", d.get("id", "")),
+            d.get("model_id", ""),
+            d.get("engine", ""),
+            d.get("status", ""),
+            "🧪" if d.get("is_mock", True) else "✅",
+        )
+    console.print(table)
+
+
+@deploy_app.command("status")
+def deploy_status(deployment_id: str = typer.Argument(...)):
+    """Get deployment status."""
+    with _client() as c:
+        try:
+            r = c.get(f"/api/v1/deployments/{deployment_id}", headers=_headers())
+            r.raise_for_status()
+            d = r.json()
+        except Exception as exc:
+            console.print(f"[red]❌ {exc}[/]")
+            raise typer.Exit(1)
+    console.print_json(json.dumps(d, indent=2))
+
+
+@deploy_app.command("stop")
+def deploy_stop(deployment_id: str = typer.Argument(...)):
+    """Stop a deployment."""
+    with _client() as c:
+        try:
+            r = c.delete(f"/api/v1/deployments/{deployment_id}", headers=_headers())
+            r.raise_for_status()
+        except Exception as exc:
+            console.print(f"[red]❌ {exc}[/]")
+            raise typer.Exit(1)
+    console.print(f"[green]✅ Deployment {deployment_id} stopped.[/]")
+
+
+# ── Benchmark subcommands ─────────────────────────────────────────────────────
+bench_app = typer.Typer(help="Benchmarking")
+app.add_typer(bench_app, name="benchmark")
+
+
+@bench_app.command("run")
+def bench_run(
+    model_id: str = typer.Option(..., "--model", help="Model ID"),
+    deployment_id: str = typer.Option(..., "--deployment", help="Deployment ID"),
+    requests: int = typer.Option(50, "--requests", help="Number of requests"),
+    concurrency: int = typer.Option(4, "--concurrency"),
+    context: int = typer.Option(512, "--context", help="Context length"),
+):
+    """Run an inference benchmark."""
+    with _client() as c:
+        try:
+            r = c.post("/api/v1/benchmarks",
+                       json={"model_id": model_id, "deployment_id": deployment_id,
+                             "num_requests": requests, "concurrency": concurrency,
+                             "context_length": context},
+                       headers=_headers())
+            r.raise_for_status()
+            result = r.json()
+        except Exception as exc:
+            console.print(f"[red]❌ {exc}[/]")
+            raise typer.Exit(1)
+
+    is_mock = result.get("is_mock", True)
+    console.print(Panel(
+        f"{'🧪 MOCK — not real GPU execution' if is_mock else '📊 MEASURED'}\n\n"
+        f"Benchmark ID : [cyan]{result.get('benchmark_id', '')}[/]\n"
+        f"TPS          : {result.get('tps', 0):.1f} tokens/s\n"
+        f"P50 Latency  : {result.get('p50_latency_ms', 0):.1f} ms\n"
+        f"P95 Latency  : {result.get('p95_latency_ms', 0):.1f} ms\n"
+        f"Failure Rate : {result.get('failure_rate', 0)*100:.1f}%\n"
+        f"Cost/task    : ${result.get('cost_per_task_usd', 0):.6f}",
+        title=f"Benchmark: {model_id}",
+    ))
+
+
+@bench_app.command("results")
+def bench_results(model_id: Optional[str] = typer.Option(None, "--model")):
+    """List benchmark results."""
+    with _client() as c:
+        params = {}
+        if model_id:
+            params["model_id"] = model_id
+        try:
+            r = c.get("/api/v1/benchmarks", params=params, headers=_headers())
+            r.raise_for_status()
+            results = r.json()
+        except Exception as exc:
+            console.print(f"[red]❌ {exc}[/]")
+            raise typer.Exit(1)
+
+    table = Table(title="Benchmark Results", show_lines=True)
+    table.add_column("ID", style="cyan", no_wrap=True)
+    table.add_column("Model")
+    table.add_column("TPS", justify="right")
+    table.add_column("P95 ms", justify="right")
+    table.add_column("Fail%", justify="right")
+    table.add_column("Mock", justify="center")
+    for res in results:
+        cfg = res.get("config", {})
+        table.add_row(
+            res.get("benchmark_id", "")[:16] + "…",
+            cfg.get("model_id", ""),
+            f"{res.get('tps', 0):.1f}",
+            f"{res.get('p95_latency_ms', 0):.0f}",
+            f"{res.get('failure_rate', 0)*100:.1f}%",
+            "🧪" if res.get("is_mock", True) else "✅",
+        )
+    console.print(table)
+
+
 if __name__ == "__main__":
     app()
