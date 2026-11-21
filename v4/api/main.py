@@ -1361,6 +1361,15 @@ except Exception as _e:
     import logging as _l
     _l.getLogger("orquanta.main").warning(f"[Phase3EH] Routers not loaded: {_e}")
 
+
+# ── Phase 4: AI Trust Centre ─────────────────────────────────────────────────
+try:
+    from .routers.trust_centre import trust_router as _trust_router
+    app.include_router(_trust_router)  # /api/v1/trust/*
+except Exception as _e:
+    import logging as _l
+    _l.getLogger("orquanta.main").warning(f"[Phase4] Trust router not loaded: {_e}")
+
 app.include_router(ws_router)
 
 # Demo router - always included; active only when DEMO_MODE=true

@@ -7,6 +7,95 @@ OrQuanta uses [Conventional Commits](https://www.conventionalcommits.org/) for c
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-11-21
+
+### Added — Phase 4: AI Security, Governance and Trust Platform
+
+**Phase 4A — Central Policy Decision and Enforcement Engine**
+- `v4/security/policy_engine.py` — `PolicyEngine` (PDP), `Enforcer` (PEP), `PolicyStore`, `AuditBus`
+- `Decision` enum: ALLOW / DENY / REQUIRE_APPROVAL / RESTRICTED / REVIEW_REQUIRED
+- 8 default policies seeded at startup (model infer, model deploy, GPU provision, budget enforcement, etc.)
+- Cross-tenant resource access is always DENY — evaluated before any other policy
+- `context_hash` on every `PolicyResult` for immutable audit evidence
+- `AuditBus` is append-only; no delete/clear/remove capability exposed
+- `PolicyDeniedError` / `ApprovalRequiredError` for clean exception propagation
+
+**Phase 4B — AI Identity and Access Management**
+- `v4/security/iam.py` — `IAMStore`, `Identity`, `DelegatedCredential`
+- 7 `IdentityType` values: human, agent, model, api_key, service_account, mcp_server, service
+- RBAC with `Permission` enum (25 permissions) and role→permission mapping for 6 roles
+- Delegation uses strict permission intersection — agent can never exceed delegating user's permissions
+- Cross-tenant delegation raises `PermissionError` (tenant isolation enforced)
+- `revoke_identity()` immediately sets `is_active=False` on the identity record
+- Short-lived credentials with configurable `ttl_hours`; negative TTL produces an immediately-expired credential
+
+**Phase 4C — Agent Runtime Security**
+- `v4/security/agent_runtime.py` — `AgentRuntimeSecurity`, `AgentSession`, `InjectionAssessment`, `OutputValidationResult`
+- Tool allowlist per session — calls to tools not in the allowlist are blocked and recorded
+- Per-session spend limit (`max_spend_usd`); enforced on `authorize_tool_call` after `record_tool_execution`
+- `InputSource` enum: USER_DIRECT, MODEL_OUTPUT, TOOL_RESPONSE, RAG_DOCUMENT, EXTERNAL_API, SYSTEM_PROMPT
+- Multi-signal injection assessment (not keyword-only); `is_heuristic=True` always; `limitation` disclaimer always present
+- Output validation with pattern-based sensitive-data redaction (`sk-`, API keys, tokens); `limitation` disclaimer present
+- All `ToolCallRecord` events stored for audit; execution blocked on terminated sessions
+
+**Phase 4D — Model Security and Supply Chain**
+- `v4/security/model_supply_chain.py` — `ModelSupplyChainSecurity`, `ModelSecurityAssessment`, `ModelRiskRecord`
+- `assess_model()` evaluates: format risk (pickle=UNSAFE, safetensors=SAFE), revision hash verification, licence risk, custom code detection, publisher provenance
+- Revision mismatch → CRITICAL finding with MITRE ATLAS references (AML.T0010, AML.T0049)
+- `custom_code_detected=True` for any config containing `trust_remote_code`, `auto_map`, `custom_pipelines`
+- `is_cleared_for_deployment=False` by default; `clear_for_deployment()` raises `PermissionError` for system actors
+- CRITICAL overall_risk models cannot be cleared by any single reviewer — raises `PermissionError`
+- Assessment carries a `limitation` disclaimer: not a security certification
+
+**Phase 4E — MCP and Tool Security**
+- `v4/security/mcp_tool_security.py` — `MCPToolSecurityRegistry`, `MCPServer`, `RegisteredTool`, `ToolExecutionRecord`
+- Server and tool registration with explicit human `registered_by` / `approver_id` (system actors raise `PermissionError`)
+- Tools remain `PENDING_REVIEW` until explicitly approved; unapproved tools block all execution
+- Scope-based authorization: agent must hold all `required_scopes` for the tool
+- Tenant isolation enforced on every `authorize_execution()` call
+- HIGH_IMPACT_SCOPE tools set `approval_required=True` on execution records
+- Cross-tenant tool access always blocked; `blocked_reason` recorded on every rejected execution
+
+**Phase 4F — Governance and Human Approvals**
+- `v4/security/governance_approvals.py` — `GovernanceApprovalEngine`, `ApprovalRequest`, `GovDecisionResult`, `GovPolicy`
+- 8 default governance policies: high-risk model deploy, low-risk model deploy, agent execute, external API access, sensitive data access, high GPU spend (≥\$100), normal GPU spend, high-impact tool execute
+- `evaluate()` auto-creates an `ApprovalRequest` when decision is REQUIRE_APPROVAL
+- `SYSTEM_ACTOR_IDS` check: `{"system", "auto", "automated", "orquanta", ""}` are rejected on all approve/reject calls
+- Approval creates an immutable audit log entry via `_audit_log`
+- `get_audit_log()` returns all governance decisions and approval actions
+
+**Phase 4G — AI Risk Register and Compliance Evidence**
+- `v4/security/risk_register.py` — `AIRiskRegister`, `RiskEntry`, `EvidenceItem`, `CONTROL_CATALOGUE`
+- 4 seed risks pre-loaded on init: prompt injection, supply chain poisoning, data exfiltration, bias and fairness
+- `CONTROL_CATALOGUE` covers: NIST AI RMF (GOVERN/MAP/MEASURE/MANAGE), OWASP LLM Top 10 (LLM01–LLM10), MITRE ATLAS (AML.T*), ISO 42001, EU AI Act
+- `add_evidence()` validates `control_id` against catalogue; unknown controls return `None` (never auto-approved)
+- Every `EvidenceItem` carries a `disclaimer` field: not a compliance certification
+- `generate_risk_report()` includes explicit non-certification disclaimer in all outputs
+- `export_evidence_json()` for structured compliance export per tenant
+
+**Phase 4H — AI Trust Centre Frontend**
+- `v4/frontend/src/pages/TrustCentrePage.jsx` — 8-tab enterprise security dashboard
+- Tabs: Overview, Policy Engine, Identity & Access, Model Security, MCP & Tools, Governance, Risk Register, Audit Log
+- No decorative security indicators; no fake "protected" status badges
+- Route: `/trust`
+- API router: `v4/api/routers/trust_centre.py` — `trust_router` at `/api/v1/trust/*` with 40+ endpoints
+- Registered in `v4/api/main.py` via try/except injection block (graceful degradation on import error)
+
+### Tests
+- `v4/phase4_tests.py` — 66 new synchronous tests; all pass
+- **Total test count: 153 / 153 pass** (87 existing Phase 3 + 66 Phase 4)
+- Coverage: PolicyEngine (10), IAM (7), AgentRuntime (10), ModelSupplyChain (10), MCPToolSecurity (8), GovernanceApprovals (8), RiskRegister (10), Apache headers (3)
+
+### Security Guarantees
+- Cross-tenant access: DENY always, checked first before any policy
+- System actor IDs rejected on all human-approval-required operations: `system`, `auto`, `automated`, `orquanta`, `""`
+- Injection detection: always multi-signal, `is_heuristic=True` always, limitation disclaimer always present
+- Supply chain clearance: CRITICAL risk → `PermissionError`; system actor → `PermissionError`
+- Delegation: strict subset intersection — agent can never hold permissions the delegating user does not have
+
+### Environment Variables
+- No new environment variables required for Phase 4
+
 ## [0.7.0] — 2026-11-21
 
 ### Added — Phase 3E–3H: Inference Engine Completion, Deployment Wizard, Benchmarking, Governance & Security
