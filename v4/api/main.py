@@ -407,6 +407,16 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 # Register FIRST -> runs INNERMOST (after security headers are already set)
 app.add_middleware(PrometheusMiddleware)
 
+# ── Phase 5A: OpenTelemetry unified telemetry ─────────────────────────────────
+try:
+    from observability.telemetry import setup_telemetry as _setup_otel, install_trace_log_filter
+    _setup_otel(app=app)
+    install_trace_log_filter("orquanta")
+except Exception as _e:
+    import logging as _l
+    _l.getLogger("orquanta.main").warning(f"[Phase5A] OTel setup failed (non-fatal): {_e}")
+
+
 # Register LAST -> runs OUTERMOST (executes before anything else, wraps all responses)
 app.add_middleware(SecurityHeadersMiddleware)
 
@@ -1369,6 +1379,15 @@ try:
 except Exception as _e:
     import logging as _l
     _l.getLogger("orquanta.main").warning(f"[Phase4] Trust router not loaded: {_e}")
+
+
+# ── Phase 5: AI Observability and Intelligence Centre ─────────────────────────
+try:
+    from .routers.observability import obs_router as _obs_router
+    app.include_router(_obs_router)  # /api/v1/observability/*
+except Exception as _e:
+    import logging as _l
+    _l.getLogger("orquanta.main").warning(f"[Phase5] Observability router not loaded: {_e}")
 
 app.include_router(ws_router)
 

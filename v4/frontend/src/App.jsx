@@ -27,6 +27,7 @@ import SelfImprovementPage from './pages/SelfImprovementPage.jsx'
 import ModelHubPage from './pages/ModelHubPage.jsx'
 import DeploymentWizardPage from './pages/DeploymentWizardPage.jsx'
 import TrustCentrePage from './pages/TrustCentrePage.jsx'
+import ObservabilityCentrePage from './pages/ObservabilityCentrePage.jsx'
 import OrQuantaAssistant from './components/OrQuantaAssistant.jsx'
 import { CommandPalette, ShortcutsModal, useCommandPalette } from './components/CommandPalette.jsx'
 import OnboardingWizard from './components/OnboardingWizard.jsx'
@@ -663,6 +664,7 @@ function AppLayout() {
                         <Route path="/models" element={<ModelHubPage />} />
                         <Route path="/deploy" element={<DeploymentWizardPage />} />
                         <Route path="/trust" element={<TrustCentrePage />} />
+                        <Route path="/observe" element={<ObservabilityCentrePage />} />
                         <Route path="/help" element={<HelpPage />} />
                         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                         <Route path="*" element={

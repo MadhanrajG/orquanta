@@ -7,6 +7,92 @@ OrQuanta uses [Conventional Commits](https://www.conventionalcommits.org/) for c
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-11-21
+
+### Added — Phase 5: AI Observability, Security Intelligence and Cost Intelligence
+
+**Phase 5A — OpenTelemetry Unified Telemetry**
+- `v4/observability/telemetry.py` — `OrQuantaTelemetry` singleton wrapping OpenTelemetry SDK
+- Distributed tracing with `start_span()` / `record_exception()` helpers
+- Structured logging with trace/span ID injection for log correlation
+- Tenant-aware span attributes: `tenant.id`, `actor.id`, `operation.name`
+- Celery task span helpers: `celery_task_span()` context manager
+- Sensitive data redaction on span attributes: API keys (`sk-*`), bearer tokens, passwords
+- No-op fallbacks when `OTEL_ENABLED=false` — telemetry failures never affect security enforcement
+- New env vars: `OTEL_ENABLED`, `OTEL_SERVICE_NAME`, `OTEL_EXPORTER_OTLP_ENDPOINT`
+- Test: `test_telemetry_failure_no_impact_on_security_policy` verifies policy enforcement is unaffected by telemetry errors
+
+**Phase 5B — LLM Observability**
+- `v4/observability/llm_observability.py` — `LLMObservabilityService` singleton
+- `LLMCallRecord`: model, provider, prompt/completion tokens, latency, TTFT, tokens/sec, cost estimate, tool calls, success/failure
+- `AgentExecutionRecord`: agent ID, workflow ID, steps, tool calls, total tokens, total cost
+- Optional Langfuse integration via `langfuse` package (gracefully no-ops if not installed)
+- Privacy controls: prompt/completion content NOT captured by default; enabled only with `LLM_CAPTURE_CONTENT=true`
+- `is_estimated=True` on all cost estimates — never presented as actual billing
+- New env vars: `LLM_CAPTURE_CONTENT` (default `false`), `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_HOST`
+
+**Phase 5C — Security Intelligence**
+- `v4/observability/security_intelligence.py` — `SecurityIntelligenceService` singleton
+- Central security event pipeline with 13 `SecurityEventCategory` values
+- 5 `SeverityLevel` values: INFO → LOW → MEDIUM → HIGH → CRITICAL
+- `SecurityEvent` dataclass with `is_heuristic=True` always; `heuristic_limitation` disclaimer always present
+- Heuristic detectors: `detect_excessive_api_consumption()`, `detect_cross_tenant_probe()`, `detect_credential_abuse()`, `detect_anomalous_spending()`
+- Investigation workflow: `open_investigation()`, `add_investigation_note()`, `resolve_investigation()`
+- System actors (`system`, `auto`, `automated`, `orquanta`, `""`) blocked from investigation/resolution
+- Integration with Trust Centre and risk register via event callbacks
+
+**Phase 5D — Agent Intelligence**
+- `v4/observability/intelligence.py` — `AgentIntelligenceService` with agent execution timeline tracking
+- `AgentExecutionTimeline`: step-by-step traces, tool call sequences, prompt token timeline, latency breakdown
+- `WorkflowTrace`: multi-agent workflow DAG with step dependencies, parallel/sequential classification
+- Agent performance metrics: success rate, avg latency, tool call frequency, cost per execution
+
+**Phase 5E — GPU Performance Intelligence**
+- `v4/observability/intelligence.py` — `GPUPerformanceService`
+- Real-time GPU utilisation, VRAM consumption, thermal throttling, power efficiency metrics
+- All metrics carry `is_real_measurement`, `is_estimated`, `is_demo_data` boolean labels — never conflated
+- Throughput tracking: tokens/sec/GPU, batch efficiency, model load time
+- Multi-node GPU fleet aggregation
+
+**Phase 5F — Cost Intelligence Engine**
+- `v4/observability/intelligence.py` — `CostIntelligenceEngine`
+- Real-time cost accumulation per tenant, model, provider, region
+- Budget forecasting: linear trend projection with `is_estimated=True` label
+- Anomaly detection: z-score based spike detection with `is_heuristic=True` label and disclaimer
+- Cost recommendations engine: idle GPU detection, underutilised model cleanup, provider switching suggestions
+- Spending breakdown: by model family, by inference type, by time window
+
+**Phase 5G — Governance Reporting**
+- `v4/observability/intelligence.py` — `GovernanceReportingService`
+- Automated governance report generation: policy compliance summary, approval audit trail, identity lifecycle events
+- Compliance evidence collection (non-certifying): `compliance_disclaimer` on every report
+- Risk posture summary: open risks, unresolved security events, pending approvals
+- Export formats: JSON (structured), human-readable summary
+
+**Phase 5H — Unified Operations Centre**
+- `v4/api/routers/observability.py` — 30+ REST endpoints at `/api/v1/observability/*`
+  - `/telemetry/status`, `/telemetry/spans`
+  - `/llm/calls`, `/llm/stats`, `/llm/agents`
+  - `/security/events`, `/security/stats`, `/security/investigations`
+  - `/agents/timelines`, `/agents/stats`
+  - `/gpu/metrics`, `/gpu/fleet`
+  - `/cost/summary`, `/cost/forecast`, `/cost/recommendations`, `/cost/anomalies`
+  - `/governance/report`, `/governance/compliance`
+  - `/overview` — unified dashboard data
+- `v4/frontend/src/pages/ObservabilityCentrePage.jsx` — 8-tab UI: Overview · Inference · Agents · Security · GPU · Cost · Governance · Telemetry
+- Route `/observe` added to `App.jsx`; `obs_router` and `setup_telemetry()` wired in `api/main.py`
+- All estimated/demo data surfaced with explicit UI labels
+
+### Infrastructure
+- Deleted temp orchestration scripts: `wire_phase5.py`, `wire_phase4_routers.py`
+- `v4/observability/__init__.py` — package marker
+
+### Tests
+- `v4/phase5_tests.py` — 76 new tests covering all 5A–5H sub-phases
+- Full regression suite: **229/229 passed** (Phase 3 + 3E–3H + Phase 4 + Phase 5)
+
+---
+
 ## [0.8.0] — 2026-11-21
 
 ### Added — Phase 4: AI Security, Governance and Trust Platform
