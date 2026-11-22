@@ -5,7 +5,7 @@ import { useAppStore } from './store'
 import {
     LayoutDashboard, Target, Server, DollarSign,
     ScrollText, Cpu, Zap, LogOut, Menu, X, AlertTriangle, Leaf, Gift, BarChart2,
-    Settings, HelpCircle, Loader2, CreditCard, Globe, Brain, Wand2, Crown, Clock, TrendingUp, Layers
+    Settings, HelpCircle, Loader2, CreditCard, Globe, Brain, Wand2, Crown, Clock, TrendingUp, Layers, Store
 } from 'lucide-react'
 import Dashboard from './pages/Dashboard.jsx'
 import GoalSubmit from './pages/GoalSubmit.jsx'
@@ -28,6 +28,7 @@ import ModelHubPage from './pages/ModelHubPage.jsx'
 import DeploymentWizardPage from './pages/DeploymentWizardPage.jsx'
 import TrustCentrePage from './pages/TrustCentrePage.jsx'
 import ObservabilityCentrePage from './pages/ObservabilityCentrePage.jsx'
+import MarketplacePage from './pages/MarketplacePage.jsx'
 import OrQuantaAssistant from './components/OrQuantaAssistant.jsx'
 import { CommandPalette, ShortcutsModal, useCommandPalette } from './components/CommandPalette.jsx'
 import OnboardingWizard from './components/OnboardingWizard.jsx'
@@ -425,6 +426,12 @@ const NAV_GROUPS = [
     ]
   },
   {
+    label: 'Ecosystem',
+    items: [
+      { to: '/marketplace', icon: Store, label: 'Marketplace', badge: { text: 'NEW', cls: 'nav-badge-green' } },
+    ]
+  },
+  {
     label: 'Compliance',
     items: [
       { to: '/audit', icon: ScrollText, label: 'Audit Log' },
@@ -576,6 +583,7 @@ const ROUTE_TITLES = {
     '/nemoclaw': 'NemoClaw',
     '/uix': 'UIXAgent',
     '/help': 'Help Center',
+    '/marketplace': 'Marketplace',
 }
 
 function AppLayout() {
@@ -665,6 +673,7 @@ function AppLayout() {
                         <Route path="/deploy" element={<DeploymentWizardPage />} />
                         <Route path="/trust" element={<TrustCentrePage />} />
                         <Route path="/observe" element={<ObservabilityCentrePage />} />
+                        <Route path="/marketplace" element={<MarketplacePage />} />
                         <Route path="/help" element={<HelpPage />} />
                         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                         <Route path="*" element={

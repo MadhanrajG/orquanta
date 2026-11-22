@@ -7,6 +7,65 @@ OrQuanta uses [Conventional Commits](https://www.conventionalcommits.org/) for c
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-11-23
+
+### Added — Phase 6: Open AI Ecosystem and Trusted Marketplace
+
+**Phase 6A — Unified Asset Registry and Signed Manifests**
+- `v4/marketplace/registry.py` — `MarketplaceRegistry` singleton; `MarketplaceAsset`, `PublisherProfile`, `InstallationRecord` dataclasses
+- 4 MVP asset types: `MODEL`, `AGENT`, `MCP_TOOL`, `WORKFLOW`; `DATASET` / `APPLICATION` reserved for future phases
+- 6 trust statuses: `PENDING_REVIEW`, `METADATA_VERIFIED`, `SECURITY_REVIEWED`, `RESTRICTED`, `REJECTED`, `REVOKED`
+- 4 publication statuses: `DRAFT`, `PENDING_REVIEW`, `PUBLISHED`, `DEPRECATED` / `WITHDRAWN`
+- System actors (`system`, `auto`, `automated`, `orquanta`, `""`) blocked from all publish / approve / install operations
+- Revoked assets retained in registry with status `REVOKED` — audit trail preserved
+- Trust status is **version-specific** — a new asset version resets trust to `PENDING_REVIEW`
+- `v4/marketplace/manifest.py` — `AssetManifest`, `build_manifest()`, `verify_manifest()`, `ManifestVerificationResult`
+- Cryptographic integrity verification via SHA-256 hashes in signed manifest; silent version changes detected and blocked
+
+**Phase 6B — Model Marketplace**
+- `v4/marketplace/model_marketplace.py` — `ModelMarketplace`, `ModelMarketplaceEntry`
+- Integrates with Phase 3 model registry and Hugging Face metadata; discovery, search, filters, benchmark results, licence info
+- Approved models link directly to Phase 3 Deployment Wizard; no duplicate model registry created
+
+**Phase 6C — Agent Marketplace**
+- `v4/marketplace/agent_marketplace.py` — `AgentMarketplace`, `AgentMarketplaceEntry`
+- Publisher attribution, versioning, model/tool dependency declarations, explicit permission manifests
+- Agents cannot inherit permissions beyond declared scope; permission claims reviewed before publication
+
+**Phase 6D — MCP Marketplace**
+- `v4/marketplace/mcp_marketplace.py` — `MCPMarketplace`, `MCPToolEntry`
+- Scope-based permission declarations; MCP tools are **never auto-executed** on install
+- Integrates with Phase 4E MCPToolSecurity for runtime enforcement
+
+**Phase 6E — Workflow Marketplace**
+- `v4/marketplace/workflow_marketplace.py` — `WorkflowMarketplace`, `WorkflowMarketplaceEntry`
+- Celery-integrated workflow execution; governance approval required before first execution
+- Workflow step audit trail; each execution creates a governance record
+
+**Phase 6F — Marketplace Trust Engine**
+- `v4/marketplace/trust_engine.py` — `MarketplaceTrustEngine`; 6-step trust pipeline; `FindingSeverity`, `TrustFinding`
+- `is_safe_claim=False` on **all** trust assessments — OrQuanta never guarantees asset safety
+- Disclaimer always present: "Security review reflects the state of static analysis at review time"
+- System actors blocked from running trust pipeline
+
+**Phase 6G — Publisher Portal**
+- `v4/marketplace/publisher_portal.py` — `PublisherPortal`, `PublisherAnalytics`, `RevenueRecord`
+- Publisher analytics, revenue accounting (`is_estimated=True`); real payouts explicitly disabled until legal/compliance review
+- System actors cannot view analytics or revenue records
+
+**Phase 6H — Marketplace API and Frontend**
+- `v4/api/routers/marketplace.py` — 40+ REST endpoints at `/api/v1/marketplace/*`
+- `v4/frontend/src/pages/MarketplacePage.jsx` — 7-tab UI: Discover, Models, Agents, MCP Tools, Workflows, Installed, Publish
+- Marketplace nav item added to App.jsx sidebar under "Ecosystem" group
+- `Store` icon from lucide-react; `/marketplace` route registered
+
+### Tests
+- `v4/phase6_tests.py` — 60 new test cases covering all 6A–6H modules
+- Full regression suite: **289/289 passed** (60 Phase 6 + 229 existing)
+- Frontend build: **2803 modules transformed, 0 errors** (`npm run build`)
+
+---
+
 ## [0.9.0] — 2026-11-21
 
 ### Added — Phase 5: AI Observability, Security Intelligence and Cost Intelligence

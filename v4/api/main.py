@@ -1389,6 +1389,14 @@ except Exception as _e:
     import logging as _l
     _l.getLogger("orquanta.main").warning(f"[Phase5] Observability router not loaded: {_e}")
 
+# ── Phase 6: Open AI Ecosystem and Trusted Marketplace ────────────────────────
+try:
+    from .routers.marketplace import router as _marketplace_router
+    app.include_router(_marketplace_router)  # /api/v1/marketplace/*
+except Exception as _e:
+    import logging as _l
+    _l.getLogger("orquanta.main").warning(f"[Phase6] Marketplace router not loaded: {_e}")
+
 app.include_router(ws_router)
 
 # Demo router - always included; active only when DEMO_MODE=true
